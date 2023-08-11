@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "unified-metric"
+version = "0.1.0"
+description = ""
+authors = ["Tongfei Chen <tongfei@pm.me>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "unimetric"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+networkx = "^3.0"
+numpy = "^1.19"
+scipy = "^1.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
