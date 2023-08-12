@@ -28,7 +28,6 @@ class ProductMetric(Metric[T]):
     def __init__(self, cls: Type[T], field_metrics: Dict[str, Metric]):
         if getattr(cls, "__dataclass_fields__", None) is None:
             raise ValueError("Class must be a dataclass")
-        self.field_names = cls.__dataclass_fields__.keys()
         self.field_metrics = field_metrics
 
     def score(self, x: T, y: T) -> float:
@@ -36,7 +35,7 @@ class ProductMetric(Metric[T]):
             mul,
             (
                 self.field_metrics[fld].score(getattr(x, fld), getattr(y, fld))
-                for fld in self.field_names
+                for fld in self.field_metrics.keys()
             )
         )
 
@@ -46,6 +45,9 @@ class AlignmentMetric(Metric[Set[U]]):
         self.inner = inner
 
     def score(self, x: Set[U], y: Set[U]) -> float:
+        if isinstance(self.inner, DiscreteMetric):
+            return len(x & y)
+        # else, we need to solve the assignment problem
         m = np.array([
             [
                 self.inner.score(u, v)
@@ -69,6 +71,26 @@ class Jaccard(Metric[T]):
         sxx = self.inner.score(x, x)
         syy = self.inner.score(y, y)
         return sxy / (sxx + syy - sxy)
+
+
+class Precision(Metric[T]):
+    def __init__(self, inner: Metric[T]):
+        self.inner = inner
+
+    def score(self, x: T, y: T) -> float:
+        sxy = self.inner.score(x, y)
+        sxx = self.inner.score(x, x)
+        return sxy / sxx
+
+
+class Recall(Metric[T]):
+    def __init__(self, inner: Metric[T]):
+        self.inner = inner
+
+    def score(self, x: T, y: T) -> float:
+        sxy = self.inner.score(x, y)
+        syy = self.inner.score(y, y)
+        return sxy / syy
 
 
 class Dice(Metric[T]):
