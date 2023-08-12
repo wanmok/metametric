@@ -9,7 +9,6 @@ packages = [{include = "unimetric"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-networkx = "^3.0"
 numpy = "^1.19"
 scipy = "^1.9"
 
