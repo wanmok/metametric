@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from functools import reduce
 from operator import mul
-from typing import Dict, Generic, Set, Type, TypeVar
+from typing import Callable, Dict, Generic, Set, Type, TypeVar
 import numpy as np
 import scipy as sp
 
@@ -15,6 +15,15 @@ class Metric(Generic[T]):
         raise NotImplementedError()
 
 
+class ContramappedMetric(Metric[T]):
+    def __init__(self, inner: Metric[U], f: Callable[[T], U]):
+        self.inner = inner
+        self.f = f
+
+    def score(self, x: T, y: T) -> float:
+        return self.inner.score(self.f(x), self.f(y))
+
+
 class DiscreteMetric(Metric[T]):
     def __init__(self, cls: Type[T]):
         if getattr(cls, "__eq__", None) is None:
@@ -25,7 +34,7 @@ class DiscreteMetric(Metric[T]):
 
 
 class ProductMetric(Metric[T]):
-    def __init__(self, cls: Type[T], field_metrics: Dict[str, Metric]):
+    def __init__(self, cls: type, field_metrics: Dict[str, Metric]):
         if getattr(cls, "__dataclass_fields__", None) is None:
             raise ValueError("Class must be a dataclass")
         self.field_metrics = field_metrics
@@ -103,4 +112,6 @@ class Dice(Metric[T]):
         syy = self.inner.score(y, y)
         p = sxy / sxx
         r = sxy / syy
+        if p + r == 0:
+            return 0
         return 2 * p * r / (p + r)
