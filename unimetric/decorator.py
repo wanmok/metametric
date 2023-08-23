@@ -1,4 +1,4 @@
-from typing import Literal, get_args, get_origin, Collection
+from typing import Literal, get_args, get_origin, Collection, Annotated
 
 from unimetric.metric import Metric, ProductMetric, AlignmentMetric, DiscreteMetric, Dice, Jaccard, Precision, \
     Recall
@@ -10,6 +10,12 @@ def derive_metric(cls: type) -> Metric:
     :param cls: The type to derive a metric from.
     :return: A metric object for the given type.
     """
+
+    # if the type is annotated with a metric instance, use the metric annotation
+    if get_origin(cls) is Annotated:
+        metric = get_args(cls)[1]
+        if isinstance(metric, Metric):
+            return metric
 
     # if an explicit metric is defined, use it
     if getattr(cls, "metric", None) is not None:
