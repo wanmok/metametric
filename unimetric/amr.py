@@ -12,7 +12,7 @@ class Variable:
 
 @dataclass
 class Prop:
-    subj: Union[Variable, str]
+    subj: Variable
     pred: str
     obj: Union[Variable, str]
 
@@ -32,4 +32,3 @@ class AMR:
             if isinstance(p.obj, Variable):
                 vars.add(p.obj)
         return vars
-

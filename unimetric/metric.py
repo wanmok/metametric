@@ -3,16 +3,25 @@ from functools import reduce
 from operator import mul
 from typing import Callable, Dict, Generic, Set, Type, TypeVar
 import numpy as np
-import scipy as sp
+import scipy.optimize as spo
 
 T = TypeVar('T', contravariant=True)
 U = TypeVar('U')
 
 
 class Metric(Generic[T]):
+
     @abstractmethod
     def score(self, x: T, y: T) -> float:
         raise NotImplementedError()
+
+    def score_self(self, x: T) -> float:
+        """
+        Score an object against itself.
+        In a lot of cases there is a faster way to compute this than the general pair case.
+        In such cases, please override this function.
+        """
+        return self.score(x, x)
 
 
 class ContramappedMetric(Metric[T]):
@@ -23,6 +32,9 @@ class ContramappedMetric(Metric[T]):
     def score(self, x: T, y: T) -> float:
         return self.inner.score(self.f(x), self.f(y))
 
+    def score_self(self, x: T) -> float:
+        return self.inner.score_self(self.f(x))
+
 
 class DiscreteMetric(Metric[T]):
     def __init__(self, cls: Type[T]):
@@ -31,6 +43,9 @@ class DiscreteMetric(Metric[T]):
 
     def score(self, x: T, y: T) -> float:
         return float(x == y)
+
+    def score_self(self, x: T) -> float:
+        return 1.0
 
 
 class ProductMetric(Metric[T]):
@@ -64,11 +79,14 @@ class AlignmentMetric(Metric[Set[U]]):
             ]
             for u in x
         ])
-        row_idx, col_idx = sp.optimize.linear_sum_assignment(
+        row_idx, col_idx = spo.linear_sum_assignment(
             cost_matrix=m,
             maximize=True,
         )
         return m[row_idx, col_idx].sum()
+
+    def score_self(self, x: Set[U]) -> float:
+        return sum(self.inner.score_self(u) for u in x)
 
 
 class Jaccard(Metric[T]):
@@ -77,9 +95,12 @@ class Jaccard(Metric[T]):
 
     def score(self, x: T, y: T) -> float:
         sxy = self.inner.score(x, y)
-        sxx = self.inner.score(x, x)
-        syy = self.inner.score(y, y)
+        sxx = self.inner.score_self(x)
+        syy = self.inner.score_self(y)
         return sxy / (sxx + syy - sxy)
+
+    def score_self(self, x: T) -> float:
+        return 1.0
 
 
 class Precision(Metric[T]):
@@ -88,8 +109,11 @@ class Precision(Metric[T]):
 
     def score(self, x: T, y: T) -> float:
         sxy = self.inner.score(x, y)
-        sxx = self.inner.score(x, x)
+        sxx = self.inner.score_self(x)
         return sxy / sxx
+
+    def score_self(self, x: T) -> float:
+        return 1.0
 
 
 class Recall(Metric[T]):
@@ -98,20 +122,26 @@ class Recall(Metric[T]):
 
     def score(self, x: T, y: T) -> float:
         sxy = self.inner.score(x, y)
-        syy = self.inner.score(y, y)
+        syy = self.inner.score_self(y)
         return sxy / syy
 
+    def score_self(self, x: T) -> float:
+        return 1.0
 
-class Dice(Metric[T]):
+
+class FScore(Metric[T]):
     def __init__(self, inner: Metric[T]):
         self.inner = inner
 
     def score(self, x: T, y: T) -> float:
         sxy = self.inner.score(x, y)
-        sxx = self.inner.score(x, x)
-        syy = self.inner.score(y, y)
+        sxx = self.inner.score_self(x)
+        syy = self.inner.score_self(y)
         p = sxy / sxx
         r = sxy / syy
         if p + r == 0:
             return 0
         return 2 * p * r / (p + r)
+
+    def score_self(self, x: T) -> float:
+        return 1.0

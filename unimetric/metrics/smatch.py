@@ -1,14 +1,19 @@
 from typing import Tuple, Generic, TypeVar, Collection, Mapping, Iterator
 
 import numpy as np
-from scipy.optimize import milp, LinearConstraint, Bounds
+import scipy.optimize as spo
 from unimetric.amr import AMR, Variable
 from unimetric.metric import Metric
 
 T = TypeVar('T')
 
+__all__ = ['SMatchCount']
 
-class PairIndexer(Generic[T], Mapping[Tuple[T, T], int]):
+
+class _PairIndexer(Generic[T], Mapping[Tuple[T, T], int]):
+    """
+    Creates a mapping of a Cartesian product of objects to a single index.
+    """
 
     def __init__(self, x: Collection[T], y: Collection[T], offset: int = 0):
         self.x = x
@@ -28,91 +33,82 @@ class PairIndexer(Generic[T], Mapping[Tuple[T, T], int]):
         return ((x, y) for x in self.x for y in self.y)
 
 
-class SMatch(Metric[AMR]):
+class SMatchCount(Metric[AMR]):
+    """
+    Implements the SMatch metric of AMRs.
+    This function just counts the number of matches between two AMRs.
+    For the common Smatch metric which is F1-normalized, use `Dice(SMatchCount())`.
+    References:
+        - S Cai, K Knight (2013): Smatch: An Evaluation Metric for Semantic Feature Structures.
+        ACL. https://aclanthology.org/P13-2131.pdf.
+    """
 
     def score(self, x: AMR, y: AMR) -> float:
 
-        var_indexer = PairIndexer(x.variables(), y.variables())
-        prop_indexer = PairIndexer(x.props, y.props, offset=len(var_indexer))
+        x_vars = list(x.variables())
+        y_vars = list(y.variables())
+        n_x = len(x_vars)
+        n_y = len(y_vars)
+        var_indexer = _PairIndexer(x_vars, y_vars)
+        prop_indexer = _PairIndexer(x.props, y.props, offset=n_x * n_y)
+
+        # coefficient vector for the objective function
+        coef = np.zeros(len(var_indexer) + len(prop_indexer))
 
         # build the constraint matrix
         n = len(var_indexer) + len(prop_indexer)
-        constraint_vectors = []
 
-        num_x_var = len(x.variables())
-        num_y_var = len(y.variables())
-        num_var_constraints = num_x_var + num_y_var
-        num_x_prop = len(x.props)
-        num_y_prop = len(y.props)
-        num_prop_constraints = num_x_prop + num_y_prop
-        num_all_constraints = num_var_constraints + num_prop_constraints
-
-        var_constraint_matrix = np.zeros((num_var_constraints, num_all_constraints))
         # each variable must be mapped to exactly one variable
-        for x_var in x.variables():
-            for y_var in y.variables():
-                constraint_vectors[]
+        mask_x = np.zeros([n_x, n_x, n_y])
+        mask_x[np.arange(n_x), np.arange(n_x), :] = 1
+        mask_x = mask_x.reshape([n_x, n_x * n_y])
 
-        prop_constraint_matrix = np.zeros((num_prop_constraints, num_all_constraints))
+        mask_y = np.zeros([n_y, n_x, n_y])
+        mask_y[np.arange(n_y), :, np.arange(n_y)] = 1
+        mask_y = mask_y.reshape([n_y, n_x * n_y])
 
+        var_constraint_matrix = np.concatenate(
+            [
+                np.concatenate([mask_x, mask_y], axis=0),
+                np.zeros([n_x + n_y, len(prop_indexer)])
+            ],
+            axis=1
+        )
+        var_constraints = spo.LinearConstraint(
+            A=var_constraint_matrix,
+            ub=np.ones(var_constraint_matrix.shape[0]),
+        )
+
+        prop_constraint_vectors = []
         # each property may be mapped to at most one property if the variable is matched
+        for px in x.props:
+            for py in y.props:
+                if px.pred == py.pred:
+                    v = np.zeros(n)
+                    v[prop_indexer[px, py]] = 1
+                    v[var_indexer[px.subj, py.subj]] = -1
+                    prop_constraint_vectors.append(v)
+                    if isinstance(px.obj, Variable) and isinstance(py.obj, Variable):
+                        v = np.zeros(n)
+                        v[prop_indexer[px, py]] = 1
+                        v[var_indexer[px.obj, py.obj]] = -1
+                        prop_constraint_vectors.append(v)
+                        coef[prop_indexer[px, py]] = 1
 
-        x_props = list(x.props)
-        y_props = list(y.props)
-        for k in range(num_x_prop):
-            for l in range(num_y_prop):
-                index = prop_indexer[x_props[k], y_props[l]]
-                if x_props[k].pred == y_props[l].pred:
-                    if isinstance(x_props[k].subj, Variable) and isinstance(y_props[k].subj, Variable):
-                        prop_constraint_matrix[index, num_var_constraints + num_x_prop * k + l] = 1
-                        prop_constraint_matrix[index, ]
-                        constraint_vectors.append(row)
-                    if isinstance(x_prop.obj, Variable) and isinstance(y_prop.obj, Variable):
-                        row = np.zeros(n)
-                        row[prop_indexer[x_prop, y_prop]] = 1
-                        row[var_indexer[x_prop.obj, y_prop.obj]] = -1
-                        constraint_vectors.append(row)
+                    if isinstance(px.obj, str) and isinstance(py.obj, str) and px.obj == py.obj:
+                        coef[prop_indexer[px, py]] = 1
 
-        num_constraints = len(constraint_vectors)
-        num_prop_constraints = num_constraints - num_var_constraints
-        constraint_vectors = np.array(constraint_vectors)
-        c = -np.concatenate([np.zeros(num_var_constraints), np.ones(num_prop_constraints)])
+        prop_constraint_matrix = np.stack(prop_constraint_vectors, axis=0)  # [PC, N]
+        prop_constraints = spo.LinearConstraint(
+            A=prop_constraint_matrix,
+            ub=np.zeros(prop_constraint_matrix.shape[0]),
+        )
 
-        result = milp(
-            c=c,
-            constraints=LinearConstraint(
-                np.array(constraint_vectors),
-                np.zeros(len(constraint_vectors)),
-                np.ones(len(constraint_vectors)),
-            ),
-            bounds=Bounds(0, 1),
-            integrality=np.ones(n),
+        result = spo.milp(
+            c=-coef,
+            constraints=[var_constraints, prop_constraints],
+            bounds=spo.Bounds(lb=0, ub=1),
+            integrality=np.ones_like(coef),
         )
 
         return -result.fun
-
-
-from unimetric.amr import AMR, Variable, Prop
-
-amr1 = AMR(
-    props=[
-        Prop(Variable('a'), 'instance', 'want-01'),
-        Prop(Variable('b'), 'instance', 'boy'),
-        Prop(Variable('c'), 'instance', 'go-01'),
-        Prop(Variable('a'), 'ARG0', Variable('b')),
-        Prop(Variable('a'), 'ARG1', Variable('c')),
-        Prop(Variable('c'), 'ARG0', Variable('b')),
-    ]
-)
-
-amr2 = AMR(
-    props=[
-        Prop(Variable('x'), 'instance', 'want-01'),
-        Prop(Variable('y'), 'instance', 'boy'),
-        Prop(Variable('z'), 'instance', 'football'),
-        Prop(Variable('x'), 'ARG0', Variable('y')),
-        Prop(Variable('x'), 'ARG1', Variable('z')),
-    ]
-)
-
-print(SMatch().score(amr1, amr2))

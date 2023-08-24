@@ -1,6 +1,6 @@
 from typing import Literal, get_args, get_origin, Collection, Annotated
 
-from unimetric.metric import Metric, ProductMetric, AlignmentMetric, DiscreteMetric, Dice, Jaccard, Precision, \
+from unimetric.metric import Metric, ProductMetric, AlignmentMetric, DiscreteMetric, FScore, Jaccard, Precision, \
     Recall
 
 
@@ -59,8 +59,8 @@ def unimetric(
         normalized_metric = {
             'none': lambda x: x,
             'jaccard': Jaccard,
-            'dice': Dice,
-            'f1': Dice,
+            'dice': FScore,
+            'f1': FScore,
             'precision': Precision,
             'recall': Recall,
         }[normalizer](metric)
