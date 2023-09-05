@@ -1,8 +1,6 @@
 from pytest import approx
 
-from unimetric.metric import FScore
 from unimetric.amr import AMR, Variable, Prop
-from unimetric.metrics.smatch import SMatchCount
 
 
 def test_smatch():
@@ -31,5 +29,4 @@ def test_smatch():
         ]
     )
 
-    smatch = FScore(SMatchCount())
-    assert smatch.score(amr1, amr2) == approx(0.73, abs=0.01)
+    assert AMR.metric.score(amr1, amr2) == approx(0.73, abs=0.01)

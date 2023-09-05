@@ -1,15 +1,11 @@
 from dataclasses import dataclass
 from typing import Collection, Set, Union
 
-
-@dataclass
-class Variable:
-    name: str
-
-    def __hash__(self):
-        return hash(self.name)
+from unimetric.latent_alignment import Variable
+from unimetric.decorator import unimetric
 
 
+@unimetric()
 @dataclass
 class Prop:
     subj: Variable
@@ -20,6 +16,7 @@ class Prop:
         return hash((self.subj, self.pred, self.obj))
 
 
+@unimetric(normalizer='f1')
 @dataclass
 class AMR:
     props: Collection[Prop]

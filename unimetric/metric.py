@@ -1,9 +1,9 @@
 from abc import abstractmethod
+from dataclasses import is_dataclass
 from functools import reduce
 from operator import mul
-from typing import Callable, Dict, Generic, Set, Type, TypeVar
+from typing import Callable, Dict, Generic, Sequence, Set, Type, TypeVar, Collection, Union, get_origin
 import numpy as np
-import scipy.optimize as spo
 
 T = TypeVar('T', contravariant=True)
 U = TypeVar('U')
@@ -17,11 +17,29 @@ class Metric(Generic[T]):
 
     def score_self(self, x: T) -> float:
         """
-        Score an object against itself.
-        In a lot of cases there is a faster way to compute this than the general pair case.
+        Scores an object against itself.
+        In many cases there is a faster way to compute this than the general pair case.
         In such cases, please override this function.
         """
         return self.score(x, x)
+
+    def gram_matrix(self, xs: Collection[T], ys: Collection[T]) -> np.ndarray:
+        return np.array([
+            [self.score(x, y) for y in ys]
+            for x in xs
+        ])
+
+    @staticmethod
+    def from_function(f: Callable[[T, T], float]) -> "Metric[T]":
+        return MetricFromFunction(f)
+
+
+class MetricFromFunction(Metric[T]):
+    def __init__(self, f: Callable[[T, T], float]):
+        self.f = f
+
+    def score(self, x: T, y: T) -> float:
+        return self.f(x, y)
 
 
 class ContramappedMetric(Metric[T]):
@@ -46,47 +64,6 @@ class DiscreteMetric(Metric[T]):
 
     def score_self(self, x: T) -> float:
         return 1.0
-
-
-class ProductMetric(Metric[T]):
-    def __init__(self, cls: type, field_metrics: Dict[str, Metric]):
-        if getattr(cls, "__dataclass_fields__", None) is None:
-            raise ValueError("Class must be a dataclass")
-        self.field_metrics = field_metrics
-
-    def score(self, x: T, y: T) -> float:
-        return reduce(
-            mul,
-            (
-                self.field_metrics[fld].score(getattr(x, fld), getattr(y, fld))
-                for fld in self.field_metrics.keys()
-            )
-        )
-
-
-class AlignmentMetric(Metric[Set[U]]):
-    def __init__(self, inner: Metric[U]):
-        self.inner = inner
-
-    def score(self, x: Set[U], y: Set[U]) -> float:
-        if isinstance(self.inner, DiscreteMetric):
-            return len(x & y)
-        # else, we need to solve the assignment problem
-        m = np.array([
-            [
-                self.inner.score(u, v)
-                for v in y
-            ]
-            for u in x
-        ])
-        row_idx, col_idx = spo.linear_sum_assignment(
-            cost_matrix=m,
-            maximize=True,
-        )
-        return m[row_idx, col_idx].sum()
-
-    def score_self(self, x: Set[U]) -> float:
-        return sum(self.inner.score_self(u) for u in x)
 
 
 class Jaccard(Metric[T]):
@@ -142,6 +119,39 @@ class FScore(Metric[T]):
         if p + r == 0:
             return 0
         return 2 * p * r / (p + r)
+
+    def score_self(self, x: T) -> float:
+        return 1.0
+
+
+class ProductMetric(Metric[T]):
+    def __init__(self, cls: type, field_metrics: Dict[str, Metric]):
+        if not is_dataclass(cls):
+            raise ValueError(f"{cls} has to be a dataclass.")
+        self.field_metrics = field_metrics
+
+    def score(self, x: T, y: T) -> float:
+        return reduce(
+            mul,
+            (
+                self.field_metrics[fld].score(getattr(x, fld), getattr(y, fld))
+                for fld in self.field_metrics.keys()
+            )
+        )
+
+
+class UnionMetric(Metric[T]):
+    def __init__(self, cls: type, case_metrics: Dict[type, Metric]):
+        if not get_origin(cls) is Union:
+            raise ValueError(f"{cls} has to be a union.")
+        self.case_metrics = case_metrics
+
+    def score(self, x: T, y: T) -> float:
+        x_type = type(x)
+        y_type = type(y)
+        if x_type != y_type:
+            return 0.0
+        return self.case_metrics[x_type].score(x, y)
 
     def score_self(self, x: T) -> float:
         return 1.0

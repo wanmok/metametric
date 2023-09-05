@@ -1,10 +1,13 @@
-from typing import Literal, get_args, get_origin, Collection, Annotated
+from dataclasses import fields, is_dataclass
+from typing import Literal, get_args, get_origin, Collection, Annotated, Union
+from inspect import isclass
 
-from unimetric.metric import Metric, ProductMetric, AlignmentMetric, DiscreteMetric, FScore, Jaccard, Precision, \
-    Recall
+from unimetric.latent_alignment import Variable, dataclass_has_variable, LatentAlignmentMetric
+from unimetric.metric import Metric, ProductMetric, DiscreteMetric, FScore, Jaccard, Precision, Recall, UnionMetric
+from unimetric.alignment import AlignmentConstraint, AlignmentMetric
 
 
-def derive_metric(cls: type) -> Metric:
+def derive_metric(cls: type, constraint: AlignmentConstraint) -> Metric:
     """
     Derive a unified metric from any type.
     :param cls: The type to derive a metric from.
@@ -21,22 +24,44 @@ def derive_metric(cls: type) -> Metric:
     if getattr(cls, "metric", None) is not None:
         return cls.metric
 
+    if getattr(cls, "latent_metric", None) is not None:
+        return cls.latent_metric
+
     # derive product metric from dataclass
-    elif getattr(cls, "__dataclass_fields__", None) is not None:
+    elif is_dataclass(cls):
         return ProductMetric(
             cls=cls,
             field_metrics={
-                fld: derive_metric(cls.__dataclass_fields__[fld].type)
-                for fld in cls.__dataclass_fields__.keys()
+                fld.name: derive_metric(fld.type, constraint=constraint)
+                for fld in fields(cls)
+            }
+        )
+
+    # derive union metric from unions
+    elif get_origin(cls) is Union:
+        return UnionMetric(
+            cls=cls,
+            case_metrics={
+                case: derive_metric(case, constraint=constraint)
+                for case in get_args(cls)
             }
         )
 
     # derive alignment metric from collections
-    elif get_origin(cls) is not None and issubclass(get_origin(cls), Collection):
+    elif get_origin(cls) is not None and isinstance(get_origin(cls), type) and issubclass(get_origin(cls), Collection):
         elem_type = get_args(cls)[0]
-        return AlignmentMetric(
-            inner=derive_metric(elem_type)
-        )
+        inner_metric = derive_metric(elem_type, constraint=constraint)
+        if dataclass_has_variable(elem_type):
+            return LatentAlignmentMetric(
+                cls=elem_type,
+                inner=inner_metric,
+                constraint=constraint,
+            )
+        else:
+            return AlignmentMetric(
+                inner=inner_metric,
+                constraint=constraint,
+            )
 
     # derive discrete metric from equality
     elif getattr(cls, "__eq__", None) is not None:
@@ -48,6 +73,7 @@ def derive_metric(cls: type) -> Metric:
 
 def unimetric(
         normalizer: Literal['none', 'jaccard', 'dice', 'f1'] = 'none',
+        constraint: Literal['<->', '<-', '->', '~'] = '<->',
 ):
     """
     Derive a unified metric from a class.
@@ -55,7 +81,17 @@ def unimetric(
     :return:
     """
     def class_decorator(cls):
-        metric = derive_metric(cls)
+        alignment_constraint = {
+            '<->': AlignmentConstraint.ONE_TO_ONE,
+            '<-': AlignmentConstraint.ONE_TO_MANY,
+            '->': AlignmentConstraint.MANY_TO_ONE,
+            '~': AlignmentConstraint.MANY_TO_MANY,
+            '1:1': AlignmentConstraint.ONE_TO_ONE,
+            '1:*': AlignmentConstraint.ONE_TO_MANY,
+            '*:1': AlignmentConstraint.MANY_TO_ONE,
+            '*:*': AlignmentConstraint.MANY_TO_MANY,
+        }[constraint]
+        metric = derive_metric(cls, constraint=alignment_constraint)
         normalized_metric = {
             'none': lambda x: x,
             'jaccard': Jaccard,
@@ -64,6 +100,10 @@ def unimetric(
             'precision': Precision,
             'recall': Recall,
         }[normalizer](metric)
-        setattr(cls, 'metric', normalized_metric)
+
+        if dataclass_has_variable(cls):
+            setattr(cls, 'latent_metric', normalized_metric)
+        else:
+            setattr(cls, 'metric', normalized_metric)
         return cls
     return class_decorator
