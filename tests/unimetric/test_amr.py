@@ -1,3 +1,4 @@
+"""Tests for SMatch derived from the AMR structure."""
 from pytest import approx
 
 from unimetric.amr import AMR, Prop
@@ -6,10 +7,7 @@ from unimetric.latent_alignment import Variable
 
 
 def test_smatch():
-    """
-    Example from https://aclanthology.org/P13-2131.pdf.
-    """
-
+    """Example from https://aclanthology.org/P13-2131.pdf."""
     amr1 = AMR(
         props=[
             Prop(Variable("a"), "instance", "want-01"),

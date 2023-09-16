@@ -1,3 +1,4 @@
+"""Decorator for deriving metrics from dataclasses."""
 from dataclasses import fields, is_dataclass
 from typing import (
     Literal,
@@ -24,11 +25,15 @@ ConstraintLiteral = Literal["<->", "<-", "->", "~"]
 
 @runtime_checkable
 class HasMetric(Protocol):
+    """Protocol for classes that have a metric."""
+
     metric: Metric
 
 
 @runtime_checkable
 class HasLatentMetric(Protocol):
+    """Protocol for classes that have a latent metric."""
+
     latent_metric: Metric
 
 
@@ -47,7 +52,6 @@ def derive_metric(cls: object, constraint: AlignmentConstraint) -> Metric:
     Metric
         The derived metric.
     """
-
     # if the type is annotated with a metric instance, use the metric annotation
     if get_origin(cls) is Annotated:
         metric = get_args(cls)[1]
@@ -104,7 +108,7 @@ def unimetric(
     normalizer: NormalizerLiteral = "none",
     constraint: ConstraintLiteral = "<->",
 ) -> Callable[[T], T]:
-    """Decorator to derive a metric from a dataclass.
+    """Decorate a dataclass to have corresponding metric derived.
 
     Parameters
     ----------

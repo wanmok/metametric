@@ -1,3 +1,4 @@
+"""Metric derivation with latent alignments."""
 from dataclasses import dataclass, fields, is_dataclass
 from typing import ClassVar, Generic, Collection, Mapping, Tuple, TypeVar, Union, Set, Iterator, get_origin, get_args
 
@@ -12,6 +13,8 @@ T = TypeVar("T")
 
 @dataclass
 class Variable:
+    """A variable in a latent."""
+
     name: str
 
     latent_metric: ClassVar[Metric["Variable"]] = Metric.from_function(lambda x, y: 1.0)
@@ -21,6 +24,8 @@ class Variable:
 
 
 class LatentAlignmentMetric(Metric[Collection[T]]):
+    """A metric derived to support aligning latent variables defined in structures."""
+
     def __init__(self, cls: type, inner: Metric[T], constraint: AlignmentConstraint = AlignmentConstraint.OneToOne):
         if is_dataclass(cls):
             self.fields = fields(cls)
@@ -30,6 +35,7 @@ class LatentAlignmentMetric(Metric[Collection[T]]):
         self.constraint = constraint
 
     def score(self, x: Collection[T], y: Collection[T]) -> float:
+        """Score two collections of objects."""
         x = list(x)
         y = list(y)
         x_vars = _all_variables(x)
@@ -120,13 +126,12 @@ class LatentAlignmentMetric(Metric[Collection[T]]):
         return -result.fun
 
     def score_self(self, x: Collection[T]) -> float:
+        """Score a collection of objects with itself."""
         return solve_alignment(self.inner.gram_matrix(x, x), self.constraint)
 
 
 class _PairIndexer(Generic[T], Mapping[Tuple[T, T], int]):
-    """
-    Creates a mapping of a Cartesian product of objects to a single index.
-    """
+    """Creates a mapping of a Cartesian product of objects to a single index."""
 
     def __init__(self, x: Collection[T], y: Collection[T], offset: int = 0):
         self.x = x
@@ -181,6 +186,7 @@ def _get_one_to_one_constraint_matrix(n_x: int, n_y: int) -> np.ndarray:  # [X +
 
 
 def may_be_variable(cls: object) -> bool:
+    """Check if a type may be a `Variable`."""
     if cls is Variable:
         return True
     if get_origin(cls) is not None and get_origin(cls) is Union:
@@ -190,6 +196,7 @@ def may_be_variable(cls: object) -> bool:
 
 
 def dataclass_has_variable(cls: object) -> bool:
+    """Check if a dataclass has a field is in `Variable` type."""
     if cls is Variable:
         return True
     if is_dataclass(cls):

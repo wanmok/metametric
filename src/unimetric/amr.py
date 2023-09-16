@@ -1,3 +1,4 @@
+"""Abstract Meaning Representation (AMR) structure."""
 from dataclasses import dataclass
 from typing import Collection, Set, Union
 
@@ -8,6 +9,8 @@ from unimetric.latent_alignment import Variable
 @unimetric()
 @dataclass
 class Prop:
+    """A property in an AMR."""
+
     subj: Variable
     pred: str
     obj: Union[Variable, str]
@@ -19,9 +22,12 @@ class Prop:
 @unimetric(normalizer="f1")
 @dataclass
 class AMR:
+    """Abstract Meaning Representation (AMR) structure."""
+
     props: Collection[Prop]
 
     def variables(self) -> Set[Variable]:
+        """Return the set of variables in the AMR."""
         vars = set()
         for p in self.props:
             if isinstance(p.subj, Variable):

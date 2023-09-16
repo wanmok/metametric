@@ -1,12 +1,27 @@
 [tool.ruff]
 line-length = 120
+src = ["src", "tests"]
+
+select = [
+  "E", # pycodestyle
+  "F", # pyflakes
+  "UP", # pyupgrade
+  "D", # pydocstyle
+]
+ignore = [
+  "D105", # Missing docstring in magic method
+]
+
+fixable = ["ALL"]
+
+[tool.ruff.pydocstyle]
+convention = "numpy"
 
 [tool.black]
 line-length = 120
 
 [tool.pyright]
 include = ["src", "tests"]
-
 
 [tool.pytest.ini_options]
 minversion = "6.0"
