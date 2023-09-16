@@ -1,19 +1,37 @@
+[tool.ruff]
+line-length = 120
+
+[tool.black]
+line-length = 120
+
+[tool.pyright]
+include = ["src", "tests"]
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+
 [tool.poetry]
 name = "unified-metric"
 version = "0.1.0"
-description = ""
-authors = ["Tongfei Chen <tongfei@pm.me>"]
-license = "MIT"
+description = "A Unified View of Evaluation Metrics for Information Extraction"
+authors = ["Tongfei Chen <tongfei@pm.me>", "Yunmo Chen <yunmo@jhu.edu>"]
 readme = "README.md"
-packages = [{include = "unimetric"}]
+packages = [{ include = "src/unimetric" }]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-numpy = "^1.19"
-scipy = "^1.9"
+python = ">=3.9,<3.13"
+scipy = "^1.11.2"
+numpy = "^1.25.2"
+pytest = "^7.4.2"
+
+[tool.poetry.group.dev]
+optional = true
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
+pytest = "^7.4.2"
+pyright = "^1.1.327"
 
 [build-system]
 requires = ["poetry-core"]
