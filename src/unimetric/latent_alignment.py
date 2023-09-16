@@ -21,7 +21,7 @@ class Variable:
 
 
 class LatentAlignmentMetric(Metric[Collection[T]]):
-    def __init__(self, cls: type, inner: Metric[T], constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE):
+    def __init__(self, cls: type, inner: Metric[T], constraint: AlignmentConstraint = AlignmentConstraint.OneToOne):
         if is_dataclass(cls):
             self.fields = fields(cls)
         else:
@@ -71,10 +71,10 @@ class LatentAlignmentMetric(Metric[Collection[T]]):
 
         # each item may be mapped to some other items given the constraint
         item_constraint_matrix_ctor = {
-            AlignmentConstraint.ONE_TO_ONE: _get_one_to_one_constraint_matrix,
-            AlignmentConstraint.ONE_TO_MANY: _get_one_to_many_constraint_matrix,
-            AlignmentConstraint.MANY_TO_ONE: _get_many_to_one_constraint_matrix,
-            AlignmentConstraint.MANY_TO_MANY: lambda _0, _1: None,
+            AlignmentConstraint.OneToOne: _get_one_to_one_constraint_matrix,
+            AlignmentConstraint.OneToMany: _get_one_to_many_constraint_matrix,
+            AlignmentConstraint.ManyToOne: _get_many_to_one_constraint_matrix,
+            AlignmentConstraint.ManyToMany: lambda _0, _1: None,
         }[self.constraint]
         item_constraint_matrix = item_constraint_matrix_ctor(n_x, n_y)
         if item_constraint_matrix is not None:

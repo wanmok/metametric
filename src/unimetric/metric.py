@@ -2,7 +2,8 @@ from abc import abstractmethod
 from dataclasses import is_dataclass
 from functools import reduce
 from operator import mul
-from typing import Callable, Dict, Generic, Sequence, Set, Type, TypeVar, Collection, Union, get_origin
+from typing import Callable, Dict, Generic, Type, TypeVar, Collection, Union, get_origin
+
 import numpy as np
 
 T = TypeVar('T', contravariant=True)
@@ -142,7 +143,7 @@ class ProductMetric(Metric[T]):
 
 class UnionMetric(Metric[T]):
     def __init__(self, cls: type, case_metrics: Dict[type, Metric]):
-        if not get_origin(cls) is Union:
+        if get_origin(cls) is not Union:
             raise ValueError(f"{cls} has to be a union.")
         self.case_metrics = case_metrics
 

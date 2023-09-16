@@ -1,6 +1,7 @@
 from pytest import approx
 
-from unimetric.amr import AMR, Variable, Prop
+from unimetric.amr import AMR, Prop
+from unimetric.latent_alignment import Variable
 
 
 def test_smatch():

@@ -1,10 +1,9 @@
 from dataclasses import fields, is_dataclass
 from typing import Literal, get_args, get_origin, Collection, Annotated, Union
-from inspect import isclass
 
-from unimetric.latent_alignment import Variable, dataclass_has_variable, LatentAlignmentMetric
-from unimetric.metric import Metric, ProductMetric, DiscreteMetric, FScore, Jaccard, Precision, Recall, UnionMetric
 from unimetric.alignment import AlignmentConstraint, AlignmentMetric
+from unimetric.latent_alignment import dataclass_has_variable, LatentAlignmentMetric
+from unimetric.metric import Metric, ProductMetric, DiscreteMetric, FScore, Jaccard, Precision, Recall, UnionMetric
 
 
 def derive_metric(cls: type, constraint: AlignmentConstraint) -> Metric:
@@ -82,14 +81,14 @@ def unimetric(
     """
     def class_decorator(cls):
         alignment_constraint = {
-            '<->': AlignmentConstraint.ONE_TO_ONE,
-            '<-': AlignmentConstraint.ONE_TO_MANY,
-            '->': AlignmentConstraint.MANY_TO_ONE,
-            '~': AlignmentConstraint.MANY_TO_MANY,
-            '1:1': AlignmentConstraint.ONE_TO_ONE,
-            '1:*': AlignmentConstraint.ONE_TO_MANY,
-            '*:1': AlignmentConstraint.MANY_TO_ONE,
-            '*:*': AlignmentConstraint.MANY_TO_MANY,
+            '<->': AlignmentConstraint.OneToOne,
+            '<-': AlignmentConstraint.OneToMany,
+            '->': AlignmentConstraint.ManyToOne,
+            '~': AlignmentConstraint.ManyToMany,
+            '1:1': AlignmentConstraint.OneToOne,
+            '1:*': AlignmentConstraint.OneToMany,
+            '*:1': AlignmentConstraint.ManyToOne,
+            '*:*': AlignmentConstraint.ManyToMany,
         }[constraint]
         metric = derive_metric(cls, constraint=alignment_constraint)
         normalized_metric = {
