@@ -145,16 +145,9 @@ def unimetric(
         }[normalizer](metric)
 
         if dataclass_has_variable(cls):
-
-            class LatentMetricWrapper(cls, HasLatentMetric):  # type: ignore
-                latent_metric = normalized_metric
-
-            return LatentMetricWrapper
+            setattr(cls, "latent_metric", normalized_metric)  # type: ignore
         else:
-
-            class MetricWrapper(cls, HasMetric):  # type: ignore
-                metric = normalized_metric
-
-            return MetricWrapper
+            setattr(cls, "metric", normalized_metric)  # type: ignore
+        return cls
 
     return class_decorator
