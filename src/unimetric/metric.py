@@ -6,12 +6,11 @@ from typing import Callable, Dict, Generic, Type, TypeVar, Collection, Union, ge
 
 import numpy as np
 
-T = TypeVar('T', contravariant=True)
-U = TypeVar('U')
+T = TypeVar("T", contravariant=True)
+U = TypeVar("U")
 
 
 class Metric(Generic[T]):
-
     @abstractmethod
     def score(self, x: T, y: T) -> float:
         raise NotImplementedError()
@@ -25,10 +24,7 @@ class Metric(Generic[T]):
         return self.score(x, x)
 
     def gram_matrix(self, xs: Collection[T], ys: Collection[T]) -> np.ndarray:
-        return np.array([
-            [self.score(x, y) for y in ys]
-            for x in xs
-        ])
+        return np.array([[self.score(x, y) for y in ys] for x in xs])
 
     @staticmethod
     def from_function(f: Callable[[T, T], float]) -> "Metric[T]":
@@ -133,11 +129,7 @@ class ProductMetric(Metric[T]):
 
     def score(self, x: T, y: T) -> float:
         return reduce(
-            mul,
-            (
-                self.field_metrics[fld].score(getattr(x, fld), getattr(y, fld))
-                for fld in self.field_metrics.keys()
-            )
+            mul, (self.field_metrics[fld].score(getattr(x, fld), getattr(y, fld)) for fld in self.field_metrics.keys())
         )
 
 

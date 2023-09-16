@@ -7,13 +7,12 @@ import scipy.optimize as spo
 
 from unimetric.metric import Metric
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class AlignmentConstraint(Enum):
-    """
-    Alignment constraints for the alignment metric.
-    """
+    """Alignment constraints for the alignment metric."""
+
     OneToOne = enum.auto()
     OneToMany = enum.auto()
     ManyToOne = enum.auto()

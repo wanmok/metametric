@@ -12,22 +12,22 @@ def test_smatch():
 
     amr1 = AMR(
         props=[
-            Prop(Variable('a'), 'instance', 'want-01'),
-            Prop(Variable('b'), 'instance', 'boy'),
-            Prop(Variable('c'), 'instance', 'go-01'),
-            Prop(Variable('a'), 'ARG0', Variable('b')),
-            Prop(Variable('a'), 'ARG1', Variable('c')),
-            Prop(Variable('c'), 'ARG0', Variable('b')),
+            Prop(Variable("a"), "instance", "want-01"),
+            Prop(Variable("b"), "instance", "boy"),
+            Prop(Variable("c"), "instance", "go-01"),
+            Prop(Variable("a"), "ARG0", Variable("b")),
+            Prop(Variable("a"), "ARG1", Variable("c")),
+            Prop(Variable("c"), "ARG0", Variable("b")),
         ]
     )
 
     amr2 = AMR(
         props=[
-            Prop(Variable('x'), 'instance', 'want-01'),
-            Prop(Variable('y'), 'instance', 'boy'),
-            Prop(Variable('z'), 'instance', 'football'),
-            Prop(Variable('x'), 'ARG0', Variable('y')),
-            Prop(Variable('x'), 'ARG1', Variable('z')),
+            Prop(Variable("x"), "instance", "want-01"),
+            Prop(Variable("y"), "instance", "boy"),
+            Prop(Variable("z"), "instance", "football"),
+            Prop(Variable("x"), "ARG0", Variable("y")),
+            Prop(Variable("x"), "ARG1", Variable("z")),
         ]
     )
 

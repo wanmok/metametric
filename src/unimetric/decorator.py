@@ -33,10 +33,19 @@ class HasLatentMetric(Protocol):
 
 
 def derive_metric(cls: object, constraint: AlignmentConstraint) -> Metric:
-    """
-    Derive a unified metric from any type.
-    :param cls: The type to derive a metric from.
-    :return: A metric object for the given type.
+    """Derive a unified metric from any type.
+
+    Parameters
+    ----------
+    cls : object
+        The dataclass-like class to derive the metric from.
+    constraint : AlignmentConstraint
+        The alignment constraint to use.
+
+    Returns
+    -------
+    Metric
+        The derived metric.
     """
 
     # if the type is annotated with a metric instance, use the metric annotation
@@ -95,10 +104,19 @@ def unimetric(
     normalizer: NormalizerLiteral = "none",
     constraint: ConstraintLiteral = "<->",
 ) -> Callable[[T], T]:
-    """
-    Derive a unified metric from a class.
-    :param normalizer:
-    :return:
+    """Decorator to derive a metric from a dataclass.
+
+    Parameters
+    ----------
+    normalizer : NormalizerLiteral
+        The normalizer to use, by default "none"
+    constraint : ConstraintLiteral
+        The alignment constraint to use, by default "<->"
+
+    Returns
+    -------
+    Callable[[T], T]
+        The decorated new class.
     """
 
     def class_decorator(cls: T) -> T:
@@ -123,15 +141,16 @@ def unimetric(
         }[normalizer](metric)
 
         if dataclass_has_variable(cls):
+
             class LatentMetricWrapper(cls, HasLatentMetric):  # type: ignore
                 latent_metric = normalized_metric
 
             return LatentMetricWrapper
         else:
+
             class MetricWrapper(cls, HasMetric):  # type: ignore
                 metric = normalized_metric
 
             return MetricWrapper
-        # return cls
 
     return class_decorator

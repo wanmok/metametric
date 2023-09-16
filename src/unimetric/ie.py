@@ -50,13 +50,13 @@ class RelationSet:
     relations: List[Relation]
 
 
-@unimetric(normalizer='f1')
+@unimetric(normalizer="f1")
 @dataclass
 class Entity:
     mentions: List[Mention]
 
 
-@unimetric(normalizer='f1')
+@unimetric(normalizer="f1")
 @dataclass
 class EntitySet:
     entities: List[Entity]

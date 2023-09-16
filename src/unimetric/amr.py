@@ -16,7 +16,7 @@ class Prop:
         return hash((self.subj, self.pred, self.obj))
 
 
-@unimetric(normalizer='f1')
+@unimetric(normalizer="f1")
 @dataclass
 class AMR:
     props: Collection[Prop]
