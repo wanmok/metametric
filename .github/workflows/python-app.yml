@@ -19,20 +19,22 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.9"
     - name: Setup Poetry
       uses: Gr1N/setup-poetry@v8
       with:
         poetry-version: 1.6.1
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.9"
+        cache: "poetry"
     - name: Install dependencies
       run: |
         poetry install --with dev
     - uses: chartboost/ruff-action@v1
       with:
         version: 0.0.290
+    - uses: jakebailey/pyright-action@v1
     - name: Test with pytest
       run: |
         poetry run pytest
