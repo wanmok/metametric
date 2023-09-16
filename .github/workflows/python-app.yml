@@ -35,4 +35,4 @@ jobs:
         version: 0.0.290
     - name: Test with pytest
       run: |
-        pytest
+        poetry run pytest
