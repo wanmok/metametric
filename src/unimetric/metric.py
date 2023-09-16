@@ -126,7 +126,7 @@ class FScore(Metric[T]):
 
 
 class ProductMetric(Metric[T]):
-    def __init__(self, cls: type, field_metrics: Dict[str, Metric]):
+    def __init__(self, cls: object, field_metrics: Dict[str, Metric]):
         if not is_dataclass(cls):
             raise ValueError(f"{cls} has to be a dataclass.")
         self.field_metrics = field_metrics
@@ -142,7 +142,7 @@ class ProductMetric(Metric[T]):
 
 
 class UnionMetric(Metric[T]):
-    def __init__(self, cls: type, case_metrics: Dict[type, Metric]):
+    def __init__(self, cls: object, case_metrics: Dict[type, Metric]):
         if get_origin(cls) is not Union:
             raise ValueError(f"{cls} has to be a union.")
         self.case_metrics = case_metrics

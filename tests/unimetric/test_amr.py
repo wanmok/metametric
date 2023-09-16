@@ -1,6 +1,7 @@
 from pytest import approx
 
 from unimetric.amr import AMR, Prop
+from unimetric.decorator import HasMetric
 from unimetric.latent_alignment import Variable
 
 
@@ -30,4 +31,8 @@ def test_smatch():
         ]
     )
 
-    assert AMR.metric.score(amr1, amr2) == approx(0.73, abs=0.01)
+    if isinstance(AMR, HasMetric):
+        assert AMR.metric.score(amr1, amr2) == approx(0.73, abs=0.01)
+    else:
+        # In case of failure to derive the metric.
+        assert False

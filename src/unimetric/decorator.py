@@ -1,12 +1,38 @@
 from dataclasses import fields, is_dataclass
-from typing import Literal, get_args, get_origin, Collection, Annotated, Union
+from typing import (
+    Literal,
+    get_args,
+    get_origin,
+    Collection,
+    Annotated,
+    Union,
+    Protocol,
+    runtime_checkable,
+    Callable,
+    TypeVar,
+)
 
 from unimetric.alignment import AlignmentConstraint, AlignmentMetric
 from unimetric.latent_alignment import dataclass_has_variable, LatentAlignmentMetric
 from unimetric.metric import Metric, ProductMetric, DiscreteMetric, FScore, Jaccard, Precision, Recall, UnionMetric
 
+T = TypeVar("T", covariant=True)
 
-def derive_metric(cls: type, constraint: AlignmentConstraint) -> Metric:
+NormalizerLiteral = Literal["none", "jaccard", "dice", "f1"]
+ConstraintLiteral = Literal["<->", "<-", "->", "~"]
+
+
+@runtime_checkable
+class HasMetric(Protocol):
+    metric: Metric
+
+
+@runtime_checkable
+class HasLatentMetric(Protocol):
+    latent_metric: Metric
+
+
+def derive_metric(cls: object, constraint: AlignmentConstraint) -> Metric:
     """
     Derive a unified metric from any type.
     :param cls: The type to derive a metric from.
@@ -20,34 +46,29 @@ def derive_metric(cls: type, constraint: AlignmentConstraint) -> Metric:
             return metric
 
     # if an explicit metric is defined, use it
-    if getattr(cls, "metric", None) is not None:
+    # if getattr(cls, "metric", None) is not None:
+    if isinstance(cls, HasMetric):
         return cls.metric
 
-    if getattr(cls, "latent_metric", None) is not None:
+    cls_origin = get_origin(cls)
+    # if getattr(cls, "latent_metric", None) is not None:
+    if isinstance(cls, HasLatentMetric):
         return cls.latent_metric
 
     # derive product metric from dataclass
     elif is_dataclass(cls):
         return ProductMetric(
-            cls=cls,
-            field_metrics={
-                fld.name: derive_metric(fld.type, constraint=constraint)
-                for fld in fields(cls)
-            }
+            cls=cls, field_metrics={fld.name: derive_metric(fld.type, constraint=constraint) for fld in fields(cls)}
         )
 
     # derive union metric from unions
-    elif get_origin(cls) is Union:
+    elif cls_origin is Union:
         return UnionMetric(
-            cls=cls,
-            case_metrics={
-                case: derive_metric(case, constraint=constraint)
-                for case in get_args(cls)
-            }
+            cls=cls, case_metrics={case: derive_metric(case, constraint=constraint) for case in get_args(cls)}
         )
 
     # derive alignment metric from collections
-    elif get_origin(cls) is not None and isinstance(get_origin(cls), type) and issubclass(get_origin(cls), Collection):
+    elif cls_origin is not None and isinstance(cls_origin, type) and issubclass(cls_origin, Collection):
         elem_type = get_args(cls)[0]
         inner_metric = derive_metric(elem_type, constraint=constraint)
         if dataclass_has_variable(elem_type):
@@ -71,38 +92,46 @@ def derive_metric(cls: type, constraint: AlignmentConstraint) -> Metric:
 
 
 def unimetric(
-        normalizer: Literal['none', 'jaccard', 'dice', 'f1'] = 'none',
-        constraint: Literal['<->', '<-', '->', '~'] = '<->',
-):
+    normalizer: NormalizerLiteral = "none",
+    constraint: ConstraintLiteral = "<->",
+) -> Callable[[T], T]:
     """
     Derive a unified metric from a class.
     :param normalizer:
     :return:
     """
-    def class_decorator(cls):
+
+    def class_decorator(cls: T) -> T:
         alignment_constraint = {
-            '<->': AlignmentConstraint.OneToOne,
-            '<-': AlignmentConstraint.OneToMany,
-            '->': AlignmentConstraint.ManyToOne,
-            '~': AlignmentConstraint.ManyToMany,
-            '1:1': AlignmentConstraint.OneToOne,
-            '1:*': AlignmentConstraint.OneToMany,
-            '*:1': AlignmentConstraint.ManyToOne,
-            '*:*': AlignmentConstraint.ManyToMany,
+            "<->": AlignmentConstraint.OneToOne,
+            "<-": AlignmentConstraint.OneToMany,
+            "->": AlignmentConstraint.ManyToOne,
+            "~": AlignmentConstraint.ManyToMany,
+            "1:1": AlignmentConstraint.OneToOne,
+            "1:*": AlignmentConstraint.OneToMany,
+            "*:1": AlignmentConstraint.ManyToOne,
+            "*:*": AlignmentConstraint.ManyToMany,
         }[constraint]
         metric = derive_metric(cls, constraint=alignment_constraint)
         normalized_metric = {
-            'none': lambda x: x,
-            'jaccard': Jaccard,
-            'dice': FScore,
-            'f1': FScore,
-            'precision': Precision,
-            'recall': Recall,
+            "none": lambda x: x,
+            "jaccard": Jaccard,
+            "dice": FScore,
+            "f1": FScore,
+            "precision": Precision,
+            "recall": Recall,
         }[normalizer](metric)
 
         if dataclass_has_variable(cls):
-            setattr(cls, 'latent_metric', normalized_metric)
+            class LatentMetricWrapper(cls, HasLatentMetric):  # type: ignore
+                latent_metric = normalized_metric
+
+            return LatentMetricWrapper
         else:
-            setattr(cls, 'metric', normalized_metric)
-        return cls
+            class MetricWrapper(cls, HasMetric):  # type: ignore
+                metric = normalized_metric
+
+            return MetricWrapper
+        # return cls
+
     return class_decorator
