@@ -5,7 +5,7 @@ The data structures defined here can automatically derive commonly used metrics 
 from dataclasses import dataclass
 from typing import List
 
-from unimetric.decorator import unimetric
+from unimetric.core.decorator import unimetric
 
 
 @unimetric()

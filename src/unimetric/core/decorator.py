@@ -11,11 +11,12 @@ from typing import (
     runtime_checkable,
     Callable,
     TypeVar,
+    Any,
 )
 
-from unimetric.alignment import AlignmentConstraint, AlignmentMetric
-from unimetric.latent_alignment import dataclass_has_variable, LatentAlignmentMetric
-from unimetric.metric import Metric, ProductMetric, DiscreteMetric, FScore, Jaccard, Precision, Recall, UnionMetric
+from unimetric.core.alignment import AlignmentConstraint, AlignmentMetric
+from unimetric.core.latent_alignment import dataclass_has_variable, LatentAlignmentMetric
+from unimetric.core.metric import Metric, ProductMetric, DiscreteMetric, FScore, Jaccard, Precision, Recall, UnionMetric
 
 T = TypeVar("T", covariant=True)
 
@@ -37,12 +38,12 @@ class HasLatentMetric(Protocol):
     latent_metric: Metric
 
 
-def derive_metric(cls: object, constraint: AlignmentConstraint) -> Metric:
+def derive_metric(cls: Any, constraint: AlignmentConstraint) -> Metric:
     """Derive a unified metric from any type.
 
     Parameters
     ----------
-    cls : object
+    cls : Any
         The dataclass-like class to derive the metric from.
     constraint : AlignmentConstraint
         The alignment constraint to use.
@@ -125,14 +126,14 @@ def unimetric(
 
     def class_decorator(cls: T) -> T:
         alignment_constraint = {
-            "<->": AlignmentConstraint.OneToOne,
-            "<-": AlignmentConstraint.OneToMany,
-            "->": AlignmentConstraint.ManyToOne,
-            "~": AlignmentConstraint.ManyToMany,
-            "1:1": AlignmentConstraint.OneToOne,
-            "1:*": AlignmentConstraint.OneToMany,
-            "*:1": AlignmentConstraint.ManyToOne,
-            "*:*": AlignmentConstraint.ManyToMany,
+            "<->": AlignmentConstraint.ONE_TO_ONE,
+            "<-": AlignmentConstraint.ONE_TO_MANY,
+            "->": AlignmentConstraint.MANY_TO_ONE,
+            "~": AlignmentConstraint.MANY_TO_MANY,
+            "1:1": AlignmentConstraint.ONE_TO_ONE,
+            "1:*": AlignmentConstraint.ONE_TO_MANY,
+            "*:1": AlignmentConstraint.MANY_TO_ONE,
+            "*:*": AlignmentConstraint.MANY_TO_MANY,
         }[constraint]
         metric = derive_metric(cls, constraint=alignment_constraint)
         normalized_metric = {

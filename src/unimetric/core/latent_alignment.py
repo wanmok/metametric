@@ -1,32 +1,42 @@
 """Metric derivation with latent alignments."""
 from dataclasses import dataclass, fields, is_dataclass
-from typing import ClassVar, Generic, Collection, Mapping, Tuple, TypeVar, Union, Set, Iterator, get_origin, get_args
+from typing import (
+    ClassVar,
+    Generic,
+    Collection,
+    Mapping,
+    Tuple,
+    TypeVar,
+    Union,
+    Set,
+    Iterator,
+    get_origin,
+    get_args,
+    Any,
+)
 
 import numpy as np
 import scipy.optimize as spo
 
-from unimetric.alignment import AlignmentConstraint, solve_alignment
-from unimetric.metric import Metric
+from unimetric.core.alignment import AlignmentConstraint, solve_alignment
+from unimetric.core.metric import Metric
 
 T = TypeVar("T")
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class Variable:
-    """A variable in a latent."""
+    """A variable in latent alignments."""
 
     name: str
 
     latent_metric: ClassVar[Metric["Variable"]] = Metric.from_function(lambda x, y: 1.0)
 
-    def __hash__(self):
-        return hash(self.name)
-
 
 class LatentAlignmentMetric(Metric[Collection[T]]):
     """A metric derived to support aligning latent variables defined in structures."""
 
-    def __init__(self, cls: type, inner: Metric[T], constraint: AlignmentConstraint = AlignmentConstraint.OneToOne):
+    def __init__(self, cls: type, inner: Metric[T], constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE):
         if is_dataclass(cls):
             self.fields = fields(cls)
         else:
@@ -69,10 +79,10 @@ class LatentAlignmentMetric(Metric[Collection[T]]):
 
         # each item may be mapped to some other items given the constraint
         item_constraint_matrix_ctor = {
-            AlignmentConstraint.OneToOne: _get_one_to_one_constraint_matrix,
-            AlignmentConstraint.OneToMany: _get_one_to_many_constraint_matrix,
-            AlignmentConstraint.ManyToOne: _get_many_to_one_constraint_matrix,
-            AlignmentConstraint.ManyToMany: lambda _0, _1: None,
+            AlignmentConstraint.ONE_TO_ONE: _get_one_to_one_constraint_matrix,
+            AlignmentConstraint.ONE_TO_MANY: _get_one_to_many_constraint_matrix,
+            AlignmentConstraint.MANY_TO_ONE: _get_many_to_one_constraint_matrix,
+            AlignmentConstraint.MANY_TO_MANY: lambda _0, _1: None,
         }[self.constraint]
         item_constraint_matrix = item_constraint_matrix_ctor(n_x, n_y)
         if item_constraint_matrix is not None:
@@ -151,8 +161,8 @@ class _PairIndexer(Generic[T], Mapping[Tuple[T, T], int]):
         return ((x, y) for x in self.x for y in self.y)
 
 
-def _all_variables(x: object) -> Set[Variable]:
-    def _all_variables_iterator(obj: object) -> Iterator[Variable]:
+def _all_variables(x: Any) -> Set[Variable]:
+    def _all_variables_iterator(obj: Any) -> Iterator[Variable]:
         if isinstance(obj, Variable):
             yield obj
         elif isinstance(obj, Collection) and not isinstance(obj, str):
@@ -185,7 +195,7 @@ def _get_one_to_one_constraint_matrix(n_x: int, n_y: int) -> np.ndarray:  # [X +
     return np.concatenate([mask_x, mask_y], axis=0)
 
 
-def may_be_variable(cls: object) -> bool:
+def may_be_variable(cls: Any) -> bool:
     """Check if a type may be a `Variable`."""
     if cls is Variable:
         return True
@@ -195,7 +205,7 @@ def may_be_variable(cls: object) -> bool:
     return False
 
 
-def dataclass_has_variable(cls: object) -> bool:
+def dataclass_has_variable(cls: Any) -> bool:
     """Check if a dataclass has a field is in `Variable` type."""
     if cls is Variable:
         return True

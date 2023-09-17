@@ -1,6 +1,6 @@
 """Tests for metrics derived with alignments."""
-from unimetric.alignment import solve_alignment, AlignmentConstraint
-from unimetric.metric import DiscreteMetric
+from unimetric.core.alignment import solve_alignment, AlignmentConstraint
+from unimetric.core.metric import DiscreteMetric
 
 
 def test_solve_alignment():
@@ -10,7 +10,7 @@ def test_solve_alignment():
 
     g = DiscreteMetric(int).gram_matrix(a, b)
 
-    assert solve_alignment(g, AlignmentConstraint.OneToOne) == 2
-    assert solve_alignment(g, AlignmentConstraint.ManyToOne) == 3
-    assert solve_alignment(g, AlignmentConstraint.OneToMany) == 4
-    assert solve_alignment(g, AlignmentConstraint.ManyToMany) == 5
+    assert solve_alignment(g, AlignmentConstraint.ONE_TO_ONE) == 2
+    assert solve_alignment(g, AlignmentConstraint.MANY_TO_ONE) == 3
+    assert solve_alignment(g, AlignmentConstraint.ONE_TO_MANY) == 4
+    assert solve_alignment(g, AlignmentConstraint.MANY_TO_MANY) == 5

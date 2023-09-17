@@ -1,9 +1,9 @@
 """Tests for SMatch derived from the AMR structure."""
 from pytest import approx
 
-from unimetric.amr import AMR, Prop
-from unimetric.decorator import HasMetric
-from unimetric.latent_alignment import Variable
+from unimetric.core.decorator import HasMetric
+from unimetric.core.latent_alignment import Variable
+from unimetric.metrics.amr import AMR, Prop
 
 
 def test_smatch():

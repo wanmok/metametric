@@ -39,6 +39,7 @@ packages = [{ include = "unimetric", from = "src" }]
 python = ">=3.9,<3.13"
 scipy = "^1.11.2"
 numpy = "^1.25.2"
+pytest = "^7.4.2"
 
 [tool.poetry.group.dev]
 optional = true
