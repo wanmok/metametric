@@ -1,26 +1,41 @@
+"""Metric derivation with latent alignments."""
 from dataclasses import dataclass, fields, is_dataclass
-from typing import ClassVar, Generic, Collection, Mapping, Tuple, TypeVar, Union, Set, Iterator, get_origin, get_args
+from typing import (
+    ClassVar,
+    Generic,
+    Collection,
+    Mapping,
+    Tuple,
+    TypeVar,
+    Union,
+    Set,
+    Iterator,
+    get_origin,
+    get_args,
+    Any,
+)
 
 import numpy as np
 import scipy.optimize as spo
 
-from unimetric.alignment import AlignmentConstraint, solve_alignment
-from unimetric.metric import Metric
+from unimetric.core.alignment import AlignmentConstraint, solve_alignment
+from unimetric.core.metric import Metric
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
-@dataclass
+@dataclass(eq=True, frozen=True)
 class Variable:
+    """A variable in latent alignments."""
+
     name: str
 
     latent_metric: ClassVar[Metric["Variable"]] = Metric.from_function(lambda x, y: 1.0)
 
-    def __hash__(self):
-        return hash(self.name)
-
 
 class LatentAlignmentMetric(Metric[Collection[T]]):
+    """A metric derived to support aligning latent variables defined in structures."""
+
     def __init__(self, cls: type, inner: Metric[T], constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE):
         if is_dataclass(cls):
             self.fields = fields(cls)
@@ -30,6 +45,7 @@ class LatentAlignmentMetric(Metric[Collection[T]]):
         self.constraint = constraint
 
     def score(self, x: Collection[T], y: Collection[T]) -> float:
+        """Score two collections of objects."""
         x = list(x)
         y = list(y)
         x_vars = _all_variables(x)
@@ -45,28 +61,20 @@ class LatentAlignmentMetric(Metric[Collection[T]]):
 
         # coefficient vector for the objective function
         coef = np.concatenate(
-            [
-                np.zeros(n_x_vars * n_y_vars),
-                gram_matrix.reshape([n_pairs])  # score that x_i matches x_j
-            ],
-            axis=0
+            [np.zeros(n_x_vars * n_y_vars), gram_matrix.reshape([n_pairs])], axis=0  # score that x_i matches x_j
         )
-        
+
         # build the constraint matrix
         n = n_x_vars * n_y_vars + n_pairs
 
         # each variable must be mapped to exactly one variable
         var_constraint_matrix = _get_one_to_one_constraint_matrix(n_x_vars, n_y_vars)
         var_constraint_matrix = np.concatenate(
-            [
-                var_constraint_matrix,
-                np.zeros([var_constraint_matrix.shape[0], n_pairs])
-            ],
-            axis=1
+            [var_constraint_matrix, np.zeros([var_constraint_matrix.shape[0], n_pairs])], axis=1
         )
         var_constraints = spo.LinearConstraint(
             A=var_constraint_matrix,
-            ub=np.ones(var_constraint_matrix.shape[0]),
+            ub=np.ones(var_constraint_matrix.shape[0]),  # type: ignore
         )
 
         # each item may be mapped to some other items given the constraint
@@ -83,11 +91,15 @@ class LatentAlignmentMetric(Metric[Collection[T]]):
                     np.zeros([item_constraint_matrix.shape[0], n_x_vars * n_y_vars]),
                     item_constraint_matrix,
                 ],
-                axis=1
+                axis=1,
             )
-        item_constraints = None if item_constraint_matrix is None else spo.LinearConstraint(
-            A=item_constraint_matrix,
-            ub=np.ones(item_constraint_matrix.shape[0]),
+        item_constraints = (
+            None
+            if item_constraint_matrix is None
+            else spo.LinearConstraint(
+                A=item_constraint_matrix,
+                ub=np.ones(item_constraint_matrix.shape[0]),  # type: ignore
+            )
         )
 
         # constrain the item and their variables
@@ -108,7 +120,7 @@ class LatentAlignmentMetric(Metric[Collection[T]]):
         item_var_constraint_matrix = np.stack(item_var_constraint_vectors, axis=0)  # [PC, N]
         item_var_constraints = spo.LinearConstraint(
             A=item_var_constraint_matrix,
-            ub=np.zeros(item_var_constraint_matrix.shape[0]),
+            ub=np.zeros(item_var_constraint_matrix.shape[0]),  # type: ignore
         )
 
         constraints = [var_constraints, item_var_constraints]
@@ -123,14 +135,13 @@ class LatentAlignmentMetric(Metric[Collection[T]]):
         )
         return -result.fun
 
-    def score_self(self, x: T) -> float:
+    def score_self(self, x: Collection[T]) -> float:
+        """Score a collection of objects with itself."""
         return solve_alignment(self.inner.gram_matrix(x, x), self.constraint)
 
 
 class _PairIndexer(Generic[T], Mapping[Tuple[T, T], int]):
-    """
-    Creates a mapping of a Cartesian product of objects to a single index.
-    """
+    """Creates a mapping of a Cartesian product of objects to a single index."""
 
     def __init__(self, x: Collection[T], y: Collection[T], offset: int = 0):
         self.x = x
@@ -150,8 +161,8 @@ class _PairIndexer(Generic[T], Mapping[Tuple[T, T], int]):
         return ((x, y) for x in self.x for y in self.y)
 
 
-def _all_variables(x: object) -> Set[Variable]:
-    def _all_variables_iterator(obj: object) -> Iterator[Variable]:
+def _all_variables(x: Any) -> Set[Variable]:
+    def _all_variables_iterator(obj: Any) -> Iterator[Variable]:
         if isinstance(obj, Variable):
             yield obj
         elif isinstance(obj, Collection) and not isinstance(obj, str):
@@ -160,6 +171,7 @@ def _all_variables(x: object) -> Set[Variable]:
         elif getattr(obj, "__dict__", None) is not None:
             for fld in vars(x).values():
                 yield from _all_variables(fld)
+
     return set(_all_variables_iterator(x))
 
 
@@ -183,7 +195,8 @@ def _get_one_to_one_constraint_matrix(n_x: int, n_y: int) -> np.ndarray:  # [X +
     return np.concatenate([mask_x, mask_y], axis=0)
 
 
-def may_be_variable(cls: type) -> bool:
+def may_be_variable(cls: Any) -> bool:
+    """Check if a type may be a `Variable`."""
     if cls is Variable:
         return True
     if get_origin(cls) is not None and get_origin(cls) is Union:
@@ -192,10 +205,11 @@ def may_be_variable(cls: type) -> bool:
     return False
 
 
-def dataclass_has_variable(cls: type) -> bool:
+def dataclass_has_variable(cls: Any) -> bool:
+    """Check if a dataclass has a field is in `Variable` type."""
     if cls is Variable:
         return True
-    if getattr(cls, "__dataclass_fields__", None) is not None:
+    if is_dataclass(cls):
         if any(may_be_variable(t.type) for t in cls.__dataclass_fields__.values()):
             return True
     return False
