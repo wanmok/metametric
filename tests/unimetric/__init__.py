@@ -1,1 +1,1 @@
-"""Tests for the unimetric package."""
+"""Tests for the autometric package."""

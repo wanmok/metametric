@@ -18,8 +18,8 @@ from typing import (
 import numpy as np
 import scipy.optimize as spo
 
-from unimetric.core.alignment import AlignmentConstraint, solve_alignment
-from unimetric.core.metric import Metric
+from autometric.core.alignment import AlignmentConstraint, solve_alignment
+from autometric.core.metric import Metric
 
 T = TypeVar("T")
 

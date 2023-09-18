@@ -5,10 +5,10 @@ The data structures defined here can automatically derive commonly used metrics 
 from dataclasses import dataclass
 from typing import List
 
-from unimetric.core.decorator import unimetric
+from autometric.core.decorator import autometric
 
 
-@unimetric()
+@autometric()
 @dataclass
 class Mention:
     """A mention span commonly used for .
@@ -26,7 +26,7 @@ class Mention:
     right: int
 
 
-@unimetric()
+@autometric()
 @dataclass
 class Relation:
     """A relation between two mentions commonly used in relation extraction.
@@ -44,7 +44,7 @@ class Relation:
     obj: Mention
 
 
-@unimetric()
+@autometric()
 class Trigger:
     """A trigger mention commonly used in event extraction.
 
@@ -57,7 +57,7 @@ class Trigger:
     type: str
 
 
-@unimetric()
+@autometric()
 class Argument:
     """An argument mention commonly used in event extraction.
 
@@ -71,7 +71,7 @@ class Argument:
     role: str
 
 
-@unimetric()
+@autometric()
 @dataclass
 class Event:
     """An event commonly used in event extraction.
@@ -86,7 +86,7 @@ class Event:
     args: List[Argument]
 
 
-@unimetric()
+@autometric()
 @dataclass
 class EventSet:
     """A set of events to present predicted or referenced events."""
@@ -94,7 +94,7 @@ class EventSet:
     events: List[Event]
 
 
-@unimetric()
+@autometric()
 @dataclass
 class RelationSet:
     """A set of relations to present predicted or referenced relations."""
@@ -102,7 +102,7 @@ class RelationSet:
     relations: List[Relation]
 
 
-@unimetric(normalizer="f1")
+@autometric(normalizer="f1")
 @dataclass
 class Entity:
     """An entity comprises multiple mentions, commonly used in coreference resolution."""
@@ -110,7 +110,7 @@ class Entity:
     mentions: List[Mention]
 
 
-@unimetric(normalizer="f1")
+@autometric(normalizer="f1")
 @dataclass
 class EntitySet:
     """A set of entities to present predicted or referenced entities."""

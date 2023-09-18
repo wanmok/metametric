@@ -1,1 +1,1 @@
-"""Tests for the unimetric project."""
+"""Tests for the autometric project."""

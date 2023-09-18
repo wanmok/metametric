@@ -14,9 +14,11 @@ from typing import (
     Any,
 )
 
-from unimetric.core.alignment import AlignmentConstraint, AlignmentMetric
-from unimetric.core.latent_alignment import dataclass_has_variable, LatentAlignmentMetric
-from unimetric.core.metric import Metric, ProductMetric, DiscreteMetric, FScore, Jaccard, Precision, Recall, UnionMetric
+from autometric.core.alignment import AlignmentConstraint, AlignmentMetric
+from autometric.core.latent_alignment import dataclass_has_variable, LatentAlignmentMetric
+from autometric.core.metric import (
+    Metric, ProductMetric, DiscreteMetric, FScore, Jaccard, Precision, Recall, UnionMetric,
+)
 
 T = TypeVar("T", covariant=True)
 
@@ -105,7 +107,7 @@ def derive_metric(cls: Any, constraint: AlignmentConstraint) -> Metric:
         raise ValueError(f"Could not derive metric from type {cls}.")
 
 
-def unimetric(
+def autometric(
     normalizer: NormalizerLiteral = "none",
     constraint: ConstraintLiteral = "<->",
 ) -> Callable[[T], T]:
