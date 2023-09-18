@@ -105,7 +105,7 @@ def derive_metric(cls: Any, constraint: AlignmentConstraint) -> Metric:
         raise ValueError(f"Could not derive metric from type {cls}.")
 
 
-def unimetric(
+def autometric(
     normalizer: NormalizerLiteral = "none",
     constraint: ConstraintLiteral = "<->",
 ) -> Callable[[T], T]:
