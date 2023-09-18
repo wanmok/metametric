@@ -6,7 +6,7 @@ from typing import Collection, TypeVar
 import numpy as np
 import scipy.optimize as spo
 
-from unimetric.core.metric import Metric
+from autometric.core.metric import Metric
 
 T = TypeVar("T")
 

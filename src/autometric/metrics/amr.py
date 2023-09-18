@@ -2,8 +2,8 @@
 from dataclasses import dataclass
 from typing import Collection, Union
 
-from unimetric.core.decorator import unimetric
-from unimetric.core.latent_alignment import Variable
+from autometric.core.decorator import unimetric
+from autometric.core.latent_alignment import Variable
 
 
 @unimetric()

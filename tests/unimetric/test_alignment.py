@@ -1,6 +1,6 @@
 """Tests for metrics derived with alignments."""
-from unimetric.core.alignment import solve_alignment, AlignmentConstraint
-from unimetric.core.metric import DiscreteMetric
+from autometric.core.alignment import solve_alignment, AlignmentConstraint
+from autometric.core.metric import DiscreteMetric
 
 
 def test_solve_alignment():
