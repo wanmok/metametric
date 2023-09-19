@@ -1,6 +1,5 @@
 from abc import abstractmethod
-from typing import TypeVar, Generic
-from enum import Enum, auto
+from typing import TypeVar
 from autometric.core.metric import Metric
 
 
@@ -21,6 +20,7 @@ class Normalizer:
 
 class Jaccard(Normalizer):
     """Jaccard metric."""
+
     def normalize(self, score_xy: float, score_xx: float, score_yy: float) -> float:
         return score_xy / (score_xx + score_yy - score_xy)
 
@@ -30,6 +30,7 @@ class Jaccard(Normalizer):
 
 class Precision(Normalizer):
     """Precision metric."""
+
     def normalize(self, score_xy: float, score_xx: float, score_yy: float) -> float:
         return score_xy / score_xx
 
@@ -39,6 +40,7 @@ class Precision(Normalizer):
 
 class Recall(Normalizer):
     """Recall metric."""
+
     def normalize(self, score_xy: float, score_xx: float, score_yy: float) -> float:
         return score_xy / score_yy
 
@@ -48,6 +50,7 @@ class Recall(Normalizer):
 
 class FScore(Normalizer):
     """F-score metric."""
+
     def __init__(self, beta: float = 1.0):
         self.beta = beta
 

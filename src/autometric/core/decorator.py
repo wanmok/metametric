@@ -11,7 +11,7 @@ from typing import (
     runtime_checkable,
     Callable,
     TypeVar,
-    Any, Type,
+    Type,
 )
 
 from autometric.core.alignment import AlignmentConstraint, AlignmentMetric

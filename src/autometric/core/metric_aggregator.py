@@ -2,13 +2,14 @@ from typing import TypeVar, Generic, Set, Optional, Dict, Sequence, List
 from enum import Enum, auto
 
 from autometric.core.metric import Metric
-from autometric.core.normalizers import Normalizer, Normalizer, Precision, Recall, FScore
+from autometric.core.normalizers import Normalizer, Precision, Recall, FScore
 
 T = TypeVar("T")
 
 
 class Averaging(Enum):
     """Averaging methods."""
+
     MICRO = auto()
     MACRO = auto()
 

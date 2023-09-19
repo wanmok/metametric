@@ -36,7 +36,12 @@ class Variable:
 class LatentAlignmentMetric(Metric[Collection[T]]):
     """A metric derived to support aligning latent variables defined in structures."""
 
-    def __init__(self, cls: Type[T], inner: Metric[T], constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE):
+    def __init__(
+            self,
+            cls: Type[T],
+            inner: Metric[T],
+            constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE
+    ):
         if is_dataclass(cls):
             self.fields = fields(cls)
         else:
