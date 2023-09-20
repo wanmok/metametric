@@ -11,36 +11,35 @@ from typing import (
     runtime_checkable,
     Callable,
     TypeVar,
-    Any, Type,
+    Type,
 )
 
 from autometric.core.alignment import AlignmentConstraint, AlignmentMetric
 from autometric.core.latent_alignment import dataclass_has_variable, LatentAlignmentMetric
-from autometric.core.metric import (
-    Metric, ProductMetric, DiscreteMetric, FScore, Jaccard, Precision, Recall, UnionMetric,
-)
-
-T = TypeVar("T")
+from autometric.core.metric import Metric, ProductMetric, DiscreteMetric, UnionMetric
+from autometric.core.normalizers import NormalizingMetric, Normalizer, Jaccard, FScore, Precision, Recall
 
 NormalizerLiteral = Literal["none", "jaccard", "dice", "f1"]
-ConstraintLiteral = Literal["<->", "<-", "->", "~"]
+ConstraintLiteral = Literal["<->", "<-", "->", "~", "1:1", "1:*", "*:1", "*:*"]
+
+T = TypeVar("T", contravariant=True)
 
 
 @runtime_checkable
-class HasMetric(Protocol):
+class HasMetric(Protocol[T]):
     """Protocol for classes that have a metric."""
 
-    metric: Metric
+    metric: Metric[T]
 
 
 @runtime_checkable
-class HasLatentMetric(Protocol):
+class HasLatentMetric(Protocol[T]):
     """Protocol for classes that have a latent metric."""
 
-    latent_metric: Metric
+    latent_metric: Metric[T]
 
 
-def derive_metric(cls: Type[T], constraint: AlignmentConstraint) -> Metric:
+def derive_metric(cls: Type, constraint: AlignmentConstraint) -> Metric:
     """Derive a unified metric from any type.
 
     Parameters
@@ -108,9 +107,9 @@ def derive_metric(cls: Type[T], constraint: AlignmentConstraint) -> Metric:
 
 
 def autometric(
-    normalizer: NormalizerLiteral = "none",
+    normalizer: Union[NormalizerLiteral, Normalizer] = "none",
     constraint: ConstraintLiteral = "<->",
-) -> Callable[[T], T]:
+) -> Callable[[Type], Type]:
     """Decorate a dataclass to have corresponding metric derived.
 
     Parameters
@@ -126,7 +125,7 @@ def autometric(
         The decorated new class.
     """
 
-    def class_decorator(cls: Type[T]) -> Type[T]:
+    def class_decorator(cls: Type) -> Type:
         alignment_constraint = {
             "<->": AlignmentConstraint.ONE_TO_ONE,
             "<-": AlignmentConstraint.ONE_TO_MANY,
@@ -138,15 +137,17 @@ def autometric(
             "*:*": AlignmentConstraint.MANY_TO_MANY,
         }[constraint]
         metric = derive_metric(cls, constraint=alignment_constraint)
-        normalized_metric = {
-            "none": lambda x: x,
-            "jaccard": Jaccard,
-            "dice": FScore,
-            "f1": FScore,
-            "precision": Precision,
-            "recall": Recall,
-        }[normalizer](metric)
-
+        if isinstance(normalizer, Normalizer):
+            normalized_metric = NormalizingMetric(metric, normalizer=normalizer)
+        else:
+            normalized_metric = {
+                "none": lambda m: m,
+                "jaccard": lambda m: NormalizingMetric(inner=m, normalizer=Jaccard()),
+                "dice": lambda m: NormalizingMetric(inner=m, normalizer=FScore()),
+                "f1": lambda m: NormalizingMetric(inner=m, normalizer=FScore()),
+                "precision": lambda m: NormalizingMetric(inner=m, normalizer=Precision()),
+                "recall": lambda m: NormalizingMetric(inner=m, normalizer=Recall()),
+            }[normalizer](metric)
         if dataclass_has_variable(cls):
             setattr(cls, "latent_metric", normalized_metric)  # type: ignore
         else:
