@@ -11,7 +11,7 @@ from typing import (
     runtime_checkable,
     Callable,
     TypeVar,
-    Any,
+    Any, Type,
 )
 
 from autometric.core.alignment import AlignmentConstraint, AlignmentMetric
@@ -20,7 +20,7 @@ from autometric.core.metric import (
     Metric, ProductMetric, DiscreteMetric, FScore, Jaccard, Precision, Recall, UnionMetric,
 )
 
-T = TypeVar("T", covariant=True)
+T = TypeVar("T")
 
 NormalizerLiteral = Literal["none", "jaccard", "dice", "f1"]
 ConstraintLiteral = Literal["<->", "<-", "->", "~"]
@@ -40,7 +40,7 @@ class HasLatentMetric(Protocol):
     latent_metric: Metric
 
 
-def derive_metric(cls: Any, constraint: AlignmentConstraint) -> Metric:
+def derive_metric(cls: Type[T], constraint: AlignmentConstraint) -> Metric:
     """Derive a unified metric from any type.
 
     Parameters
@@ -126,7 +126,7 @@ def autometric(
         The decorated new class.
     """
 
-    def class_decorator(cls: T) -> T:
+    def class_decorator(cls: Type[T]) -> Type[T]:
         alignment_constraint = {
             "<->": AlignmentConstraint.ONE_TO_ONE,
             "<-": AlignmentConstraint.ONE_TO_MANY,

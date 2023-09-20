@@ -12,7 +12,7 @@ from typing import (
     Iterator,
     get_origin,
     get_args,
-    Any,
+    Any, Type,
 )
 
 import numpy as np
@@ -36,7 +36,7 @@ class Variable:
 class LatentAlignmentMetric(Metric[Collection[T]]):
     """A metric derived to support aligning latent variables defined in structures."""
 
-    def __init__(self, cls: type, inner: Metric[T], constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE):
+    def __init__(self, cls: Type[T], inner: Metric[T], constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE):
         if is_dataclass(cls):
             self.fields = fields(cls)
         else:
@@ -161,8 +161,8 @@ class _PairIndexer(Generic[T], Mapping[Tuple[T, T], int]):
         return ((x, y) for x in self.x for y in self.y)
 
 
-def _all_variables(x: Any) -> Set[Variable]:
-    def _all_variables_iterator(obj: Any) -> Iterator[Variable]:
+def _all_variables(x: T) -> Set[Variable]:
+    def _all_variables_iterator(obj: T) -> Iterator[Variable]:
         if isinstance(obj, Variable):
             yield obj
         elif isinstance(obj, Collection) and not isinstance(obj, str):
@@ -195,7 +195,7 @@ def _get_one_to_one_constraint_matrix(n_x: int, n_y: int) -> np.ndarray:  # [X +
     return np.concatenate([mask_x, mask_y], axis=0)
 
 
-def may_be_variable(cls: Any) -> bool:
+def may_be_variable(cls: Type[T]) -> bool:
     """Check if a type may be a `Variable`."""
     if cls is Variable:
         return True
@@ -205,7 +205,7 @@ def may_be_variable(cls: Any) -> bool:
     return False
 
 
-def dataclass_has_variable(cls: Any) -> bool:
+def dataclass_has_variable(cls: Type[T]) -> bool:
     """Check if a dataclass has a field is in `Variable` type."""
     if cls is Variable:
         return True
