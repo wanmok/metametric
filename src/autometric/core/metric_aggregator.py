@@ -34,7 +34,7 @@ class MetricAggregator(Generic[T]):
         self.ref = []
         self.match = []
 
-    def update(self, pred: T, ref: T):
+    def _update(self, pred: T, ref: T):
         """Update the aggregator with a single prediction and its reference."""
         sxx = self.metric.score_self(pred)
         syy = self.metric.score_self(ref)
@@ -43,10 +43,14 @@ class MetricAggregator(Generic[T]):
         self.ref.append(syy)
         self.match.append(sxy)
 
-    def update_batch(self, pred: Sequence[T], ref: Sequence[T]):
+    def update(self, pred: T, ref: T):
+        """Wrapper that allows for polymorphism."""
+        self._update(pred, ref)
+
+    def update_batch(self, preds: Sequence[T], refs: Sequence[T]):
         """Update the aggregator with a batch of predictions and their references."""
-        for p, r in zip(pred, ref):
-            self.update(p, r)
+        for p, r in zip(preds, refs):
+            self._update(p, r)
 
     def _compute_normalized_metrics(self, sxy: float, sxx: float, syy: float) -> Dict[str, float]:
         return {normalizer.name: normalizer.normalize(sxy, sxx, syy) for normalizer in self.normalizers}
