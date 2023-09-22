@@ -36,7 +36,9 @@ version = "0.1.0"
 description = "A Unified View of Evaluation Metrics for Information Extraction"
 authors = ["Tongfei Chen <tongfei@pm.me>", "Yunmo Chen <yunmo@jhu.edu>"]
 readme = "README.md"
-packages = [{ include = "autometric", from = "src" }]
+packages = [
+    { include = "autometric", from = "src" }
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
