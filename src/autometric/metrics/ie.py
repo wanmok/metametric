@@ -16,7 +16,7 @@ class Mention:
     The mention span here does not enforce whether it is right exclusive or not.
     However, it is a convention that the mention span is right exclusive.
 
-    Attributes
+    Attributes:
     ----------
         left: The left index of the span.
         right: The right index of the span.
@@ -31,7 +31,7 @@ class Mention:
 class Relation:
     """A relation between two mentions commonly used in relation extraction.
 
-    Attributes
+    Attributes:
     ----------
         type: The type of the relation.
         subj: The subject mention.
@@ -48,7 +48,7 @@ class Relation:
 class Trigger:
     """A trigger mention commonly used in event extraction.
 
-    Attributes
+    Attributes:
     ----------
         type: The type of the trigger, commonly used to indicate event type.
     """
@@ -61,7 +61,7 @@ class Trigger:
 class Argument:
     """An argument mention commonly used in event extraction.
 
-    Attributes
+    Attributes:
     ----------
         mention: The mention of the argument.
         role: The role of the argument.
@@ -76,7 +76,7 @@ class Argument:
 class Event:
     """An event commonly used in event extraction.
 
-    Attributes
+    Attributes:
     ----------
         trigger: The trigger of the event.
         args: The arguments of the event.

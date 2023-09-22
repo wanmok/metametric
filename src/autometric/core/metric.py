@@ -7,6 +7,7 @@ from typing import Callable, Dict, Generic, Type, TypeVar, Collection, Union, ge
 
 import numpy as np
 
+S = TypeVar("S", contravariant=True)
 T = TypeVar("T", contravariant=True)
 U = TypeVar("U")
 
@@ -31,20 +32,21 @@ class Metric(Generic[T]):
         """Compute the gram matrix of the metric."""
         return np.array([[self.score(x, y) for y in ys] for x in xs])
 
+    def contramap(self, f: Callable[[S], T]) -> "Metric[S]":
+        """Returns a new metric by first preprocess the objects by a given function."""
+        return ContramappedMetric(self, f)
+
     @staticmethod
     def from_function(f: Callable[[T, T], float]) -> "Metric[T]":
         """Create a metric from a function.
 
-        Parameters
-        ----------
-        f : Callable[[T, T], float]
-            The function to create the metric from.
+        Args:
+            f (`Callable[[T, T], float]`):
+                A function that takes two objects and returns a float.
+                This is the function that derives the metric.
 
-
-        Returns
-        -------
-        Metric[T]
-            The metric.
+        Returns:
+            `Metric[T]`: A metric that uses the function to score two objects.
         """
         return MetricFromFunction(f)
 
@@ -60,18 +62,18 @@ class MetricFromFunction(Metric[T]):
         return self.f(x, y)
 
 
-class ContramappedMetric(Metric[T]):
+class ContramappedMetric(Metric[S]):
     """A metric contramapped by a function."""
 
-    def __init__(self, inner: Metric[U], f: Callable[[T], U]):
+    def __init__(self, inner: Metric[T], f: Callable[[S], T]):
         self.inner = inner
         self.f = f
 
-    def score(self, x: T, y: T) -> float:
+    def score(self, x: S, y: S) -> float:
         """Score two objects."""
         return self.inner.score(self.f(x), self.f(y))
 
-    def score_self(self, x: T) -> float:
+    def score_self(self, x: S) -> float:
         """Scores an object against itself."""
         return self.inner.score_self(self.f(x))
 
@@ -92,84 +94,10 @@ class DiscreteMetric(Metric[T]):
         return 1.0
 
 
-class Jaccard(Metric[T]):
-    """Jaccard metric."""
-
-    def __init__(self, inner: Metric[T]):
-        self.inner = inner
-
-    def score(self, x: T, y: T) -> float:
-        """Score two objects."""
-        sxy = self.inner.score(x, y)
-        sxx = self.inner.score_self(x)
-        syy = self.inner.score_self(y)
-        return sxy / (sxx + syy - sxy)
-
-    def score_self(self, x: T) -> float:
-        """Scores an object against itself."""
-        return 1.0
-
-
-class Precision(Metric[T]):
-    """Precision metric."""
-
-    def __init__(self, inner: Metric[T]):
-        self.inner = inner
-
-    def score(self, x: T, y: T) -> float:
-        """Score two objects."""
-        sxy = self.inner.score(x, y)
-        sxx = self.inner.score_self(x)
-        return sxy / sxx
-
-    def score_self(self, x: T) -> float:
-        """Scores an object against itself."""
-        return 1.0
-
-
-class Recall(Metric[T]):
-    """Recall metric."""
-
-    def __init__(self, inner: Metric[T]):
-        self.inner = inner
-
-    def score(self, x: T, y: T) -> float:
-        """Score two objects."""
-        sxy = self.inner.score(x, y)
-        syy = self.inner.score_self(y)
-        return sxy / syy
-
-    def score_self(self, x: T) -> float:
-        """Scores an object against itself."""
-        return 1.0
-
-
-class FScore(Metric[T]):
-    """F-score metric."""
-
-    def __init__(self, inner: Metric[T]):
-        self.inner = inner
-
-    def score(self, x: T, y: T) -> float:
-        """Score two objects."""
-        sxy = self.inner.score(x, y)
-        sxx = self.inner.score_self(x)
-        syy = self.inner.score_self(y)
-        p = sxy / sxx
-        r = sxy / syy
-        if p + r == 0:
-            return 0
-        return 2 * p * r / (p + r)
-
-    def score_self(self, x: T) -> float:
-        """Scores an object against itself."""
-        return 1.0
-
-
 class ProductMetric(Metric[T]):
     """A metric that is the product of other metrics."""
 
-    def __init__(self, cls: object, field_metrics: Dict[str, Metric]):
+    def __init__(self, cls: Type[T], field_metrics: Dict[str, Metric]):
         if not is_dataclass(cls):
             raise ValueError(f"{cls} has to be a dataclass.")
         self.field_metrics = field_metrics
@@ -184,7 +112,7 @@ class ProductMetric(Metric[T]):
 class UnionMetric(Metric[T]):
     """A metric that is the union of other metrics."""
 
-    def __init__(self, cls: object, case_metrics: Dict[type, Metric]):
+    def __init__(self, cls: Type[T], case_metrics: Dict[type, Metric]):
         if get_origin(cls) is not Union:
             raise ValueError(f"{cls} has to be a union.")
         self.case_metrics = case_metrics
