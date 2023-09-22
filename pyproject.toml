@@ -1,24 +1,27 @@
 [tool.ruff]
-line-length = 120
+line-length = 119
 src = ["src", "tests"]
 
 select = [
-  "E", # pycodestyle
-  "F", # pyflakes
-  "UP", # pyupgrade
-  "D", # pydocstyle
+    "E", # pycodestyle
+    "F", # pyflakes
+    "UP", # pyupgrade
+    "D", # pydocstyle
 ]
 ignore = [
-  "D105", # Missing docstring in magic method
+    "D107", # Missing docstring in `__init__`
 ]
 
 fixable = ["ALL"]
 
 [tool.ruff.pydocstyle]
-convention = "numpy"
+convention = "google"
+
+[tool.ruff.isort]
+lines-after-imports = 2
 
 [tool.black]
-line-length = 120
+line-length = 119
 
 [tool.pyright]
 include = ["src", "tests"]

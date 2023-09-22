@@ -40,16 +40,13 @@ class Metric(Generic[T]):
     def from_function(f: Callable[[T, T], float]) -> "Metric[T]":
         """Create a metric from a function.
 
-        Parameters
-        ----------
-        f : Callable[[T, T], float]
-            The function to create the metric from.
+        Args:
+            f (`Callable[[T, T], float]`):
+                A function that takes two objects and returns a float.
+                This is the function that derives the metric.
 
-
-        Returns
-        -------
-        Metric[T]
-            The metric.
+        Returns:
+            `Metric[T]`: A metric that uses the function to score two objects.
         """
         return MetricFromFunction(f)
 

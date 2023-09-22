@@ -42,17 +42,12 @@ class HasLatentMetric(Protocol[T]):
 def derive_metric(cls: Type, constraint: AlignmentConstraint) -> Metric:
     """Derive a unified metric from any type.
 
-    Parameters
-    ----------
-    cls : Any
-        The dataclass-like class to derive the metric from.
-    constraint : AlignmentConstraint
-        The alignment constraint to use.
+    Args:
+        cls (`Type`): The type to derive the metric from.
+        constraint (`AlignmentConstraint`): The alignment constraint to use.
 
-    Returns
-    -------
-    Metric
-        The derived metric.
+    Returns:
+        `Metric`: The derived metric.
     """
     # if the type is annotated with a metric instance, use the metric annotation
     if get_origin(cls) is Annotated:
@@ -61,12 +56,10 @@ def derive_metric(cls: Type, constraint: AlignmentConstraint) -> Metric:
             return metric
 
     # if an explicit metric is defined, use it
-    # if getattr(cls, "metric", None) is not None:
     if isinstance(cls, HasMetric):
         return cls.metric
 
     cls_origin = get_origin(cls)
-    # if getattr(cls, "latent_metric", None) is not None:
     if isinstance(cls, HasLatentMetric):
         return cls.latent_metric
 
@@ -112,17 +105,14 @@ def autometric(
 ) -> Callable[[Type], Type]:
     """Decorate a dataclass to have corresponding metric derived.
 
-    Parameters
-    ----------
-    normalizer : NormalizerLiteral
-        The normalizer to use, by default "none"
-    constraint : ConstraintLiteral
-        The alignment constraint to use, by default "<->"
+    Args:
+        normalizer (`Union[NormalizerLiteral, Normalizer]`, defaults to "none"):
+            The normalizer to use.
+        constraint (`ConstraintLiteral`, defaults to "<->"):
+            The alignment constraint to use.
 
-    Returns
-    -------
-    Callable[[T], T]
-        The decorated new class.
+    Returns:
+        `Callable[[Type], Type]`: The class decorator.
     """
 
     def class_decorator(cls: Type) -> Type:

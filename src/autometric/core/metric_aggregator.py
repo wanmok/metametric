@@ -1,3 +1,4 @@
+"""Metric aggregator for computing metrics on a batch of predictions and references."""
 from typing import TypeVar, Generic, Set, Optional, Dict, Sequence, List
 from enum import Enum, auto
 
@@ -15,11 +16,16 @@ class Averaging(Enum):
 
 
 class MetricAggregator(Generic[T]):
+    """Metric aggregator for computing metrics on a batch of predictions and references.
+
+    The aggregator can compute multiple metrics at once, and supports multiple averaging methods.
+    """
+
     def __init__(
-            self,
-            metric: Metric[T],
-            averaging: Optional[Set[Averaging]] = None,
-            normalizers: Optional[List[Normalizer]] = None,
+        self,
+        metric: Metric[T],
+        averaging: Optional[Set[Averaging]] = None,
+        normalizers: Optional[List[Normalizer]] = None,
     ):
         self.metric = metric
         self.averaging = averaging or {Averaging.MACRO, Averaging.MICRO}
@@ -29,6 +35,7 @@ class MetricAggregator(Generic[T]):
         self.match = []
 
     def update(self, pred: T, ref: T):
+        """Update the aggregator with a single prediction and its reference."""
         sxx = self.metric.score_self(pred)
         syy = self.metric.score_self(ref)
         sxy = self.metric.score(pred, ref)
@@ -37,16 +44,15 @@ class MetricAggregator(Generic[T]):
         self.match.append(sxy)
 
     def update_batch(self, pred: Sequence[T], ref: Sequence[T]):
+        """Update the aggregator with a batch of predictions and their references."""
         for p, r in zip(pred, ref):
             self.update(p, r)
 
     def _compute_normalized_metrics(self, sxy: float, sxx: float, syy: float) -> Dict[str, float]:
-        return {
-            normalizer.name(): normalizer.normalize(sxy, sxx, syy)
-            for normalizer in self.normalizers
-        }
+        return {normalizer.name: normalizer.normalize(sxy, sxx, syy) for normalizer in self.normalizers}
 
     def compute(self) -> Dict[str, float]:
+        """Compute the metrics."""
         n = len(self.match)
         if n == 0:
             return {}
@@ -65,12 +71,13 @@ class MetricAggregator(Generic[T]):
                 for sxy, sxx, syy in zip(self.match, self.pred, self.ref)
             ]
             metrics |= {
-                f"macro-{normalizer.name()}": sum(metric[normalizer.name()] for metric in metrics_per_sample) / n
+                f"macro-{normalizer.name}": sum(metric[normalizer.name] for metric in metrics_per_sample) / n
                 for normalizer in self.normalizers
             }
         return metrics
 
     def reset(self):
+        """Reset the aggregator."""
         self.pred = []
         self.ref = []
         self.match = []

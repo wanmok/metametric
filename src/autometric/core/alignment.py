@@ -30,15 +30,12 @@ class AlignmentMetric(Metric[Collection[T]]):
     def score(self, x: Collection[T], y: Collection[T]) -> float:
         """Score two collections of objects.
 
-        Parameters
-        ----------
-        x : Collection[T]
-        y : Collection[T]
+        Args:
+            x (`Collection[T]`): The first collection.
+            y (`Collection[T]`): The second collection.
 
-        Returns
-        -------
-        float
-            The score of the two collections.
+        Returns:
+            `float`: The score of the alignment.
         """
         # TODO: alternative implementation when the inner metric is discrete
         return solve_alignment(
@@ -57,17 +54,12 @@ class AlignmentMetric(Metric[Collection[T]]):
 def solve_alignment(gram_matrix: np.ndarray, constraint: AlignmentConstraint) -> float:
     """Solve the alignment problem.
 
-    Parameters
-    ----------
-    gram_matrix : np.ndarray
-        The gram matrix of the inner metric.
-    constraint : AlignmentConstraint
-        The alignment constraint.
+    Args:
+        gram_matrix (`np.ndarray`): The gram matrix of the inner metric.
+        constraint (`AlignmentConstraint`): The alignment constraint.
 
-    Returns
-    -------
-    float
-        The score of the alignment.
+    Returns:
+        `float`: The score of the alignment.
     """
     if constraint == AlignmentConstraint.ONE_TO_ONE:
         row_idx, col_idx = spo.linear_sum_assignment(
