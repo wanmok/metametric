@@ -2,7 +2,7 @@ from dataclasses import dataclass, is_dataclass, fields
 from typing import Generic, Type, Union, Dict, get_origin, TypeVar, Callable, Collection, Optional, Tuple
 
 from autometric.core.alignment import AlignmentConstraint
-from autometric.core.metric import Metric, DiscreteMetric, ProductMetric, UnionMetric, ContramappedMetric
+from autometric.core.metric import Metric, DiscreteMetric, ProductMetric, UnionMetric, ContramappedMetric, WrappedMetric
 from autometric.core.alignment import AlignmentMetric
 from autometric.core.latent_alignment import LatentAlignmentMetric
 from autometric.core.decorator import derive_metric
@@ -53,6 +53,10 @@ def from_func(func: Callable[[T, T], float]) -> Metric[T]:
 
 def preprocess(func: Callable[[S], T], m: Metric[T]) -> Metric[S]:
     return ContramappedMetric(m, func)
+
+
+def wrapped(metrics: Tuple[Metric[T], ...], f: Callable[[float, ...], float]) -> Metric[T]:
+    return WrappedMetric(metrics, f)
 
 
 class _Auto:
@@ -156,3 +160,8 @@ class _Normalize:
 
 
 normalize = _Normalize()
+
+
+def collection(
+
+)

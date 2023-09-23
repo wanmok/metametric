@@ -3,7 +3,8 @@ from abc import abstractmethod
 from dataclasses import is_dataclass
 from functools import reduce
 from operator import mul
-from typing import Callable, Dict, Generic, Type, TypeVar, Collection, Union, get_origin, Protocol, runtime_checkable
+from typing import Callable, Dict, Generic, Type, TypeVar, Collection, Union, get_origin, Protocol, runtime_checkable, \
+    Sequence, Tuple
 
 import numpy as np
 
@@ -74,6 +75,20 @@ class ContramappedMetric(Metric[T]):
     def score_self(self, x: T) -> float:
         """Scores an object against itself."""
         return self.inner.score_self(self.f(x))
+
+
+class WrappedMetric(Metric[T]):
+    def __init__(self, metrics: Tuple[Metric[T], ...], f: Callable[[float, ...], float]):
+        self.metrics = metrics
+        self.f = f
+
+    def score(self, x: T, y: T) -> float:
+        """Score two objects."""
+        return self.f(*(metric.score(x, y) for metric in self.metrics))
+
+    def score_self(self, x: T) -> float:
+        """Scores an object against itself."""
+        return self.f(*(metric.score_self(x) for metric in self.metrics))
 
 
 class DiscreteMetric(Metric[T]):

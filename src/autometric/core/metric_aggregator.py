@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Set, Optional, Dict, Sequence, List
+from typing import TypeVar, Generic, Set, Optional, Dict, Sequence, List, Callable
 from enum import Enum, auto
 
 from autometric.core.metric import Metric
@@ -31,6 +31,13 @@ class Averaging(Enum):
 
     MICRO = auto()
     MACRO = auto()
+
+    @staticmethod
+    def from_str(s: str) -> "Averaging":
+        return {
+            "micro": Averaging.MICRO,
+            "macro": Averaging.MACRO,
+        }[s]
 
 
 class SingleMetricAggregator(MetricAggregator[T]):
@@ -93,8 +100,13 @@ class SingleMetricAggregator(MetricAggregator[T]):
 
 
 class MetricAggregatorCollection(MetricAggregator[T]):
-    def __init__(self, aggregators: Dict[str, MetricAggregator[T]]):
+    def __init__(
+            self,
+            aggregators: Dict[str, MetricAggregator[T]],
+            extra: Optional[Callable[[Dict[str, float]], Dict[str, float]]],
+    ):
         self.aggregators = aggregators
+        self.extra = extra
 
     def update(self, pred: T, ref: T):
         for agg in self.aggregators.values():
@@ -106,8 +118,12 @@ class MetricAggregatorCollection(MetricAggregator[T]):
 
     def compute(self) -> Dict[str, float]:
         metrics = {
-            f"name-key": value
+            f"{name}-{key}": value
             for name, agg in self.aggregators.items()
             for key, value in agg.compute().items()
         }
-        return metrics
+        if self.extra is None:
+            return metrics
+        else:
+            extra_metrics = self.extra(metrics)
+            return {**metrics, **extra_metrics}

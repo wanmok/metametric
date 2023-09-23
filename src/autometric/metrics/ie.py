@@ -8,6 +8,7 @@ from typing import List
 from autometric.core.alignment import AlignmentMetric
 from autometric.core.decorator import autometric
 from autometric.core.metric import Metric
+from autometric.core.metric_aggregator import SingleMetricAggregator, Averaging
 from autometric.core.normalizers import NormalizedMetric, FScore
 import autometric.core.dsl as am
 
@@ -135,6 +136,8 @@ muc = am.dataclass[EntitySet]({
     "entities": am.alignment[Entity, "~"](muc_link)
 })
 
+muc_collection = SingleMetricAggregator(muc, averaging={Averaging.MACRO}, )
+
 
 def entity_set_to_membership_set(es: EntitySet) -> List[Membership]:
     return [Membership(mention=m, entity=e) for e in es.entities for m in e.mentions]
@@ -160,7 +163,6 @@ b_cubed_recall = am.preprocess(
     )
 )
 
-
 ceaf_phi4 = am.dataclass[EntitySet]({
     "entities": am.alignment[Entity, "<->"](
         am.dataclass[Entity]({
@@ -168,3 +170,4 @@ ceaf_phi4 = am.dataclass[EntitySet]({
         })
     )
 })
+
