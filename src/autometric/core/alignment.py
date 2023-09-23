@@ -1,7 +1,7 @@
 """Metric derivation with alignment constraints."""
 import enum
 from enum import Enum
-from typing import Collection, TypeVar
+from typing import Collection, TypeVar, Union
 
 import numpy as np
 import scipy.optimize as spo
@@ -19,13 +19,26 @@ class AlignmentConstraint(Enum):
     MANY_TO_ONE = enum.auto()
     MANY_TO_MANY = enum.auto()
 
+    @staticmethod
+    def from_str(s: str) -> "AlignmentConstraint":
+        return {
+            "<->": AlignmentConstraint.ONE_TO_ONE,
+            "<-": AlignmentConstraint.ONE_TO_MANY,
+            "->": AlignmentConstraint.MANY_TO_ONE,
+            "~": AlignmentConstraint.MANY_TO_MANY,
+            "1:1": AlignmentConstraint.ONE_TO_ONE,
+            "1:*": AlignmentConstraint.ONE_TO_MANY,
+            "*:1": AlignmentConstraint.MANY_TO_ONE,
+            "*:*": AlignmentConstraint.MANY_TO_MANY,
+        }[s]
+
 
 class AlignmentMetric(Metric[Collection[T]]):
     """A metric derived using some alignment constraints."""
 
-    def __init__(self, inner: Metric[T], constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE):
+    def __init__(self, inner: Metric[T], constraint: Union[str, AlignmentConstraint] = AlignmentConstraint.ONE_TO_ONE):
         self.inner = inner
-        self.constraint = constraint
+        self.constraint = AlignmentConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
 
     def score(self, x: Collection[T], y: Collection[T]) -> float:
         """Score two collections of objects.

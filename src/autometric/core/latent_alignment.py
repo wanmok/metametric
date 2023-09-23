@@ -40,14 +40,14 @@ class LatentAlignmentMetric(Metric[Collection[T]]):
             self,
             cls: Type[T],
             inner: Metric[T],
-            constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE
+            constraint: Union[str, AlignmentConstraint] = AlignmentConstraint.ONE_TO_ONE
     ):
         if is_dataclass(cls):
             self.fields = fields(cls)
         else:
             raise ValueError(f"{cls} has to be a dataclass.")
         self.inner = inner
-        self.constraint = constraint
+        self.constraint = AlignmentConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
 
     def score(self, x: Collection[T], y: Collection[T]) -> float:
         """Score two collections of objects."""

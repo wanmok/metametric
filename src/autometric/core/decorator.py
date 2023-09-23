@@ -7,8 +7,6 @@ from typing import (
     Collection,
     Annotated,
     Union,
-    Protocol,
-    runtime_checkable,
     Callable,
     TypeVar,
     Type,
@@ -16,29 +14,13 @@ from typing import (
 
 from autometric.core.alignment import AlignmentConstraint, AlignmentMetric
 from autometric.core.latent_alignment import dataclass_has_variable, LatentAlignmentMetric
-from autometric.core.metric import (
-    Metric, ProductMetric, DiscreteMetric, FScore, Jaccard, Precision, Recall, UnionMetric,
-)
-from autometric.core.normalizers import NormalizingMetric
+from autometric.core.metric import Metric, ProductMetric, DiscreteMetric, UnionMetric, HasMetric, HasLatentMetric
+from autometric.core.normalizers import NormalizedMetric, Jaccard, FScore, Precision, Recall
 
 NormalizerLiteral = Literal["none", "jaccard", "dice", "f1"]
 ConstraintLiteral = Literal["<->", "<-", "->", "~"]
 
 T = TypeVar("T", contravariant=True)
-
-
-@runtime_checkable
-class HasMetric(Protocol[T]):
-    """Protocol for classes that have a metric."""
-
-    metric: Metric[T]
-
-
-@runtime_checkable
-class HasLatentMetric(Protocol[T]):
-    """Protocol for classes that have a latent metric."""
-
-    latent_metric: Metric[T]
 
 
 def derive_metric(cls: Type, constraint: AlignmentConstraint) -> Metric:
@@ -128,24 +110,15 @@ def autometric(
     """
 
     def class_decorator(cls: Type) -> Type:
-        alignment_constraint = {
-            "<->": AlignmentConstraint.ONE_TO_ONE,
-            "<-": AlignmentConstraint.ONE_TO_MANY,
-            "->": AlignmentConstraint.MANY_TO_ONE,
-            "~": AlignmentConstraint.MANY_TO_MANY,
-            "1:1": AlignmentConstraint.ONE_TO_ONE,
-            "1:*": AlignmentConstraint.ONE_TO_MANY,
-            "*:1": AlignmentConstraint.MANY_TO_ONE,
-            "*:*": AlignmentConstraint.MANY_TO_MANY,
-        }[constraint]
+        alignment_constraint = AlignmentConstraint.from_str(constraint)
         metric = derive_metric(cls, constraint=alignment_constraint)
         normalized_metric = {
             "none": lambda m: m,
-            "jaccard": lambda m: NormalizingMetric(inner=m, normalizer=Jaccard()),
-            "dice": lambda m: NormalizingMetric(inner=m, normalizer=FScore()),
-            "f1": lambda m: NormalizingMetric(inner=m, normalizer=FScore()),
-            "precision": lambda m: NormalizingMetric(inner=m, normalizer=Precision()),
-            "recall": lambda m: NormalizingMetric(inner=m, normalizer=Recall()),
+            "jaccard": lambda m: NormalizedMetric(inner=m, normalizer=Jaccard()),
+            "dice": lambda m: NormalizedMetric(inner=m, normalizer=FScore()),
+            "f1": lambda m: NormalizedMetric(inner=m, normalizer=FScore()),
+            "precision": lambda m: NormalizedMetric(inner=m, normalizer=Precision()),
+            "recall": lambda m: NormalizedMetric(inner=m, normalizer=Recall()),
         }[normalizer](metric)
         if dataclass_has_variable(cls):
             setattr(cls, "latent_metric", normalized_metric)  # type: ignore

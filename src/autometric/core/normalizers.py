@@ -17,6 +17,19 @@ class Normalizer:
     def name(self) -> str:
         raise NotImplementedError()
 
+    @staticmethod
+    def from_str(s: str) -> "Normalizer":
+        if s == "jaccard":
+            return Jaccard()
+        elif s == "precision":
+            return Precision()
+        elif s == "recall":
+            return Recall()
+        elif s == "dice":
+            return FScore()
+        elif s.startswith("f"):
+            return FScore(beta=float(s[1:]))
+
 
 class Jaccard(Normalizer):
     """Jaccard metric."""
@@ -64,7 +77,7 @@ class FScore(Normalizer):
             return f"f{self.beta}"
 
 
-class NormalizingMetric(Metric[T]):
+class NormalizedMetric(Metric[T]):
     def __init__(self, inner: Metric[T], normalizer: Normalizer):
         self.inner = inner
         self.normalizer = normalizer

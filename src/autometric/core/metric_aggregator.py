@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Set, Optional, Dict, Sequence, List
 from enum import Enum, auto
 
@@ -7,6 +8,24 @@ from autometric.core.normalizers import Normalizer, Precision, Recall, FScore
 T = TypeVar("T")
 
 
+class MetricAggregator(Generic[T], ABC):
+    @abstractmethod
+    def update(self, pred: T, ref: T) -> None:
+        raise NotImplementedError()
+
+    def update_batch(self, pred: Sequence[T], ref: Sequence[T]):
+        for p, r in zip(pred, ref):
+            self.update(p, r)
+
+    @abstractmethod
+    def compute(self) -> Dict[str, float]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def reset(self) -> None:
+        raise NotImplementedError()
+
+
 class Averaging(Enum):
     """Averaging methods."""
 
@@ -14,7 +33,7 @@ class Averaging(Enum):
     MACRO = auto()
 
 
-class MetricAggregator(Generic[T]):
+class SingleMetricAggregator(MetricAggregator[T]):
     def __init__(
             self,
             metric: Metric[T],
@@ -36,9 +55,6 @@ class MetricAggregator(Generic[T]):
         self.ref.append(syy)
         self.match.append(sxy)
 
-    def update_batch(self, pred: Sequence[T], ref: Sequence[T]):
-        for p, r in zip(pred, ref):
-            self.update(p, r)
 
     def _compute_normalized_metrics(self, sxy: float, sxx: float, syy: float) -> Dict[str, float]:
         return {
@@ -74,3 +90,24 @@ class MetricAggregator(Generic[T]):
         self.pred = []
         self.ref = []
         self.match = []
+
+
+class MetricAggregatorCollection(MetricAggregator[T]):
+    def __init__(self, aggregators: Dict[str, MetricAggregator[T]]):
+        self.aggregators = aggregators
+
+    def update(self, pred: T, ref: T):
+        for agg in self.aggregators.values():
+            agg.update(pred, ref)
+
+    def update_batch(self, pred: Sequence[T], ref: Sequence[T]):
+        for agg in self.aggregators.values():
+            agg.update_batch(pred, ref)
+
+    def compute(self) -> Dict[str, float]:
+        metrics = {
+            f"name-key": value
+            for name, agg in self.aggregators.items()
+            for key, value in agg.compute().items()
+        }
+        return metrics

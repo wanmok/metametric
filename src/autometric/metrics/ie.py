@@ -5,11 +5,15 @@ The data structures defined here can automatically derive commonly used metrics 
 from dataclasses import dataclass
 from typing import List
 
+from autometric.core.alignment import AlignmentMetric
 from autometric.core.decorator import autometric
+from autometric.core.metric import Metric
+from autometric.core.normalizers import NormalizedMetric, FScore
+import autometric.core.dsl as am
 
 
 @autometric()
-@dataclass
+@dataclass(eq=True, frozen=True)
 class Mention:
     """A mention span commonly used for .
 
@@ -102,7 +106,6 @@ class RelationSet:
     relations: List[Relation]
 
 
-@autometric(normalizer="f1")
 @dataclass
 class Entity:
     """An entity comprises multiple mentions, commonly used in coreference resolution."""
@@ -110,9 +113,58 @@ class Entity:
     mentions: List[Mention]
 
 
-@autometric(normalizer="f1")
+@autometric()
 @dataclass
 class EntitySet:
     """A set of entities to present predicted or referenced entities."""
 
     entities: List[Entity]
+
+
+@autometric()
+@dataclass
+class Membership:
+    """A membership relation between an entity and a mention."""
+    mention: Mention
+    entity: Entity
+
+
+muc_link: Metric[Entity] = am.from_func(lambda x, y: max(0, len(set(x.mentions) & set(y.mentions)) - 1))
+
+muc = am.dataclass[EntitySet]({
+    "entities": am.alignment[Entity, "~"](muc_link)
+})
+
+
+def entity_set_to_membership_set(es: EntitySet) -> List[Membership]:
+    return [Membership(mention=m, entity=e) for e in es.entities for m in e.mentions]
+
+
+b_cubed_precision = am.preprocess(
+    entity_set_to_membership_set,
+    am.alignment[Membership, "<->", "precision"](
+        am.dataclass[Membership]({
+            "mention": ...,
+            "entity": am.normalize["precision"](am.auto[Entity])
+        })
+    )
+)
+
+b_cubed_recall = am.preprocess(
+    entity_set_to_membership_set,
+    am.alignment[Membership, "<->", "recall"](
+        am.dataclass[Membership]({
+            "mention": ...,
+            "entity": am.normalize["recall"](am.auto[Entity])
+        })
+    )
+)
+
+
+ceaf_phi4 = am.dataclass[EntitySet]({
+    "entities": am.alignment[Entity, "<->"](
+        am.dataclass[Entity]({
+            "mentions": am.alignment[Mention, "<->", "f1"](...)
+        })
+    )
+})
