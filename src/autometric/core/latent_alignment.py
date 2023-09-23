@@ -12,7 +12,8 @@ from typing import (
     Iterator,
     get_origin,
     get_args,
-    Any, Type,
+    Any,
+    Type,
 )
 
 import numpy as np

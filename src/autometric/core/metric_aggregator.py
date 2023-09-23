@@ -1,3 +1,4 @@
+"""Metric aggregator for computing metrics on a batch of predictions and references."""
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Set, Optional, Dict, Sequence, List, Callable
 from enum import Enum, auto
@@ -55,6 +56,7 @@ class SingleMetricAggregator(MetricAggregator[T]):
         self.match = []
 
     def update(self, pred: T, ref: T):
+        """Update the aggregator with a single prediction and its reference."""
         sxx = self.metric.score_self(pred)
         syy = self.metric.score_self(ref)
         sxy = self.metric.score(pred, ref)
@@ -62,6 +64,10 @@ class SingleMetricAggregator(MetricAggregator[T]):
         self.ref.append(syy)
         self.match.append(sxy)
 
+    def update_batch(self, pred: Sequence[T], ref: Sequence[T]):
+        """Update the aggregator with a batch of predictions and their references."""
+        for p, r in zip(pred, ref):
+            self.update(p, r)
 
     def _compute_normalized_metrics(self, sxy: float, sxx: float, syy: float) -> Dict[str, float]:
         return {
@@ -88,7 +94,7 @@ class SingleMetricAggregator(MetricAggregator[T]):
                 for sxy, sxx, syy in zip(self.match, self.pred, self.ref)
             ]
             metrics |= {
-                f"macro-{normalizer.name()}": sum(metric[normalizer.name()] for metric in metrics_per_sample) / n
+                f"macro-{normalizer.name}": sum(metric[normalizer.name] for metric in metrics_per_sample) / n
                 for normalizer in self.normalizers
             }
         return metrics

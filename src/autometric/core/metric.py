@@ -8,6 +8,7 @@ from typing import Callable, Dict, Generic, Type, TypeVar, Collection, Union, ge
 
 import numpy as np
 
+S = TypeVar("S", contravariant=True)
 T = TypeVar("T", contravariant=True)
 U = TypeVar("U")
 
@@ -32,20 +33,21 @@ class Metric(Generic[T]):
         """Compute the gram matrix of the metric."""
         return np.array([[self.score(x, y) for y in ys] for x in xs])
 
+    def contramap(self, f: Callable[[S], T]) -> "Metric[S]":
+        """Returns a new metric by first preprocess the objects by a given function."""
+        return ContramappedMetric(self, f)
+
     @staticmethod
     def from_function(f: Callable[[T, T], float]) -> "Metric[T]":
         """Create a metric from a function.
 
-        Parameters
-        ----------
-        f : Callable[[T, T], float]
-            The function to create the metric from.
+        Args:
+            f (`Callable[[T, T], float]`):
+                A function that takes two objects and returns a float.
+                This is the function that derives the metric.
 
-
-        Returns
-        -------
-        Metric[T]
-            The metric.
+        Returns:
+            `Metric[T]`: A metric that uses the function to score two objects.
         """
         return MetricFromFunction(f)
 
@@ -61,18 +63,18 @@ class MetricFromFunction(Metric[T]):
         return self.f(x, y)
 
 
-class ContramappedMetric(Metric[T]):
+class ContramappedMetric(Metric[S]):
     """A metric contramapped by a function."""
 
-    def __init__(self, inner: Metric[U], f: Callable[[T], U]):
+    def __init__(self, inner: Metric[T], f: Callable[[S], T]):
         self.inner = inner
         self.f = f
 
-    def score(self, x: T, y: T) -> float:
+    def score(self, x: S, y: S) -> float:
         """Score two objects."""
         return self.inner.score(self.f(x), self.f(y))
 
-    def score_self(self, x: T) -> float:
+    def score_self(self, x: S) -> float:
         """Scores an object against itself."""
         return self.inner.score_self(self.f(x))
 
