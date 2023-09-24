@@ -30,7 +30,7 @@ jobs:
         cache: "poetry"
     - name: Install dependencies
       run: |
-        poetry install --with dev
+        poetry install --with dev --extras torchmetrics
     - name: Ensure Poetry envs
       run: |
         echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
