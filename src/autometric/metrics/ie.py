@@ -133,8 +133,6 @@ muc = am.dataclass[EntitySet]({
     "entities": am.alignment[Entity, "~"](muc_link)
 })
 
-muc_family = am.family(muc, am.macro_average(["precision", "recall", "f1"]))
-
 
 def entity_set_to_membership_set(es: EntitySet) -> List[Membership]:
     return [Membership(mention=m, entity=e) for e in es.entities for m in e.mentions]
@@ -160,16 +158,6 @@ b_cubed_recall = am.preprocess(
     )
 )
 
-b_cubed_family = am.multiple_families({
-    "precision": am.family(b_cubed_precision, am.macro_average(["none"])),
-    "recall": am.family(b_cubed_recall, am.macro_average(["none"])),
-}).with_extra(lambda m: {
-    "f1": (
-        2 * m["precision"] * m["recall"] / (m["precision"] + m["recall"])
-        if (m["precision"] + m["recall"]) > 0 else 0.0
-    )
-})
-
 
 ceaf_phi4 = am.dataclass[EntitySet]({
     "entities": am.alignment[Entity, "<->"](
@@ -180,13 +168,18 @@ ceaf_phi4 = am.dataclass[EntitySet]({
 })
 
 
-ceaf_phi4_family = am.family(ceaf_phi4, am.macro_average(["precision", "recall", "f1"]))
-
-
 coref_family = am.multiple_families({
-    "muc": muc_family,
-    "b_cubed": b_cubed_family,
-    "ceaf_phi4": ceaf_phi4_family,
+    "muc": am.family(muc, am.macro_average(["precision", "recall", "f1"])),
+    "b_cubed": am.multiple_families({
+            "precision": am.family(b_cubed_precision, am.macro_average(["none"])),
+            "recall": am.family(b_cubed_recall, am.macro_average(["none"])),
+        }).with_extra(lambda m: {
+            "f1": (
+                2 * m["precision"] * m["recall"] / (m["precision"] + m["recall"])
+                if (m["precision"] + m["recall"]) > 0 else 0.0
+            )
+        }),
+    "ceaf_phi4": am.family(ceaf_phi4, am.macro_average(["precision", "recall", "f1"])),
 }).with_extra(lambda m: {
     "avg-f1": (m["muc-f1"] + m["b_cubed-f1"] + m["ceaf_phi4-f1"]) / 3
 })

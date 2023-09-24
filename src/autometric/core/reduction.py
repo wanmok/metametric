@@ -59,14 +59,14 @@ class MicroAverage(Reduction):
         return metrics
 
 
-class MultiplePostprocessors(Reduction):
-    def __init__(self, postprocessors: Dict[str, Reduction]):
-        self.postprocessors = postprocessors
+class MultipleReductions(Reduction):
+    def __init__(self, reductions: Dict[str, Reduction]):
+        self.reductions = reductions
 
     def compute(self, agg: Aggregator) -> Dict[str, float]:
         return {
             (f"{prefix}-{name}" if name != "" else prefix): value
-            for prefix, family in self.postprocessors.items()
+            for prefix, family in self.reductions.items()
             for name, value in family.compute(agg).items()
         }
 

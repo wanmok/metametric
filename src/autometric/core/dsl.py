@@ -8,7 +8,7 @@ from autometric.core.latent_alignment import LatentAlignmentMetric
 from autometric.core.decorator import derive_metric
 from autometric.core.metric_collection import MetricFamily, MetricCollection, MultipleMetricFamilies
 from autometric.core.normalizers import Normalizer, NormalizedMetric
-from autometric.core.reduction import Reduction, MacroAverage, MicroAverage, MultiplePostprocessors
+from autometric.core.reduction import Reduction, MacroAverage, MicroAverage, MultipleReductions
 
 T = TypeVar("T")
 S = TypeVar("S")
@@ -191,7 +191,7 @@ micro_average = _MicroAverage()
 class _Family:
     def __call__(self, metric: Metric[T], postprocessor: Union[Reduction, Dict[str, Reduction]]) -> MetricFamily[T]:
         if isinstance(postprocessor, dict):
-            postprocessor = MultiplePostprocessors(postprocessor)
+            postprocessor = MultipleReductions(postprocessor)
         return MetricFamily(metric, postprocessor)
 
 
