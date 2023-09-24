@@ -20,20 +20,18 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Setup Poetry
-      uses: Gr1N/setup-poetry@v8
-      with:
-        poetry-version: 1.6.1
+      run: pipx install poetry==1.6.1
     - name: Set up Python 3.9
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: "3.9"
         cache: "poetry"
     - name: Install dependencies
       run: |
+        poetry env use python3.9
         poetry install --with dev --extras torchmetrics
     - name: Ensure Poetry envs
-      run: |
-        echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
+      run: pipx ensurepath poetry
     - name: Run ruff
       uses: chartboost/ruff-action@v1
       with:
