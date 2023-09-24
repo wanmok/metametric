@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Sequence, Dict
+from typing import Generic, TypeVar, Sequence
 
 from autometric.core.metric import Metric
 

@@ -17,7 +17,7 @@ from typing import (
 from autometric.core.alignment import AlignmentConstraint, AlignmentMetric
 from autometric.core.latent_alignment import dataclass_has_variable, LatentAlignmentMetric
 from autometric.core.metric import Metric, ProductMetric, DiscreteMetric, UnionMetric
-from autometric.core.normalizers import NormalizedMetric, Normalizer, Jaccard, FScore, Precision, Recall
+from autometric.core.normalizers import NormalizedMetric, Normalizer
 
 NormalizerLiteral = Literal["none", "jaccard", "dice", "f1"]
 ConstraintLiteral = Literal["<->", "<-", "->", "~", "1:1", "1:*", "*:1", "*:*"]

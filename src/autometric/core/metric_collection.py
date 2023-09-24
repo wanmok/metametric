@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Generic, TypeVar, Dict, Sequence, Protocol, Callable, Optional
+from typing import TypeVar, Dict, Sequence, Protocol, Callable
 from autometric.core.metric import Metric
 from autometric.core.reduction import Aggregator, Reduction
 

@@ -4,7 +4,7 @@ from dataclasses import is_dataclass
 from functools import reduce
 from operator import mul
 from typing import Callable, Dict, Generic, Type, TypeVar, Collection, Union, get_origin, Protocol, runtime_checkable, \
-    Sequence, Tuple
+    Tuple
 
 import numpy as np
 

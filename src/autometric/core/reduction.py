@@ -1,10 +1,7 @@
 """Metric aggregator for computing metrics on a batch of predictions and references."""
-from typing import TypeVar, Protocol, Set, Optional, Dict, Sequence, List, Callable, Generic, Collection
-from enum import Enum, auto
-from dataclasses import dataclass
+from typing import Protocol, Dict, Callable, Collection
 
 from autometric.core.aggregator import Aggregator
-from autometric.core.metric import Metric
 from autometric.core.normalizers import Normalizer
 
 
