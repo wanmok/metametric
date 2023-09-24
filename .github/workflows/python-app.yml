@@ -30,8 +30,6 @@ jobs:
       run: |
         poetry env use python3.9
         poetry install --with dev --extras torchmetrics
-    - name: Ensure Poetry envs
-      run: pipx ensurepath poetry
     - name: Run ruff
       uses: chartboost/ruff-action@v1
       with:
