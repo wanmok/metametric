@@ -1,7 +1,7 @@
 from pytest import fixture, approx
 
 import autometric.core.dsl as am
-from autometric.core.metric_aggregator import SingleMetricAggregator
+from autometric.core.postprocessor import SingleMetricAggregator
 from autometric.metrics.ie import Mention, Entity, EntitySet, muc, b_cubed_precision, b_cubed_recall, ceaf_phi4
 
 

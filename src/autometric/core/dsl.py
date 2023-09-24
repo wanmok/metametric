@@ -7,6 +7,7 @@ from autometric.core.alignment import AlignmentMetric
 from autometric.core.latent_alignment import LatentAlignmentMetric
 from autometric.core.decorator import derive_metric
 from autometric.core.normalizers import Normalizer, NormalizedMetric
+from autometric.core.postprocessor import Postprocessor, MacroAverage
 
 T = TypeVar("T")
 S = TypeVar("S")
@@ -162,6 +163,14 @@ class _Normalize:
 normalize = _Normalize()
 
 
-def collection(
+class _MacroAverage:
+    def __call__(self, normalizers: Collection[Union[Normalizer, str]]) -> Postprocessor[T]:
+        normalizers = [
+            Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer
+            for normalizer in normalizers
+        ]
+        return MacroAverage(normalizers)
 
-)
+
+macro_average = _MacroAverage()
+
