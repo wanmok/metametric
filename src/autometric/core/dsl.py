@@ -189,10 +189,10 @@ micro_average = _MicroAverage()
 
 
 class _Family:
-    def __call__(self, metric: Metric[T], postprocessor: Union[Reduction, Dict[str, Reduction]]) -> MetricFamily[T]:
-        if isinstance(postprocessor, dict):
-            postprocessor = MultipleReductions(postprocessor)
-        return MetricFamily(metric, postprocessor)
+    def __call__(self, metric: Metric[T], reduction: Union[Reduction, Dict[str, Reduction]]) -> MetricFamily[T]:
+        if isinstance(reduction, dict):
+            reduction = MultipleReductions(reduction)
+        return MetricFamily(metric, reduction)
 
 
 family = _Family()

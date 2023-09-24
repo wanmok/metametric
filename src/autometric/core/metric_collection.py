@@ -34,9 +34,9 @@ class MetricCollection(Protocol[T]):
 
 @dataclass
 class MetricFamily(MetricCollection[T]):
-    def __init__(self, metric: Metric[T], postprocessor: Reduction):
+    def __init__(self, metric: Metric[T], reduction: Reduction):
         self.metric = metric
-        self.postprocessor = postprocessor
+        self.reduction = reduction
 
     def new(self) -> MetricCollectionAggregator[T]:
         return MetricFamilyAggregator(self)
@@ -54,7 +54,7 @@ class MetricFamilyAggregator(MetricCollectionAggregator[T]):
         self.agg.reset()
 
     def compute(self) -> Dict[str, float]:
-        return self.family.postprocessor.compute(self.agg)
+        return self.family.reduction.compute(self.agg)
 
 
 class MultipleMetricFamilies(MetricCollection[T]):
