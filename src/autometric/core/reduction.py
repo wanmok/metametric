@@ -20,14 +20,17 @@ def _compute_normalized_metrics(
     }
 
 
-class Postprocessor(Protocol):
+class Reduction(Protocol):
 
     def compute(self, agg: Aggregator) -> Dict[str, float]:
         """Compute the metrics from the aggregator."""
         raise NotImplementedError()
 
+    def with_extra(self, extra: Callable[[Dict[str, float]], Dict[str, float]]):
+        return ReductionWithExtra(self, extra)
 
-class MacroAverage(Postprocessor):
+
+class MacroAverage(Reduction):
     def __init__(self, normalizers: Collection[Normalizer]):
         self.normalizers = normalizers
 
@@ -44,7 +47,7 @@ class MacroAverage(Postprocessor):
         return metrics
 
 
-class MicroAverage(Postprocessor):
+class MicroAverage(Reduction):
     def __init__(self, normalizers: Collection[Normalizer]):
         self.normalizers = normalizers
 
@@ -59,23 +62,24 @@ class MicroAverage(Postprocessor):
         return metrics
 
 
-class JoinedPostprocessor(Postprocessor):
-    def __init__(self, metric_families: Dict[str, Postprocessor[T]]):
-        self.metric_families = metric_families
+class MultiplePostprocessors(Reduction):
+    def __init__(self, postprocessors: Dict[str, Reduction]):
+        self.postprocessors = postprocessors
 
     def compute(self, agg: Aggregator) -> Dict[str, float]:
         return {
-            f"{prefix}-{name}": value
-            for prefix, family in self.metric_families.items()
+            (f"{prefix}-{name}" if name != "" else prefix): value
+            for prefix, family in self.postprocessors.items()
             for name, value in family.compute(agg).items()
         }
 
 
-class PostprocessorWithExtra(Postprocessor):
-    def __init__(self, extra: Callable[[Dict[str, float]], Dict[str, float]]):
+class ReductionWithExtra(Reduction):
+    def __init__(self, original: Reduction, extra: Callable[[Dict[str, float]], Dict[str, float]]):
+        self.original = original
         self.extra = extra
 
     def compute(self, agg: Aggregator) -> Dict[str, float]:
-        metrics = self.compute(agg)
+        metrics = self.original.compute(agg)
         metrics.update(self.extra(metrics))
         return metrics

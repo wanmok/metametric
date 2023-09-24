@@ -6,8 +6,9 @@ from autometric.core.metric import Metric, DiscreteMetric, ProductMetric, UnionM
 from autometric.core.alignment import AlignmentMetric
 from autometric.core.latent_alignment import LatentAlignmentMetric
 from autometric.core.decorator import derive_metric
+from autometric.core.metric_collection import MetricFamily, MetricCollection, MultipleMetricFamilies
 from autometric.core.normalizers import Normalizer, NormalizedMetric
-from autometric.core.postprocessor import Postprocessor, MacroAverage
+from autometric.core.reduction import Reduction, MacroAverage, MicroAverage, MultiplePostprocessors
 
 T = TypeVar("T")
 S = TypeVar("S")
@@ -164,7 +165,7 @@ normalize = _Normalize()
 
 
 class _MacroAverage:
-    def __call__(self, normalizers: Collection[Union[Normalizer, str]]) -> Postprocessor[T]:
+    def __call__(self, normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
         normalizers = [
             Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer
             for normalizer in normalizers
@@ -174,3 +175,32 @@ class _MacroAverage:
 
 macro_average = _MacroAverage()
 
+
+class _MicroAverage:
+    def __call__(self, normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
+        normalizers = [
+            Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer
+            for normalizer in normalizers
+        ]
+        return MicroAverage(normalizers)
+
+
+micro_average = _MicroAverage()
+
+
+class _Family:
+    def __call__(self, metric: Metric[T], postprocessor: Union[Reduction, Dict[str, Reduction]]) -> MetricFamily[T]:
+        if isinstance(postprocessor, dict):
+            postprocessor = MultiplePostprocessors(postprocessor)
+        return MetricFamily(metric, postprocessor)
+
+
+family = _Family()
+
+
+class _MultipleFamilies:
+    def __call__(self, collection: Dict[str, MetricFamily[T]]) -> MetricCollection[T]:
+        return MultipleMetricFamilies(collection)
+
+
+multiple_families = _MultipleFamilies()

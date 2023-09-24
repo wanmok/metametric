@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Generic, TypeVar, Dict, Sequence, Protocol, Callable, Optional
 from autometric.core.metric import Metric
-from autometric.core.postprocessor import Aggregator, Postprocessor
+from autometric.core.reduction import Aggregator, Reduction
 
 T = TypeVar("T")
 
@@ -27,10 +27,14 @@ class MetricCollection(Protocol[T]):
     def new(self) -> MetricCollectionAggregator[T]:
         raise NotImplementedError()
 
+    def with_extra(self, extra: Callable[[Dict[str, float]], Dict[str, float]]) -> "MetricCollection[T]":
+        return MetricCollectionWithExtra(self, extra)
+
+
 
 @dataclass
 class MetricFamily(MetricCollection[T]):
-    def __init__(self, metric: Metric[T], postprocessor: Postprocessor[T]):
+    def __init__(self, metric: Metric[T], postprocessor: Reduction):
         self.metric = metric
         self.postprocessor = postprocessor
 
@@ -53,25 +57,23 @@ class MetricFamilyAggregator(MetricCollectionAggregator[T]):
         return self.family.postprocessor.compute(self.agg)
 
 
-class JoinedMetricCollection(MetricCollection[T]):
+class MultipleMetricFamilies(MetricCollection[T]):
     def __init__(
             self,
-            families: Dict[str, MetricFamily[T]],
-            extra: Optional[Callable[[Dict[str, float]], Dict[str, float]]] = None):
+            families: Dict[str, MetricFamily[T]]
+    ):
         self.families = families
-        self.extra = extra
 
     def new(self) -> MetricCollectionAggregator[T]:
-        return JoinedMetricCollectionAggregator(self)
+        return MultipleMetricFamiliesAggregator(self)
 
 
-class JoinedMetricCollectionAggregator(MetricCollectionAggregator[T]):
-    def __init__(self, coll: JoinedMetricCollection[T]):
+class MultipleMetricFamiliesAggregator(MetricCollectionAggregator[T]):
+    def __init__(self, coll: MultipleMetricFamilies[T]):
         self.aggs = {
             name: family.new()
             for name, family in coll.families.items()
         }
-        self.extra = coll.extra
 
     def update(self, pred: T, ref: T) -> None:
         for agg in self.aggs.values():
@@ -83,9 +85,34 @@ class JoinedMetricCollectionAggregator(MetricCollectionAggregator[T]):
 
     def compute(self) -> Dict[str, float]:
         metrics = {
-            name: agg.compute()
+            f"{name}-{key}" if key != "" else name: value
             for name, agg in self.aggs.items()
+            for key, value in agg.compute().items()
         }
-        if self.extra is not None:
-            metrics = self.extra(metrics)
+        return metrics
+
+
+class MetricCollectionWithExtra(MetricCollection[T]):
+    def __init__(self, original: MetricCollection[T], extra: Callable[[Dict[str, float]], Dict[str, float]]):
+        self.original = original
+        self.extra = extra
+
+    def new(self) -> MetricCollectionAggregator[T]:
+        return MetricCollectionWithExtraAggregator(self)
+
+
+class MetricCollectionWithExtraAggregator(MetricCollectionAggregator[T]):
+    def __init__(self, coll: MetricCollectionWithExtra[T]):
+        self.agg = coll.original.new()
+        self.extra = coll.extra
+
+    def update(self, pred: T, ref: T) -> None:
+        self.agg.update(pred, ref)
+
+    def reset(self) -> None:
+        self.agg.reset()
+
+    def compute(self) -> Dict[str, float]:
+        metrics = self.agg.compute()
+        metrics.update(self.extra(metrics))
         return metrics

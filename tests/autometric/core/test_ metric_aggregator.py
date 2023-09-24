@@ -3,7 +3,7 @@ from pytest import approx
 
 from autometric.core.alignment import AlignmentMetric, AlignmentConstraint
 from autometric.core.metric import DiscreteMetric
-from autometric.core.postprocessor import MetricAggregator, Averaging
+from autometric.core.reduction import MetricAggregator, Averaging
 from autometric.core.normalizers import Precision, FScore, Recall
 
 

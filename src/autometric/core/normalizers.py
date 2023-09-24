@@ -30,6 +30,8 @@ class Normalizer(Protocol):
 
     @staticmethod
     def from_str(s: str) -> "Normalizer":
+        if s == "none":
+            return Identity()
         if s == "jaccard":
             return Jaccard()
         elif s == "precision":
@@ -40,6 +42,20 @@ class Normalizer(Protocol):
             return FScore()
         elif s.startswith("f"):
             return FScore(beta=float(s[1:]))
+
+
+class Identity(Normalizer):
+    """Identity normalizer, i.e, do not normalize the score."""
+
+    def __init__(self, name: str = ""):
+        self._name = name
+
+    def normalize(self, score_xy: float, score_xx: float, score_yy: float) -> float:
+        return score_xy
+
+    @property
+    def name(self) -> str:
+        return self._name
 
 
 class Jaccard(Normalizer):
@@ -100,7 +116,7 @@ class FScore(Normalizer):
             return f"f{self.beta}"
 
 
-class NormalizingMetric(Metric[T]):
+class NormalizedMetric(Metric[T]):
     """A wrapper for the metric that normalizes another metric.
 
     This ensures that applying a [`Normalizer`] to a [`Metric`] is also a [`Metric`].

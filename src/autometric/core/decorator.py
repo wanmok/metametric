@@ -17,7 +17,7 @@ from typing import (
 from autometric.core.alignment import AlignmentConstraint, AlignmentMetric
 from autometric.core.latent_alignment import dataclass_has_variable, LatentAlignmentMetric
 from autometric.core.metric import Metric, ProductMetric, DiscreteMetric, UnionMetric
-from autometric.core.normalizers import NormalizingMetric, Normalizer, Jaccard, FScore, Precision, Recall
+from autometric.core.normalizers import NormalizedMetric, Normalizer, Jaccard, FScore, Precision, Recall
 
 NormalizerLiteral = Literal["none", "jaccard", "dice", "f1"]
 ConstraintLiteral = Literal["<->", "<-", "->", "~", "1:1", "1:*", "*:1", "*:*"]
@@ -128,9 +128,9 @@ def autometric(
         }[constraint]
         metric = derive_metric(cls, constraint=alignment_constraint)
         if isinstance(normalizer, Normalizer):
-            normalized_metric = NormalizingMetric(metric, normalizer=normalizer)
+            normalized_metric = NormalizedMetric(metric, normalizer=normalizer)
         else:
-            normalized_metric = NormalizingMetric(metric, normalizer=Normalizer.from_str(normalizer))
+            normalized_metric = NormalizedMetric(metric, normalizer=Normalizer.from_str(normalizer))
         if dataclass_has_variable(cls):
             setattr(cls, "latent_metric", normalized_metric)  # type: ignore
         else:

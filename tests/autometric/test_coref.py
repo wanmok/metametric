@@ -1,8 +1,8 @@
 from pytest import fixture, approx
 
 import autometric.core.dsl as am
-from autometric.core.postprocessor import SingleMetricAggregator
-from autometric.metrics.ie import Mention, Entity, EntitySet, muc, b_cubed_precision, b_cubed_recall, ceaf_phi4
+from autometric.metrics.ie import Mention, Entity, EntitySet, muc, b_cubed_precision, b_cubed_recall, ceaf_phi4, \
+    coref_family
 
 
 @fixture
@@ -53,3 +53,19 @@ def test_ceaf_phi4(data):
     ceaf_phi4_recall = am.normalize["recall"](ceaf_phi4)
     assert ceaf_phi4_precision.score(pred, ref) == approx(0.43, abs=0.01)
     assert ceaf_phi4_recall.score(pred, ref) == approx(0.65, abs=0.01)
+
+def test_coref_family(data):
+    pred, ref = data
+    agg = coref_family.new()
+    agg.update(pred, ref)
+    metrics = agg.compute()
+    assert metrics["muc-precision"] == approx(0.40, abs=0.01)
+    assert metrics["muc-recall"] == approx(0.40, abs=0.01)
+    assert metrics["muc-f1"] == approx(0.40, abs=0.01)
+    assert metrics["b_cubed-precision"] == approx(0.50, abs=0.01)
+    assert metrics["b_cubed-recall"] == approx(0.42, abs=0.01)
+    assert metrics["b_cubed-f1"] == approx(0.46, abs=0.01)
+    assert metrics["ceaf_phi4-precision"] == approx(0.43, abs=0.01)
+    assert metrics["ceaf_phi4-recall"] == approx(0.65, abs=0.01)
+    assert metrics["ceaf_phi4-f1"] == approx(0.52, abs=0.01)
+    assert metrics["avg-f1"] == approx(0.46, abs=0.01)
