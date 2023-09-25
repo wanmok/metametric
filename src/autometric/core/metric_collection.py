@@ -1,35 +1,40 @@
 from dataclasses import dataclass
 from typing import TypeVar, Dict, Sequence, Protocol, Callable
+from functools import cached_property
 from autometric.core.metric import Metric
-from autometric.core.reduction import Aggregator, Reduction
+from autometric.core.reduction import MetricState, Reduction
+from autometric.core.state import StateFactory, MultipleMetricStates, DefaultStateFactory
 
 T = TypeVar("T")
 
 
-class MetricCollectionAggregator(Protocol[T]):
-    def update(self, pred: T, ref: T) -> None:
-        """Update the aggregator with a single prediction and its reference."""
+class Aggregator(Protocol[T]):
+
+    @property
+    def state(self) -> MetricState[T]:
         raise NotImplementedError()
 
-    def update_batch(self, pred: Sequence[T], ref: Sequence[T]):
+    def update_single(self, pred: T, ref: T) -> None:
+        """Update the aggregator with a single prediction and its reference."""
+        self.state.update_single(pred, ref)
+
+    def update_batch(self, preds: Sequence[T], refs: Sequence[T]):
         """Update the aggregator with a batch of predictions and their references."""
-        for p, r in zip(pred, ref):
-            self.update(p, r)
+        self.state.update_batch(preds, refs)
 
     def reset(self) -> None:
-        raise NotImplementedError()
+        self.state.reset()
 
     def compute(self) -> Dict[str, float]:
         raise NotImplementedError()
 
 
 class MetricCollection(Protocol[T]):
-    def new(self) -> MetricCollectionAggregator[T]:
+    def new(self, factory: StateFactory) -> Aggregator[T]:
         raise NotImplementedError()
 
     def with_extra(self, extra: Callable[[Dict[str, float]], Dict[str, float]]) -> "MetricCollection[T]":
         return MetricCollectionWithExtra(self, extra)
-
 
 
 @dataclass
@@ -38,23 +43,21 @@ class MetricFamily(MetricCollection[T]):
         self.metric = metric
         self.reduction = reduction
 
-    def new(self) -> MetricCollectionAggregator[T]:
-        return MetricFamilyAggregator(self)
+    def new(self, factory: StateFactory) -> Aggregator[T]:
+        return MetricFamilyAggregator(self, factory)
 
 
-class MetricFamilyAggregator(MetricCollectionAggregator[T]):
-    def __init__(self, family: MetricFamily[T]):
+class MetricFamilyAggregator(Aggregator[T]):
+    def __init__(self, family: MetricFamily[T], factory: StateFactory):
         self.family = family
-        self.agg = Aggregator(self.family.metric)
+        self._state = factory.new(family.metric)
 
-    def update(self, pred: T, ref: T) -> None:
-        self.agg.update(pred, ref)
-
-    def reset(self) -> None:
-        self.agg.reset()
+    @property
+    def state(self) -> MetricState[T]:
+        return self._state
 
     def compute(self) -> Dict[str, float]:
-        return self.family.reduction.compute(self.agg)
+        return self.family.reduction.compute(self.state)
 
 
 class MultipleMetricFamilies(MetricCollection[T]):
@@ -64,24 +67,23 @@ class MultipleMetricFamilies(MetricCollection[T]):
     ):
         self.families = families
 
-    def new(self) -> MetricCollectionAggregator[T]:
-        return MultipleMetricFamiliesAggregator(self)
+    def new(self, factory: StateFactory) -> Aggregator[T]:
+        return MultipleMetricFamiliesAggregator(self, factory)
 
 
-class MultipleMetricFamiliesAggregator(MetricCollectionAggregator[T]):
-    def __init__(self, coll: MultipleMetricFamilies[T]):
-        self.aggs = {
-            name: family.new()
+class MultipleMetricFamiliesAggregator(Aggregator[T]):
+    def __init__(self, coll: MultipleMetricFamilies[T], factory: StateFactory):
+        self.aggs: Dict[str, Aggregator[T]] = {
+            name: family.new(factory)
             for name, family in coll.families.items()
         }
 
-    def update(self, pred: T, ref: T) -> None:
-        for agg in self.aggs.values():
-            agg.update(pred, ref)
-
-    def reset(self) -> None:
-        for agg in self.aggs.values():
-            agg.reset()
+    @cached_property
+    def state(self) -> MetricState[T]:
+        return MultipleMetricStates({
+            name: agg.state
+            for name, agg in self.aggs.items()
+        })
 
     def compute(self) -> Dict[str, float]:
         metrics = {
@@ -97,20 +99,18 @@ class MetricCollectionWithExtra(MetricCollection[T]):
         self.original = original
         self.extra = extra
 
-    def new(self) -> MetricCollectionAggregator[T]:
-        return MetricCollectionWithExtraAggregator(self)
+    def new(self, factory: StateFactory) -> Aggregator[T]:
+        return WithExtraAggregator(self, factory)
 
 
-class MetricCollectionWithExtraAggregator(MetricCollectionAggregator[T]):
-    def __init__(self, coll: MetricCollectionWithExtra[T]):
-        self.agg = coll.original.new()
+class WithExtraAggregator(Aggregator[T]):
+    def __init__(self, coll: MetricCollectionWithExtra[T], factory: StateFactory):
+        self.agg = coll.original.new(factory)
         self.extra = coll.extra
 
-    def update(self, pred: T, ref: T) -> None:
-        self.agg.update(pred, ref)
-
-    def reset(self) -> None:
-        self.agg.reset()
+    @property
+    def state(self) -> MetricState[T]:
+        return self.agg.state
 
     def compute(self) -> Dict[str, float]:
         metrics = self.agg.compute()

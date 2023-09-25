@@ -1,7 +1,7 @@
 """Metric aggregator for computing metrics on a batch of predictions and references."""
 from typing import Protocol, Dict, Callable, Collection
 
-from autometric.core.aggregator import Aggregator
+from autometric.core.state import MetricState
 from autometric.core.normalizers import Normalizer
 
 
@@ -19,7 +19,7 @@ def _compute_normalized_metrics(
 
 class Reduction(Protocol):
 
-    def compute(self, agg: Aggregator) -> Dict[str, float]:
+    def compute(self, agg: MetricState) -> Dict[str, float]:
         """Compute the metrics from the aggregator."""
         raise NotImplementedError()
 
@@ -31,11 +31,11 @@ class MacroAverage(Reduction):
     def __init__(self, normalizers: Collection[Normalizer]):
         self.normalizers = normalizers
 
-    def compute(self, agg: Aggregator) -> Dict[str, float]:
+    def compute(self, agg: MetricState) -> Dict[str, float]:
         n = len(agg)
         metrics_per_sample = [
             _compute_normalized_metrics(self.normalizers, sxy, sxx, syy)
-            for sxy, sxx, syy in zip(agg.match, agg.pred, agg.ref)
+            for sxy, sxx, syy in zip(agg.matches, agg.preds, agg.refs)
         ]
         metrics = {
             normalizer.name: sum(metric[normalizer.name] for metric in metrics_per_sample) / n
@@ -48,7 +48,7 @@ class MicroAverage(Reduction):
     def __init__(self, normalizers: Collection[Normalizer]):
         self.normalizers = normalizers
 
-    def compute(self, agg: Aggregator) -> Dict[str, float]:
+    def compute(self, agg: MetricState) -> Dict[str, float]:
         sxy_total = sum(agg.match)
         sxx_total = sum(agg.pred)
         syy_total = sum(agg.ref)
@@ -63,7 +63,7 @@ class MultipleReductions(Reduction):
     def __init__(self, reductions: Dict[str, Reduction]):
         self.reductions = reductions
 
-    def compute(self, agg: Aggregator) -> Dict[str, float]:
+    def compute(self, agg: MetricState) -> Dict[str, float]:
         return {
             (f"{prefix}-{name}" if name != "" else prefix): value
             for prefix, family in self.reductions.items()
@@ -76,7 +76,7 @@ class ReductionWithExtra(Reduction):
         self.original = original
         self.extra = extra
 
-    def compute(self, agg: Aggregator) -> Dict[str, float]:
+    def compute(self, agg: MetricState) -> Dict[str, float]:
         metrics = self.original.compute(agg)
         metrics.update(self.extra(metrics))
         return metrics
