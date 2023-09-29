@@ -3,11 +3,9 @@
 The data structures defined here can automatically derive commonly used metrics in IE.
 """
 from dataclasses import dataclass
-from typing import List
+from typing import Collection
 
 from autometric.core.decorator import autometric
-from autometric.core.metric import Metric
-import autometric.core.dsl as am
 
 
 @autometric()
@@ -85,7 +83,7 @@ class Event:
     """
 
     trigger: Trigger
-    args: List[Argument]
+    args: Collection[Argument]
 
 
 @autometric()
@@ -93,7 +91,7 @@ class Event:
 class EventSet:
     """A set of events to present predicted or referenced events."""
 
-    events: List[Event]
+    events: Collection[Event]
 
 
 @autometric()
@@ -101,14 +99,14 @@ class EventSet:
 class RelationSet:
     """A set of relations to present predicted or referenced relations."""
 
-    relations: List[Relation]
+    relations: Collection[Relation]
 
 
 @dataclass
 class Entity:
     """An entity comprises multiple mentions, commonly used in coreference resolution."""
 
-    mentions: List[Mention]
+    mentions: Collection[Mention]
 
 
 @autometric()
@@ -116,7 +114,7 @@ class Entity:
 class EntitySet:
     """A set of entities to present predicted or referenced entities."""
 
-    entities: List[Entity]
+    entities: Collection[Entity]
 
 
 @autometric()
@@ -127,59 +125,3 @@ class Membership:
     entity: Entity
 
 
-muc_link: Metric[Entity] = am.from_func(lambda x, y: max(0, len(set(x.mentions) & set(y.mentions)) - 1))
-
-muc = am.dataclass[EntitySet]({
-    "entities": am.alignment[Entity, "~"](muc_link)
-})
-
-
-def entity_set_to_membership_set(es: EntitySet) -> List[Membership]:
-    return [Membership(mention=m, entity=e) for e in es.entities for m in e.mentions]
-
-
-b_cubed_precision = am.preprocess(
-    entity_set_to_membership_set,
-    am.alignment[Membership, "<->", "precision"](
-        am.dataclass[Membership]({
-            "mention": ...,
-            "entity": am.normalize["precision"](am.auto[Entity])
-        })
-    )
-)
-
-b_cubed_recall = am.preprocess(
-    entity_set_to_membership_set,
-    am.alignment[Membership, "<->", "recall"](
-        am.dataclass[Membership]({
-            "mention": ...,
-            "entity": am.normalize["recall"](am.auto[Entity])
-        })
-    )
-)
-
-
-ceaf_phi4 = am.dataclass[EntitySet]({
-    "entities": am.alignment[Entity, "<->"](
-        am.dataclass[Entity]({
-            "mentions": am.alignment[Mention, "<->", "f1"](...)
-        })
-    )
-})
-
-
-coref_family = am.multiple_families({
-    "muc": am.family(muc, am.macro_average(["precision", "recall", "f1"])),
-    "b_cubed": am.multiple_families({
-            "precision": am.family(b_cubed_precision, am.macro_average(["none"])),
-            "recall": am.family(b_cubed_recall, am.macro_average(["none"])),
-        }).with_extra(lambda m: {
-            "f1": (
-                2 * m["precision"] * m["recall"] / (m["precision"] + m["recall"])
-                if (m["precision"] + m["recall"]) > 0 else 0.0
-            )
-        }),
-    "ceaf_phi4": am.family(ceaf_phi4, am.macro_average(["precision", "recall", "f1"])),
-}).with_extra(lambda m: {
-    "avg-f1": (m["muc-f1"] + m["b_cubed-f1"] + m["ceaf_phi4-f1"]) / 3
-})

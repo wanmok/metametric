@@ -1,6 +1,5 @@
 """Tests for metrics derived with alignments."""
-from autometric.core.alignment import solve_alignment, AlignmentConstraint
-from autometric.core.metric import DiscreteMetric
+import autometric.core.dsl as am
 
 
 def test_solve_alignment():
@@ -8,9 +7,7 @@ def test_solve_alignment():
     a = [1, 2, 2]
     b = [1, 1, 1, 2]
 
-    g = DiscreteMetric(int).gram_matrix(a, b)
-
-    assert solve_alignment(g, AlignmentConstraint.ONE_TO_ONE) == 2
-    assert solve_alignment(g, AlignmentConstraint.MANY_TO_ONE) == 3
-    assert solve_alignment(g, AlignmentConstraint.ONE_TO_MANY) == 4
-    assert solve_alignment(g, AlignmentConstraint.MANY_TO_MANY) == 5
+    assert am.set_alignment[int, '<->', 'none'](...).score(a, b) == 2
+    assert am.set_alignment[int, '->', 'none'](...).score(a, b) == 3
+    assert am.set_alignment[int, '<-', 'none'](...).score(a, b) == 4
+    assert am.set_alignment[int, '~', 'none'](...).score(a, b) == 5

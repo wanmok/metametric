@@ -1,7 +1,7 @@
 """Metric aggregator for computing metrics on a batch of predictions and references."""
-from typing import Protocol, Dict, Callable, Collection
+from typing import Protocol, Dict, Callable, Collection, Optional
 
-from autometric.core.state import MetricState
+from autometric.core.state import MetricState, SingleMetricState
 from autometric.core.normalizers import Normalizer
 
 
@@ -11,15 +11,22 @@ def _compute_normalized_metrics(
         sxx: float,
         syy: float
 ) -> Dict[str, float]:
-    return {
+    normalized_metrics = {
         normalizer.name: normalizer.normalize(sxy, sxx, syy)
-        for normalizer in normalizers
+        for normalizer in normalizers if normalizer is not None
     }
+    if None in normalizers:
+        normalized_metrics[""] = sxy
+    return normalized_metrics
 
 
 class Reduction(Protocol):
+    """Describes how a collection of metric results are reduced.
 
-    def compute(self, agg: MetricState) -> Dict[str, float]:
+    Examples include macro-averaging and micro-averaging.
+    """
+
+    def compute(self, agg: SingleMetricState) -> Dict[str, float]:
         """Compute the metrics from the aggregator."""
         raise NotImplementedError()
 
@@ -28,30 +35,35 @@ class Reduction(Protocol):
 
 
 class MacroAverage(Reduction):
-    def __init__(self, normalizers: Collection[Normalizer]):
+    """Macro-average reduction."""
+    def __init__(self, normalizers: Collection[Optional[Normalizer]]):
         self.normalizers = normalizers
+        self.normalizer_names = [normalizer.name for normalizer in normalizers if normalizer is not None]
+        if None in normalizers:
+            self.normalizer_names.append("")
 
-    def compute(self, agg: MetricState) -> Dict[str, float]:
-        n = len(agg)
+    def compute(self, state: SingleMetricState) -> Dict[str, float]:
+        n = len(state)
         metrics_per_sample = [
             _compute_normalized_metrics(self.normalizers, sxy, sxx, syy)
-            for sxy, sxx, syy in zip(agg.matches, agg.preds, agg.refs)
+            for sxy, sxx, syy in zip(state.matches, state.preds, state.refs)
         ]
         metrics = {
-            normalizer.name: sum(metric[normalizer.name] for metric in metrics_per_sample) / n
-            for normalizer in self.normalizers
+            name: sum(metric[name] for metric in metrics_per_sample) / n
+            for name in self.normalizer_names
         }
         return metrics
 
 
 class MicroAverage(Reduction):
-    def __init__(self, normalizers: Collection[Normalizer]):
+    """Micro-average reduction."""
+    def __init__(self, normalizers: Collection[Optional[Normalizer]]):
         self.normalizers = normalizers
 
-    def compute(self, agg: MetricState) -> Dict[str, float]:
-        sxy_total = sum(agg.match)
-        sxx_total = sum(agg.pred)
-        syy_total = sum(agg.ref)
+    def compute(self, state: SingleMetricState) -> Dict[str, float]:
+        sxy_total = sum(state.matches)
+        sxx_total = sum(state.preds)
+        syy_total = sum(state.refs)
         metrics = {
             name: value
             for name, value in _compute_normalized_metrics(self.normalizers, sxy_total, sxx_total, syy_total).items()
@@ -60,6 +72,7 @@ class MicroAverage(Reduction):
 
 
 class MultipleReductions(Reduction):
+    """A collection of multiple reductions."""
     def __init__(self, reductions: Dict[str, Reduction]):
         self.reductions = reductions
 
@@ -72,11 +85,12 @@ class MultipleReductions(Reduction):
 
 
 class ReductionWithExtra(Reduction):
+    """Equip a downstream function after reduction is computed."""
     def __init__(self, original: Reduction, extra: Callable[[Dict[str, float]], Dict[str, float]]):
         self.original = original
         self.extra = extra
 
-    def compute(self, agg: MetricState) -> Dict[str, float]:
-        metrics = self.original.compute(agg)
+    def compute(self, state: MetricState) -> Dict[str, float]:
+        metrics = self.original.compute(state)
         metrics.update(self.extra(metrics))
         return metrics

@@ -1,12 +1,13 @@
+"""This module contains the domain-specific language (DSL) for defining metrics."""
 from dataclasses import dataclass, is_dataclass, fields
-from typing import Generic, Type, Union, Dict, get_origin, TypeVar, Callable, Collection, Optional, Tuple
+from typing import Generic, Type, Union, Dict, get_origin, TypeVar, Callable, Collection, Optional, Tuple, Sequence
 
-from autometric.core.alignment import AlignmentConstraint
+from autometric.core.alignment import AlignmentConstraint, SequenceAlignmentMetric, GraphAlignmentMetric
+from autometric.core.graph import Graph
 from autometric.core.metric import Metric, DiscreteMetric, ProductMetric, UnionMetric, ContramappedMetric, WrappedMetric
-from autometric.core.alignment import AlignmentMetric
-from autometric.core.latent_alignment import LatentAlignmentMetric
+from autometric.core.alignment import SetAlignmentMetric, LatentSetAlignmentMetric
 from autometric.core.decorator import derive_metric
-from autometric.core.metric_collection import MetricFamily, MetricCollection, MultipleMetricFamilies
+from autometric.core.metric_suite import MetricFamily, MetricSuite, MultipleMetricFamilies
 from autometric.core.normalizers import Normalizer, NormalizedMetric
 from autometric.core.reduction import Reduction, MacroAverage, MicroAverage, MultipleReductions
 
@@ -23,13 +24,13 @@ DslConfig = Union[
 ]
 
 @dataclass
-class Config(Generic[T]):
+class _Config(Generic[T]):
     cls: Type[T]
     constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE
     normalizer: Optional[Normalizer] = None
 
     @classmethod
-    def standardize(cls, config: DslConfig[T]) -> "Config[T]":
+    def standardize(cls, config: DslConfig[T]) -> "_Config[T]":
         if isinstance(config, tuple):
             if len(config) == 2:
                 t, constraint = config
@@ -50,20 +51,29 @@ class Config(Generic[T]):
 
 
 def from_func(func: Callable[[T, T], float]) -> Metric[T]:
+    """Create a metric from a binary function."""
     return Metric.from_function(func)
 
 
 def preprocess(func: Callable[[S], T], m: Metric[T]) -> Metric[S]:
+    """Preprocess the input by some function then apply a metric.
+
+    This is the `contramap` operation on the metric functor.
+    """
     return ContramappedMetric(m, func)
 
 
 def wrapped(metrics: Tuple[Metric[T], ...], f: Callable[[float, ...], float]) -> Metric[T]:
+    """Execute an additional downstream function after metrics has been computed.
+
+    This is useful to compute a weighted sum of multiple metrics.
+    """
     return WrappedMetric(metrics, f)
 
 
 class _Auto:
     def __getitem__(self, config: DslConfig[T]) -> Metric[T]:
-        config = Config.standardize(config)
+        config = _Config.standardize(config)
         return derive_metric(config.cls, constraint=config.constraint)
 
 
@@ -80,7 +90,7 @@ discrete = _Discrete()
 
 class _DataClass:
     def __getitem__(self, config: DslConfig[T]) -> Callable[[Dict[str, Union[Ell, Metric]]], Metric[T]]:
-        config = Config.standardize(config)
+        config = _Config.standardize(config)
         assert is_dataclass(config.cls)
 
         def product_metric(field_metrics: Dict[str, Union[Ell, Metric]]) -> Metric[T]:
@@ -99,7 +109,7 @@ dataclass = _DataClass()
 
 class _Union:
     def __getitem__(self, config: DslConfig[T]) -> Callable[[Dict[Type, Union[Ell, Metric]]], Metric[T]]:
-        config = Config.standardize(config)
+        config = _Config.standardize(config)
 
         def union_metric(case_metrics: Dict[Type, Union[Ell, Metric]]) -> Metric[T]:
             assert get_origin(config.cls) is Union
@@ -115,14 +125,14 @@ class _Union:
 union = _Union()
 
 
-class _Alignment:
+class _SetAlignment:
     def __getitem__(self, config: DslConfig[T]) -> Callable[[Union[Ell, Metric[T]]], Metric[Collection[T]]]:
-        config = Config.standardize(config)
+        config = _Config.standardize(config)
 
         def alignment_metric(inner: Union[Ell, Metric[T]]) -> Metric[Collection[T]]:
             if inner is ...:
                 inner = auto[config.cls, config.constraint]
-            match = AlignmentMetric(inner, constraint=config.constraint)
+            match = SetAlignmentMetric(inner, constraint=config.constraint)
             if config.normalizer is not None:
                 match = NormalizedMetric(match, config.normalizer)
             return match
@@ -130,16 +140,52 @@ class _Alignment:
         return alignment_metric
 
 
-alignment = _Alignment()
+set_alignment = _SetAlignment()
 
 
-class _LatentAlignment:
+class _SequenceAlignment:
+    def __getitem__(self, config: DslConfig[T]) -> Callable[[Union[Ell, Metric[T]]], Metric[Sequence[T]]]:
+        config = _Config.standardize(config)
+
+        def alignment_metric(inner: Union[Ell, Metric[T]]) -> Metric[Sequence[T]]:
+            if inner is ...:
+                inner = auto[config.cls, config.constraint]
+            match = SequenceAlignmentMetric(inner, constraint=config.constraint)
+            if config.normalizer is not None:
+                match = NormalizedMetric(match, config.normalizer)
+            return match
+
+        return alignment_metric
+
+
+sequence_alignment = _SequenceAlignment()
+
+
+class _GraphAlignment:
+    def __getitem__(self, config: DslConfig[T]) -> Callable[[Union[Ell, Metric[T]]], Metric[Graph[T]]]:
+        config = _Config.standardize(config)
+
+        def alignment_metric(inner: Union[Ell, Metric[T]]) -> Metric[Graph[T]]:
+            if inner is ...:
+                inner = auto[config.cls, config.constraint]
+            match = GraphAlignmentMetric(inner, constraint=config.constraint)
+            if config.normalizer is not None:
+                match = NormalizedMetric(match, config.normalizer)
+            return match
+
+        return alignment_metric
+
+
+graph_alignment = _GraphAlignment()
+
+
+class _LatentSetAlignment:
     def __getitem__(self, config: DslConfig[T]) -> Callable[[Union[Ell, Metric[T]]], Metric[Collection[T]]]:
-        config = Config.standardize(config)
+        config = _Config.standardize(config)
         def latent_alignment_metric(inner: Union[Ell, Metric[T]]) -> Metric[Collection[T]]:
             if inner is ...:
                 inner = auto[config.cls, config.constraint]
-            match = LatentAlignmentMetric(config.cls, inner, constraint=config.constraint)
+            match = LatentSetAlignmentMetric(config.cls, inner, constraint=config.constraint)
             if config.normalizer is not None:
                 match = NormalizedMetric(match, config.normalizer)
             return match
@@ -147,7 +193,7 @@ class _LatentAlignment:
         return latent_alignment_metric
 
 
-latent_alignment = _LatentAlignment()
+latent_set_alignment = _LatentSetAlignment()
 
 
 class _Normalize:
@@ -198,9 +244,9 @@ class _Family:
 family = _Family()
 
 
-class _MultipleFamilies:
-    def __call__(self, collection: Dict[str, MetricFamily[T]]) -> MetricCollection[T]:
+class _Suite:
+    def __call__(self, collection: Dict[str, MetricSuite[T]]) -> MetricSuite[T]:
         return MultipleMetricFamilies(collection)
 
 
-multiple_families = _MultipleFamilies()
+suite = _Suite()

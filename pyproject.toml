@@ -1,5 +1,5 @@
 [tool.ruff]
-line-length = 119
+line-length = 120
 src = ["src", "tests"]
 
 select = [
@@ -9,6 +9,7 @@ select = [
     "D", # pydocstyle
 ]
 ignore = [
+    "D102", # Missing docstring in public method
     "D107", # Missing docstring in `__init__`
 ]
 
@@ -43,6 +44,7 @@ python = ">=3.9,<3.13"
 scipy = "^1.11.2"
 numpy = "^1.25.2"
 torchmetrics = { version = "^1.1.2", optional = true }
+pytest = "^7.4.2"
 
 [tool.poetry.group.dev]
 optional = true
@@ -51,6 +53,7 @@ optional = true
 pytest = "^7.4.2"
 pyright = "^1.1.327"
 ruff = "^0.0.290"
+networkx = "^3.1"
 
 [tool.poetry.extras]
 torchmetrics = ["torchmetrics"]

@@ -179,7 +179,7 @@ tests = ["pytest (>=4.6)"]
 name = "networkx"
 version = "3.1"
 description = "Python package for creating and manipulating graphs and networks"
-optional = true
+optional = false
 python-versions = ">=3.8"
 files = [
     {file = "networkx-3.1-py3-none-any.whl", hash = "sha256:4f33f68cb2afcf86f28a45f43efc27a9386b535d567d2127f8f61d51dec58d36"},
@@ -507,4 +507,4 @@ torchmetrics = ["torchmetrics"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "7e142a9abadef6c3b96b40488d993a86c06c64ff94ce7954b31b30392a35baff"
+content-hash = "ba32c7088f94f33c262e39a881ceb44603b4b644fa65b0996ec529394bfaa76f"

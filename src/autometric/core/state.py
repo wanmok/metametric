@@ -1,4 +1,5 @@
-from typing import Generic, TypeVar, Sequence, Protocol, Dict
+"""Defines the states of metric aggregators."""
+from typing import TypeVar, Sequence, Protocol, Dict
 
 from autometric.core.metric import Metric
 
@@ -7,6 +8,7 @@ T = TypeVar("T")
 
 
 class MetricState(Protocol[T]):
+    """Encapsulates the state of a metric aggregator."""
 
     def update_single(self, pred: T, ref: T) -> None:
         """Update the aggregator with a single prediction and its reference."""
@@ -27,6 +29,7 @@ class MetricState(Protocol[T]):
 
 
 class SingleMetricState(MetricState[T]):
+    """Encapsulates the state of a single metric aggregator."""
     def __init__(self, metric: Metric[T]):
         self.metric = metric
         self.preds = []
@@ -43,15 +46,18 @@ class SingleMetricState(MetricState[T]):
         self.matches.append(sxy)
 
     def reset(self) -> None:
+        """Reset the aggregator to its initialization state."""
         self.preds = []
         self.refs = []
         self.matches = []
 
     def __len__(self):
+        """Returns the number of prediction-reference pairs aggregated."""
         return len(self.matches)
 
 
 class MultipleMetricStates(MetricState[T]):
+    """Encapsulates the state of multiple metric aggregators."""
     def __init__(self, states: Dict[str, MetricState[T]]):
         self.states = states
 
@@ -68,17 +74,5 @@ class MultipleMetricStates(MetricState[T]):
             state.reset()
 
     def __len__(self):
+        """Returns the number of prediction-reference pairs aggregated."""
         return len(list(self.states.values())[0])
-
-
-class StateFactory(Protocol):
-
-    def new(self, metric: Metric[T]) -> MetricState[T]:
-        """Create a new aggregator."""
-        raise NotImplementedError()
-
-
-class DefaultStateFactory(StateFactory):
-
-    def new(self, metric: Metric[T]) -> MetricState[T]:
-        return SingleMetricState(metric)

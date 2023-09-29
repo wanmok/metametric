@@ -1,9 +1,8 @@
 from pytest import fixture, approx
 
 import autometric.core.dsl as am
-from autometric.core.state import DefaultStateFactory
-from autometric.metrics.ie import Mention, Entity, EntitySet, muc, b_cubed_precision, b_cubed_recall, ceaf_phi4, \
-    coref_family
+from autometric.structures.ie import Mention, Entity, EntitySet
+from autometric.metrics.coref import muc, b_cubed_precision, b_cubed_recall, ceaf_phi4, coref_suite
 
 
 @fixture
@@ -58,7 +57,7 @@ def test_ceaf_phi4(data):
 
 def test_coref_family(data):
     pred, ref = data
-    agg = coref_family.new(DefaultStateFactory())
+    agg = coref_suite.new()
     agg.update_single(pred, ref)
     metrics = agg.compute()
     assert metrics["muc-precision"] == approx(0.40, abs=0.01)

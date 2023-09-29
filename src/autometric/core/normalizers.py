@@ -1,5 +1,5 @@
 """Normalizers to normalize metrics as normalized metrics."""
-from typing import TypeVar, Protocol, runtime_checkable
+from typing import TypeVar, Protocol, runtime_checkable, Optional
 from autometric.core.metric import Metric
 
 
@@ -29,9 +29,9 @@ class Normalizer(Protocol):
         raise NotImplementedError()
 
     @staticmethod
-    def from_str(s: str) -> "Normalizer":
+    def from_str(s: str) -> Optional["Normalizer"]:
         if s == "none":
-            return Identity()
+            return None
         if s == "jaccard":
             return Jaccard()
         elif s == "precision":
@@ -42,20 +42,8 @@ class Normalizer(Protocol):
             return FScore()
         elif s.startswith("f"):
             return FScore(beta=float(s[1:]))
-
-
-class Identity(Normalizer):
-    """Identity normalizer, i.e, do not normalize the score."""
-
-    def __init__(self, name: str = ""):
-        self._name = name
-
-    def normalize(self, score_xy: float, score_xx: float, score_yy: float) -> float:
-        return score_xy
-
-    @property
-    def name(self) -> str:
-        return self._name
+        else:
+            raise ValueError(f"Unknown normalizer {s}")
 
 
 class Jaccard(Normalizer):
@@ -113,7 +101,8 @@ class FScore(Normalizer):
         if self.beta == 1.0:
             return "f1"
         else:
-            return f"f{self.beta}"
+            b = int(self.beta) if self.beta.is_integer() else self.beta
+            return f"f{b}"
 
 
 class NormalizedMetric(Metric[T]):

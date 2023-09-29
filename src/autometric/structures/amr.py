@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Collection, Union
 
 from autometric.core.decorator import autometric
-from autometric.core.latent_alignment import Variable
+from autometric.core.metric import Variable
 
 
 @autometric()
@@ -16,7 +16,7 @@ class Prop:
     obj: Union[Variable, str]
 
 
-@autometric(normalizer="f1")
+@autometric()
 @dataclass
 class AMR:
     """Abstract Meaning Representation (AMR) structure."""

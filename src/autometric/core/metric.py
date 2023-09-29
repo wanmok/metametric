@@ -1,10 +1,10 @@
 """Metric interface and implementations for commonly used metrics."""
 from abc import abstractmethod
-from dataclasses import is_dataclass
+from dataclasses import is_dataclass, dataclass
 from functools import reduce
 from operator import mul
 from typing import Callable, Dict, Generic, Type, TypeVar, Collection, Union, get_origin, Protocol, runtime_checkable, \
-    Tuple
+    Tuple, ClassVar
 
 import numpy as np
 
@@ -80,6 +80,7 @@ class ContramappedMetric(Metric[S]):
 
 
 class WrappedMetric(Metric[T]):
+    """A metric that has some downstream operations after other metrics."""
     def __init__(self, metrics: Tuple[Metric[T], ...], f: Callable[[float, ...], float]):
         self.metrics = metrics
         self.f = f
@@ -143,6 +144,15 @@ class UnionMetric(Metric[T]):
     def score_self(self, x: T) -> float:
         """Scores an object against itself."""
         return 1.0
+
+
+@dataclass(eq=True, frozen=True)
+class Variable:
+    """A variable in latent alignments."""
+
+    name: str
+
+    latent_metric: ClassVar[Metric["Variable"]] = Metric.from_function(lambda x, y: 1.0)
 
 
 @runtime_checkable

@@ -1,17 +1,20 @@
+"""Metric suites are collections of metrics that are computed together."""
 from dataclasses import dataclass
 from typing import TypeVar, Dict, Sequence, Protocol, Callable
 from functools import cached_property
 from autometric.core.metric import Metric
 from autometric.core.reduction import MetricState, Reduction
-from autometric.core.state import StateFactory, MultipleMetricStates, DefaultStateFactory
+from autometric.core.state import MultipleMetricStates, SingleMetricState
 
 T = TypeVar("T")
 
 
 class Aggregator(Protocol[T]):
+    """Metric aggregator for computing metrics on a stream of predictions and references."""
 
     @property
     def state(self) -> MetricState[T]:
+        """The internal state of the aggregator."""
         raise NotImplementedError()
 
     def update_single(self, pred: T, ref: T) -> None:
@@ -23,58 +26,70 @@ class Aggregator(Protocol[T]):
         self.state.update_batch(preds, refs)
 
     def reset(self) -> None:
+        """Reset the aggregator to its initialization state."""
         self.state.reset()
 
     def compute(self) -> Dict[str, float]:
+        """Compute the metrics from the aggregator."""
         raise NotImplementedError()
 
 
-class MetricCollection(Protocol[T]):
-    def new(self, factory: StateFactory) -> Aggregator[T]:
+class MetricSuite(Protocol[T]):
+    """Metric suites are collections of metrics that are computed together."""
+    def new(self) -> Aggregator[T]:
+        """Create a new aggregator for the metric suite."""
         raise NotImplementedError()
 
-    def with_extra(self, extra: Callable[[Dict[str, float]], Dict[str, float]]) -> "MetricCollection[T]":
-        return MetricCollectionWithExtra(self, extra)
+    def with_extra(self, extra: Callable[[Dict[str, float]], Dict[str, float]]) -> "MetricSuite[T]":
+        """Add extra metrics to the metric suite."""
+        return MetricSuiteWithExtra(self, extra)
 
 
 @dataclass
-class MetricFamily(MetricCollection[T]):
+class MetricFamily(MetricSuite[T]):
+    """A collection of metrics that shared the same internal state.
+
+    For example, the precision, recall, and F-1 of event detection should be computed together within one family.
+    """
     def __init__(self, metric: Metric[T], reduction: Reduction):
         self.metric = metric
         self.reduction = reduction
 
-    def new(self, factory: StateFactory) -> Aggregator[T]:
-        return MetricFamilyAggregator(self, factory)
+    def new(self) -> Aggregator[T]:
+        return MetricFamilyAggregator(self)
 
 
 class MetricFamilyAggregator(Aggregator[T]):
-    def __init__(self, family: MetricFamily[T], factory: StateFactory):
+    """Aggregator for a metric family."""
+    def __init__(self, family: MetricFamily[T]):
         self.family = family
-        self._state = factory.new(family.metric)
+        self._state = SingleMetricState(family.metric)
 
     @property
     def state(self) -> MetricState[T]:
         return self._state
 
     def compute(self) -> Dict[str, float]:
-        return self.family.reduction.compute(self.state)
+        return self.family.reduction.compute(self._state)
 
 
-class MultipleMetricFamilies(MetricCollection[T]):
+class MultipleMetricFamilies(MetricSuite[T]):
+    """A collection of metric families, whose internal states are separate."""
     def __init__(
             self,
-            families: Dict[str, MetricFamily[T]]
+            families: Dict[str, MetricSuite[T]]
     ):
         self.families = families
 
-    def new(self, factory: StateFactory) -> Aggregator[T]:
-        return MultipleMetricFamiliesAggregator(self, factory)
+    def new(self) -> Aggregator[T]:
+        return MultipleMetricFamiliesAggregator(self)
 
 
 class MultipleMetricFamiliesAggregator(Aggregator[T]):
-    def __init__(self, coll: MultipleMetricFamilies[T], factory: StateFactory):
+    """Aggregator for multiple metric families."""
+    def __init__(self, coll: MultipleMetricFamilies[T]):
         self.aggs: Dict[str, Aggregator[T]] = {
-            name: family.new(factory)
+            name: family.new()
             for name, family in coll.families.items()
         }
 
@@ -94,18 +109,20 @@ class MultipleMetricFamiliesAggregator(Aggregator[T]):
         return metrics
 
 
-class MetricCollectionWithExtra(MetricCollection[T]):
-    def __init__(self, original: MetricCollection[T], extra: Callable[[Dict[str, float]], Dict[str, float]]):
+class MetricSuiteWithExtra(MetricSuite[T]):
+    """A metric suite with extra metrics."""
+    def __init__(self, original: MetricSuite[T], extra: Callable[[Dict[str, float]], Dict[str, float]]):
         self.original = original
         self.extra = extra
 
-    def new(self, factory: StateFactory) -> Aggregator[T]:
-        return WithExtraAggregator(self, factory)
+    def new(self) -> Aggregator[T]:
+        return WithExtraAggregator(self)
 
 
 class WithExtraAggregator(Aggregator[T]):
-    def __init__(self, coll: MetricCollectionWithExtra[T], factory: StateFactory):
-        self.agg = coll.original.new(factory)
+    """Aggregator for a metric suite with extra metrics."""
+    def __init__(self, coll: MetricSuiteWithExtra[T]):
+        self.agg = coll.original.new()
         self.extra = coll.extra
 
     @property

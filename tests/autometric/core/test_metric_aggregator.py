@@ -1,24 +1,24 @@
-"""Tests TorchMetrics wrapper for autometric."""
+"""Tests for metric aggregators."""
 from pytest import approx
 
-from autometric.core.alignment import AlignmentMetric, AlignmentConstraint
-from autometric.core.metric import DiscreteMetric
-from autometric.core.metric_aggregator import Averaging
-from autometric.core.normalizers import Precision, Recall, FScore
-from autometric.wrappers.torchmetrics_aggregator import TorchMetricsMetricAggregator
+import autometric.core.dsl as am
 
 
-def test_torchmetrics_metric_aggregator():
+def test_metric_aggregator():
     """Basic test for metric aggregator that computes precision, recall, and F-score."""
     a = [[0, 1], [2], [1, 2]]
     b = [[0, 1, 2, 3], [2, 3], [1, 2, 3]]
-    metric_aggregator = TorchMetricsMetricAggregator(
-        AlignmentMetric(DiscreteMetric(int), AlignmentConstraint.ONE_TO_ONE),
-        averaging={Averaging.MACRO, Averaging.MICRO},
-        normalizers=[Precision(), Recall(), FScore(), FScore(0.5), FScore(2)],
+
+    mf = am.family(
+        am.set_alignment[int, '<->', 'none'](...),
+        {
+            "macro": am.macro_average(["precision", "recall", "f1", "f0.5", "f2"]),
+            "micro": am.micro_average(["precision", "recall", "f1", "f0.5", "f2"]),
+        }
     )
-    metric_aggregator.update_single(a, b)
-    metrics = metric_aggregator.compute()
+    agg = mf.new()
+    agg.update_batch(a, b)
+    metrics = agg.compute()
 
     assert metrics["micro-precision"] == approx(1.0, abs=0.01)
     assert metrics["micro-recall"] == approx(0.55, abs=0.01)
