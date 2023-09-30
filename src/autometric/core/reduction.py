@@ -2,11 +2,11 @@
 from typing import Callable, Collection, Dict, Optional, Protocol
 
 from autometric.core.normalizers import Normalizer
-from autometric.core.state import MetricState, SingleMetricState
+from autometric.core.state import SingleMetricState
 
 
 def _compute_normalized_metrics(
-        normalizers: Collection[Normalizer],
+        normalizers: Collection[Optional[Normalizer]],
         sxy: float,
         sxx: float,
         syy: float
@@ -76,11 +76,11 @@ class MultipleReductions(Reduction):
     def __init__(self, reductions: Dict[str, Reduction]):
         self.reductions = reductions
 
-    def compute(self, agg: MetricState) -> Dict[str, float]:
+    def compute(self, state: SingleMetricState) -> Dict[str, float]:
         return {
             (f"{prefix}-{name}" if name != "" else prefix): value
             for prefix, family in self.reductions.items()
-            for name, value in family.compute(agg).items()
+            for name, value in family.compute(state).items()
         }
 
 
@@ -90,7 +90,7 @@ class ReductionWithExtra(Reduction):
         self.original = original
         self.extra = extra
 
-    def compute(self, state: MetricState) -> Dict[str, float]:
+    def compute(self, state: SingleMetricState) -> Dict[str, float]:
         metrics = self.original.compute(state)
         metrics.update(self.extra(metrics))
         return metrics

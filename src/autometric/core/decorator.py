@@ -124,11 +124,12 @@ def autometric(
         if isinstance(normalizer, Normalizer):
             normalized_metric = NormalizedMetric(metric, normalizer=normalizer)
         else:
-            normalizer = Normalizer.from_str(normalizer)
-            if normalizer is None:
+            if normalizer == "none":
                 normalized_metric = metric
             else:
-                normalized_metric = NormalizedMetric(metric, normalizer=normalizer)
+                normalizer_obj = Normalizer.from_str(normalizer)
+                assert normalizer_obj is not None
+                normalized_metric = NormalizedMetric(metric, normalizer=normalizer_obj)
         if dataclass_has_variable(cls):
             setattr(cls, "latent_metric", normalized_metric)  # type: ignore
         else:

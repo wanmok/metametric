@@ -3,7 +3,7 @@ from typing import Dict, Protocol, Sequence, TypeVar
 
 from autometric.core.metric import Metric
 
-T = TypeVar("T")
+T = TypeVar("T", contravariant=True)
 
 
 class MetricState(Protocol[T]):

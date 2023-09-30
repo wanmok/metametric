@@ -23,12 +23,13 @@ class Graph(Protocol[T]):
 def _adjacency_matrix(graph: Graph[T]) -> np.ndarray:
     """Get the adjacency matrix of a graph."""
     nodes = list(graph.nodes())
+    node_to_id = {x: i for i, x in enumerate(nodes)}
     n = len(nodes)
     adj = np.zeros([n, n], dtype=bool)
     for i, x in enumerate(nodes):
-        for j, y in enumerate(nodes):
-            if graph.has_edge(x, y):
-                adj[i, j] = 1
+        for y in graph.successors(x):
+            j = node_to_id[y]
+            adj[i, j] = 1
     return adj
 
 

@@ -4,10 +4,11 @@ from functools import cached_property
 from typing import Callable, Dict, Protocol, Sequence, TypeVar
 
 from autometric.core.metric import Metric
-from autometric.core.reduction import MetricState, Reduction
-from autometric.core.state import MultipleMetricStates, SingleMetricState
+from autometric.core.reduction import Reduction
+from autometric.core.state import (MetricState, MultipleMetricStates,
+                                   SingleMetricState)
 
-T = TypeVar("T")
+T = TypeVar("T", contravariant=True)
 
 
 class Aggregator(Protocol[T]):

@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
-from typing import (Any, Collection, Generic, Iterator, List, Optional,
-                    Sequence, Type, TypeVar)
+from typing import (Any, Callable, Collection, Generic, Iterator, List,
+                    Optional, Sequence, Type, TypeVar)
 
 import numpy as np
 import scipy as sp
 
-from autometric.core.alignment import AlignmentConstraint
+from autometric.core.constraint import AlignmentConstraint
 from autometric.core.metric import Variable
 
 T = TypeVar('T')
@@ -35,7 +35,7 @@ class MatchingConstraintBuilder(ConstraintBuilder):
     constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE
 
     def build(self) -> Optional[sp.optimize.LinearConstraint]:
-        constraint_matrix_ctor = {
+        constraint_matrix_ctor: Callable[[int, int], Optional[np.ndarray]] = {
             AlignmentConstraint.ONE_TO_ONE: _get_one_to_one_constraint_matrix,
             AlignmentConstraint.ONE_TO_MANY: _get_one_to_many_constraint_matrix,
             AlignmentConstraint.MANY_TO_ONE: _get_many_to_one_constraint_matrix,
@@ -183,13 +183,13 @@ class MatchingProblem(Generic[T]):
             self.n_y_vars = 0
         self.constraints: List[sp.optimize.LinearConstraint] = []
 
-    def add_matching_constraint(self, constraint: AlignmentConstraint):
+    def add_matching_constraint(self, constraint_type: AlignmentConstraint):
         constraint = MatchingConstraintBuilder(
             n_x=self.n_x,
             n_y=self.n_y,
             n_x_vars=self.n_x_vars,
             n_y_vars=self.n_y_vars,
-            constraint=constraint,
+            constraint=constraint_type,
         ).build()
         if constraint is not None:
             self.constraints.append(constraint)

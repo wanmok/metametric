@@ -38,6 +38,7 @@ class SetAlignmentMetric(Metric[Collection[T]]):
                 return m.max(axis=1).sum()
             if self.constraint == AlignmentConstraint.MANY_TO_MANY:
                 return m.sum()
+            raise ValueError(f"Invalid constraint: {self.constraint}")
 
     def score_self(self, x: Collection[T]) -> float:
         """Score a set of objects with itself."""

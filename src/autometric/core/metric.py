@@ -4,7 +4,7 @@ from dataclasses import dataclass, is_dataclass
 from functools import reduce
 from operator import mul
 from typing import (Callable, ClassVar, Collection, Dict, Generic, Protocol,
-                    Tuple, Type, TypeVar, Union, get_origin, runtime_checkable)
+                    Type, TypeVar, Union, get_origin, runtime_checkable)
 
 import numpy as np
 
@@ -77,21 +77,6 @@ class ContramappedMetric(Metric[S]):
     def score_self(self, x: S) -> float:
         """Scores an object against itself."""
         return self.inner.score_self(self.f(x))
-
-
-class WrappedMetric(Metric[T]):
-    """A metric that has some downstream operations after other metrics."""
-    def __init__(self, metrics: Tuple[Metric[T], ...], f: Callable[[float, ...], float]):
-        self.metrics = metrics
-        self.f = f
-
-    def score(self, x: T, y: T) -> float:
-        """Score two objects."""
-        return self.f(*(metric.score(x, y) for metric in self.metrics))
-
-    def score_self(self, x: T) -> float:
-        """Scores an object against itself."""
-        return self.f(*(metric.score_self(x) for metric in self.metrics))
 
 
 class DiscreteMetric(Metric[T]):
