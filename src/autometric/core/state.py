@@ -1,8 +1,7 @@
 """Defines the states of metric aggregators."""
-from typing import TypeVar, Sequence, Protocol, Dict
+from typing import Dict, Protocol, Sequence, TypeVar
 
 from autometric.core.metric import Metric
-
 
 T = TypeVar("T")
 

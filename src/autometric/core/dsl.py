@@ -1,15 +1,22 @@
 """This module contains the domain-specific language (DSL) for defining metrics."""
-from dataclasses import dataclass, is_dataclass, fields
-from typing import Generic, Type, Union, Dict, get_origin, TypeVar, Callable, Collection, Optional, Tuple, Sequence
+from dataclasses import dataclass, fields, is_dataclass
+from typing import (Callable, Collection, Dict, Generic, Optional, Sequence,
+                    Tuple, Type, TypeVar, Union, get_origin)
 
-from autometric.core.alignment import AlignmentConstraint, SequenceAlignmentMetric, GraphAlignmentMetric
-from autometric.core.graph import Graph
-from autometric.core.metric import Metric, DiscreteMetric, ProductMetric, UnionMetric, ContramappedMetric, WrappedMetric
-from autometric.core.alignment import SetAlignmentMetric, LatentSetAlignmentMetric
+from autometric.core.alignment import (AlignmentConstraint,
+                                       GraphAlignmentMetric,
+                                       LatentSetAlignmentMetric,
+                                       SequenceAlignmentMetric,
+                                       SetAlignmentMetric)
 from autometric.core.decorator import derive_metric
-from autometric.core.metric_suite import MetricFamily, MetricSuite, MultipleMetricFamilies
-from autometric.core.normalizers import Normalizer, NormalizedMetric
-from autometric.core.reduction import Reduction, MacroAverage, MicroAverage, MultipleReductions
+from autometric.core.graph import Graph
+from autometric.core.metric import (ContramappedMetric, DiscreteMetric, Metric,
+                                    ProductMetric, UnionMetric, WrappedMetric)
+from autometric.core.metric_suite import (MetricFamily, MetricSuite,
+                                          MultipleMetricFamilies)
+from autometric.core.normalizers import NormalizedMetric, Normalizer
+from autometric.core.reduction import (MacroAverage, MicroAverage,
+                                       MultipleReductions, Reduction)
 
 T = TypeVar("T")
 S = TypeVar("S")

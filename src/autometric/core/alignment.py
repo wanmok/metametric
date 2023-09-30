@@ -1,14 +1,14 @@
 """Metric derivation with alignment constraints."""
 from dataclasses import is_dataclass
-from typing import Collection, TypeVar, Union, Sequence, Type
+from typing import Collection, Sequence, Type, TypeVar, Union
 
 import numpy as np
 import scipy.optimize as spo
 
+from autometric.core._ilp import MatchingProblem
 from autometric.core.constraint import AlignmentConstraint
 from autometric.core.graph import Graph, _reachability_matrix
-from autometric.core._ilp import MatchingProblem
-from autometric.core.metric import Metric, DiscreteMetric
+from autometric.core.metric import DiscreteMetric, Metric
 
 T = TypeVar("T")
 

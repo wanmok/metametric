@@ -1,7 +1,7 @@
 """Normalizers to normalize metrics as normalized metrics."""
-from typing import TypeVar, Protocol, runtime_checkable, Optional
-from autometric.core.metric import Metric
+from typing import Optional, Protocol, TypeVar, runtime_checkable
 
+from autometric.core.metric import Metric
 
 T = TypeVar("T")
 

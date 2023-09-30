@@ -1,9 +1,9 @@
 """Metric suite definitions for coreference resolution."""
 from typing import Collection
 
-from autometric.core.metric import Metric
 import autometric.core.dsl as am
-from autometric.structures.ie import Mention, Membership, Entity, EntitySet
+from autometric.core.metric import Metric
+from autometric.structures.ie import Entity, EntitySet, Membership, Mention
 
 
 def _muc_common_links(x: Entity, y: Entity) -> int:

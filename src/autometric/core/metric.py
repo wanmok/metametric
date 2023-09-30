@@ -1,10 +1,10 @@
 """Metric interface and implementations for commonly used metrics."""
 from abc import abstractmethod
-from dataclasses import is_dataclass, dataclass
+from dataclasses import dataclass, is_dataclass
 from functools import reduce
 from operator import mul
-from typing import Callable, Dict, Generic, Type, TypeVar, Collection, Union, get_origin, Protocol, runtime_checkable, \
-    Tuple, ClassVar
+from typing import (Callable, ClassVar, Collection, Dict, Generic, Protocol,
+                    Tuple, Type, TypeVar, Union, get_origin, runtime_checkable)
 
 import numpy as np
 

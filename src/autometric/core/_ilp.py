@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields
-from typing import Optional, Generic, TypeVar, Collection, Type, Any, Iterator, List, Sequence
+from typing import (Any, Collection, Generic, Iterator, List, Optional,
+                    Sequence, Type, TypeVar)
 
-from autometric.core.alignment import AlignmentConstraint
 import numpy as np
 import scipy as sp
 
+from autometric.core.alignment import AlignmentConstraint
 from autometric.core.metric import Variable
 
 T = TypeVar('T')

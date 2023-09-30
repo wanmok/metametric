@@ -1,7 +1,8 @@
 """Metric suites are collections of metrics that are computed together."""
 from dataclasses import dataclass
-from typing import TypeVar, Dict, Sequence, Protocol, Callable
 from functools import cached_property
+from typing import Callable, Dict, Protocol, Sequence, TypeVar
+
 from autometric.core.metric import Metric
 from autometric.core.reduction import MetricState, Reduction
 from autometric.core.state import MultipleMetricStates, SingleMetricState

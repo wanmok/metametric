@@ -1,41 +1,20 @@
 """Decorator for deriving metrics from dataclasses."""
 from dataclasses import fields, is_dataclass
-from typing import (
-    Literal,
-    get_args,
-    get_origin,
-    Collection,
-    Annotated,
-    Union,
-    Protocol,
-    runtime_checkable,
-    Callable,
-    TypeVar,
-    Type, Any,
-)
+from typing import (Annotated, Any, Callable, Collection, Literal, Type,
+                    TypeVar, Union, get_args, get_origin)
 
-from autometric.core.alignment import AlignmentConstraint, SetAlignmentMetric, LatentSetAlignmentMetric
-from autometric.core.metric import Metric, ProductMetric, DiscreteMetric, UnionMetric, Variable
+from autometric.core.alignment import (AlignmentConstraint,
+                                       LatentSetAlignmentMetric,
+                                       SetAlignmentMetric)
+from autometric.core.metric import (DiscreteMetric, HasLatentMetric, HasMetric,
+                                    Metric, ProductMetric, UnionMetric,
+                                    Variable)
 from autometric.core.normalizers import NormalizedMetric, Normalizer
 
 NormalizerLiteral = Literal["none", "jaccard", "dice", "f1"]
 ConstraintLiteral = Literal["<->", "<-", "->", "~", "1:1", "1:*", "*:1", "*:*"]
 
 T = TypeVar("T", contravariant=True)
-
-
-@runtime_checkable
-class HasMetric(Protocol[T]):
-    """Protocol for classes that have a metric."""
-
-    metric: Metric[T]
-
-
-@runtime_checkable
-class HasLatentMetric(Protocol[T]):
-    """Protocol for classes that have a latent metric."""
-
-    latent_metric: Metric[T]
 
 
 def may_be_variable(cls: Any) -> bool:
