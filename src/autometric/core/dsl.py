@@ -1,33 +1,52 @@
 """This module contains the domain-specific language (DSL) for defining metrics."""
+import sys
 from dataclasses import dataclass, fields, is_dataclass
-from types import EllipsisType as Ell
-from typing import (Callable, Collection, Dict, Generic, Optional, Sequence,
-                    Tuple, Type, TypeVar, Union, get_origin)
+from typing import (
+    Callable,
+    Collection,
+    Dict,
+    Generic,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    get_origin,
+    TYPE_CHECKING,
+)
 
-from autometric.core.alignment import (AlignmentConstraint,
-                                       GraphAlignmentMetric,
-                                       LatentSetAlignmentMetric,
-                                       SequenceAlignmentMetric,
-                                       SetAlignmentMetric)
+if sys.version_info >= (3, 10):
+    from types import EllipsisType as Ell
+else:
+    if TYPE_CHECKING:
+        from builtins import ellipsis as Ell
+    else:
+        Ell = type(...)
+
+from autometric.core.alignment import (
+    AlignmentConstraint,
+    GraphAlignmentMetric,
+    LatentSetAlignmentMetric,
+    SequenceAlignmentMetric,
+    SetAlignmentMetric,
+)
 from autometric.core.decorator import derive_metric
 from autometric.core.graph import Graph
-from autometric.core.metric import (ContramappedMetric, DiscreteMetric, Metric,
-                                    ProductMetric, UnionMetric)
-from autometric.core.metric_suite import (MetricFamily, MetricSuite,
-                                          MultipleMetricFamilies)
+from autometric.core.metric import ContramappedMetric, DiscreteMetric, Metric, ProductMetric, UnionMetric
+from autometric.core.metric_suite import MetricFamily, MetricSuite, MultipleMetricFamilies
 from autometric.core.normalizers import NormalizedMetric, Normalizer
-from autometric.core.reduction import (MacroAverage, MicroAverage,
-                                       MultipleReductions, Reduction)
+from autometric.core.reduction import MacroAverage, MicroAverage, MultipleReductions, Reduction
 
 T = TypeVar("T", contravariant=True)
 S = TypeVar("S")
-
 
 DslConfig = Union[
     Type[T],
     Tuple[Type[T], Union[AlignmentConstraint, str]],
     Tuple[Type[T], Union[AlignmentConstraint, str], Union[Normalizer, str, None]],
 ]
+
 
 @dataclass
 class _Config(Generic[T]):
@@ -180,6 +199,7 @@ graph_alignment = _GraphAlignment()
 class _LatentSetAlignment:
     def __getitem__(self, config: DslConfig[T]) -> Callable[[Union[Ell, Metric[T]]], Metric[Collection[T]]]:
         cfg = _Config.standardize(config)
+
         def latent_alignment_metric(inner: Union[Ell, Metric[T]]) -> Metric[Collection[T]]:
             if inner is ...:
                 inner = auto[cfg.cls, cfg.constraint]

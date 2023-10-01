@@ -1,0 +1,32 @@
+site_name: 'Autometric'
+site_description: 'A library to automatically derive metrics for structure prediction'
+site_author: 'Tongfei Chen, Yunmo Chen'
+copyright: 'Copyright &copy; 2023 Tongfei Chen, Yunmo Chen'
+
+theme:
+  name: 'material'
+  palette:
+    primary: navy
+    accent: blue
+  font:
+    text: 'Source Sans Pro'
+    code: 'Source Code Pro'
+  icon:
+    logo: material/chart-arc
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.tabbed
+
+repo_name: 'wanmok/autometric'
+repo_url: 'https://github.com/wanmok/autometric'
+
+extra_css: []
+
+nav:
+  - 'Introduction': 'intro.md'
+  - 'Decorator': 'decorator.md'
+  - 'DSL': 'dsl.md'

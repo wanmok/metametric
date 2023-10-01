@@ -1,3 +1,4 @@
+"""Tests for coreference metrics."""
 from pytest import fixture, approx
 
 import autometric.core.dsl as am
@@ -33,7 +34,9 @@ def data():
     )
     return pred, ref
 
+
 def test_muc(data):
+    """MUC metric."""
     pred, ref = data
     muc_precision = am.normalize["precision"](muc)
     muc_recall = am.normalize["recall"](muc)
@@ -42,12 +45,14 @@ def test_muc(data):
 
 
 def test_b_cubed(data):
+    """B-cubed metric."""
     pred, ref = data
     assert b_cubed_precision.score(pred, ref) == approx(0.50, abs=0.01)
     assert b_cubed_recall.score(pred, ref) == approx(0.42, abs=0.01)
 
 
 def test_ceaf_phi4(data):
+    """CEAF phi4 metric."""
     pred, ref = data
     ceaf_phi4_precision = am.normalize["precision"](ceaf_phi4)
     ceaf_phi4_recall = am.normalize["recall"](ceaf_phi4)
@@ -56,6 +61,7 @@ def test_ceaf_phi4(data):
 
 
 def test_coref_family(data):
+    """Coreference suite."""
     pred, ref = data
     agg = coref_suite.new()
     agg.update_single(pred, ref)
