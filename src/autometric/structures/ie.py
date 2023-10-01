@@ -3,13 +3,13 @@
 The data structures defined here can automatically derive commonly used metrics in IE.
 """
 from dataclasses import dataclass
-from typing import List
+from typing import Collection
 
 from autometric.core.decorator import autometric
 
 
 @autometric()
-@dataclass
+@dataclass(eq=True, frozen=True)
 class Mention:
     """A mention span commonly used for .
 
@@ -83,7 +83,7 @@ class Event:
     """
 
     trigger: Trigger
-    args: List[Argument]
+    args: Collection[Argument]
 
 
 @autometric()
@@ -91,7 +91,7 @@ class Event:
 class EventSet:
     """A set of events to present predicted or referenced events."""
 
-    events: List[Event]
+    events: Collection[Event]
 
 
 @autometric()
@@ -99,20 +99,29 @@ class EventSet:
 class RelationSet:
     """A set of relations to present predicted or referenced relations."""
 
-    relations: List[Relation]
+    relations: Collection[Relation]
 
 
-@autometric(normalizer="f1")
 @dataclass
 class Entity:
     """An entity comprises multiple mentions, commonly used in coreference resolution."""
 
-    mentions: List[Mention]
+    mentions: Collection[Mention]
 
 
-@autometric(normalizer="f1")
+@autometric()
 @dataclass
 class EntitySet:
     """A set of entities to present predicted or referenced entities."""
 
-    entities: List[Entity]
+    entities: Collection[Entity]
+
+
+@autometric()
+@dataclass
+class Membership:
+    """A membership relation between an entity and a mention."""
+    mention: Mention
+    entity: Entity
+
+

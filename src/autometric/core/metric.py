@@ -1,9 +1,10 @@
 """Metric interface and implementations for commonly used metrics."""
 from abc import abstractmethod
-from dataclasses import is_dataclass
+from dataclasses import dataclass, is_dataclass
 from functools import reduce
 from operator import mul
-from typing import Callable, Dict, Generic, Type, TypeVar, Collection, Union, get_origin
+from typing import (Callable, ClassVar, Collection, Dict, Generic, Protocol,
+                    Type, TypeVar, Union, get_origin, runtime_checkable)
 
 import numpy as np
 
@@ -128,3 +129,26 @@ class UnionMetric(Metric[T]):
     def score_self(self, x: T) -> float:
         """Scores an object against itself."""
         return 1.0
+
+
+@dataclass(eq=True, frozen=True)
+class Variable:
+    """A variable in latent alignments."""
+
+    name: str
+
+    latent_metric: ClassVar[Metric["Variable"]] = Metric.from_function(lambda x, y: 1.0)
+
+
+@runtime_checkable
+class HasMetric(Protocol[T]):
+    """Protocol for classes that have a metric."""
+
+    metric: Metric[T]
+
+
+@runtime_checkable
+class HasLatentMetric(Protocol[T]):
+    """Protocol for classes that have a latent metric."""
+
+    latent_metric: Metric[T]

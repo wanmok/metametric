@@ -1,23 +1,15 @@
 """Decorator for deriving metrics from dataclasses."""
 from dataclasses import fields, is_dataclass
-from typing import (
-    Literal,
-    get_args,
-    get_origin,
-    Collection,
-    Annotated,
-    Union,
-    Protocol,
-    runtime_checkable,
-    Callable,
-    TypeVar,
-    Type,
-)
+from typing import (Annotated, Any, Callable, Collection, Literal, Type,
+                    TypeVar, Union, get_args, get_origin)
 
-from autometric.core.alignment import AlignmentConstraint, AlignmentMetric
-from autometric.core.latent_alignment import dataclass_has_variable, LatentAlignmentMetric
-from autometric.core.metric import Metric, ProductMetric, DiscreteMetric, UnionMetric
-from autometric.core.normalizers import NormalizingMetric, Normalizer, Jaccard, FScore, Precision, Recall
+from autometric.core.alignment import (AlignmentConstraint,
+                                       LatentSetAlignmentMetric,
+                                       SetAlignmentMetric)
+from autometric.core.metric import (DiscreteMetric, HasLatentMetric, HasMetric,
+                                    Metric, ProductMetric, UnionMetric,
+                                    Variable)
+from autometric.core.normalizers import NormalizedMetric, Normalizer
 
 NormalizerLiteral = Literal["none", "jaccard", "dice", "f1"]
 ConstraintLiteral = Literal["<->", "<-", "->", "~", "1:1", "1:*", "*:1", "*:*"]
@@ -25,18 +17,25 @@ ConstraintLiteral = Literal["<->", "<-", "->", "~", "1:1", "1:*", "*:1", "*:*"]
 T = TypeVar("T", contravariant=True)
 
 
-@runtime_checkable
-class HasMetric(Protocol[T]):
-    """Protocol for classes that have a metric."""
+def may_be_variable(cls: Any) -> bool:
+    """Check if a type may be a `Variable`."""
+    if cls is Variable:
+        return True
+    if get_origin(cls) is not None and get_origin(cls) is Union:
+        if any(t is Variable for t in get_args(cls)):
+            return True
+    return False
 
-    metric: Metric[T]
 
+def dataclass_has_variable(cls: Type) -> bool:
+    """Check if a dataclass has a field is in `Variable` type."""
+    if cls is Variable:
+        return True
+    if is_dataclass(cls):
+        if any(may_be_variable(t.type) for t in cls.__dataclass_fields__.values()):
+            return True
+    return False
 
-@runtime_checkable
-class HasLatentMetric(Protocol[T]):
-    """Protocol for classes that have a latent metric."""
-
-    latent_metric: Metric[T]
 
 
 def derive_metric(cls: Type, constraint: AlignmentConstraint) -> Metric:
@@ -74,19 +73,20 @@ def derive_metric(cls: Type, constraint: AlignmentConstraint) -> Metric:
         return UnionMetric(
             cls=cls, case_metrics={case: derive_metric(case, constraint=constraint) for case in get_args(cls)}
         )
+    # TODO: graph, dag, tree, sequence
 
-    # derive alignment metric from collections
+    # derive set alignment metric from collections
     elif cls_origin is not None and isinstance(cls_origin, type) and issubclass(cls_origin, Collection):
         elem_type = get_args(cls)[0]
         inner_metric = derive_metric(elem_type, constraint=constraint)
         if dataclass_has_variable(elem_type):
-            return LatentAlignmentMetric(
+            return LatentSetAlignmentMetric(
                 cls=elem_type,
                 inner=inner_metric,
                 constraint=constraint,
             )
         else:
-            return AlignmentMetric(
+            return SetAlignmentMetric(
                 inner=inner_metric,
                 constraint=constraint,
             )
@@ -101,7 +101,7 @@ def derive_metric(cls: Type, constraint: AlignmentConstraint) -> Metric:
 
 def autometric(
     normalizer: Union[NormalizerLiteral, Normalizer] = "none",
-    constraint: ConstraintLiteral = "<->",
+    constraint: Union[ConstraintLiteral, AlignmentConstraint] = "<->",
 ) -> Callable[[Type], Type]:
     """Decorate a dataclass to have corresponding metric derived.
 
@@ -116,28 +116,20 @@ def autometric(
     """
 
     def class_decorator(cls: Type) -> Type:
-        alignment_constraint = {
-            "<->": AlignmentConstraint.ONE_TO_ONE,
-            "<-": AlignmentConstraint.ONE_TO_MANY,
-            "->": AlignmentConstraint.MANY_TO_ONE,
-            "~": AlignmentConstraint.MANY_TO_MANY,
-            "1:1": AlignmentConstraint.ONE_TO_ONE,
-            "1:*": AlignmentConstraint.ONE_TO_MANY,
-            "*:1": AlignmentConstraint.MANY_TO_ONE,
-            "*:*": AlignmentConstraint.MANY_TO_MANY,
-        }[constraint]
-        metric = derive_metric(cls, constraint=alignment_constraint)
-        if isinstance(normalizer, Normalizer):
-            normalized_metric = NormalizingMetric(metric, normalizer=normalizer)
+        nonlocal normalizer, constraint
+        if isinstance(constraint, AlignmentConstraint):
+            metric = derive_metric(cls, constraint=constraint)
         else:
-            normalized_metric = {
-                "none": lambda m: m,
-                "jaccard": lambda m: NormalizingMetric(inner=m, normalizer=Jaccard()),
-                "dice": lambda m: NormalizingMetric(inner=m, normalizer=FScore()),
-                "f1": lambda m: NormalizingMetric(inner=m, normalizer=FScore()),
-                "precision": lambda m: NormalizingMetric(inner=m, normalizer=Precision()),
-                "recall": lambda m: NormalizingMetric(inner=m, normalizer=Recall()),
-            }[normalizer](metric)
+            metric = derive_metric(cls, constraint=AlignmentConstraint.from_str(constraint))
+        if isinstance(normalizer, Normalizer):
+            normalized_metric = NormalizedMetric(metric, normalizer=normalizer)
+        else:
+            if normalizer == "none":
+                normalized_metric = metric
+            else:
+                normalizer_obj = Normalizer.from_str(normalizer)
+                assert normalizer_obj is not None
+                normalized_metric = NormalizedMetric(metric, normalizer=normalizer_obj)
         if dataclass_has_variable(cls):
             setattr(cls, "latent_metric", normalized_metric)  # type: ignore
         else:

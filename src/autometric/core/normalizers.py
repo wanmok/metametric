@@ -1,5 +1,5 @@
 """Normalizers to normalize metrics as normalized metrics."""
-from typing import TypeVar, Protocol, runtime_checkable
+from typing import Optional, Protocol, TypeVar, runtime_checkable
 
 from autometric.core.metric import Metric
 
@@ -27,6 +27,23 @@ class Normalizer(Protocol):
     def name(self) -> str:
         """Get the name of the normalizer."""
         raise NotImplementedError()
+
+    @staticmethod
+    def from_str(s: str) -> Optional["Normalizer"]:
+        if s == "none":
+            return None
+        if s == "jaccard":
+            return Jaccard()
+        elif s == "precision":
+            return Precision()
+        elif s == "recall":
+            return Recall()
+        elif s == "dice":
+            return FScore()
+        elif s.startswith("f"):
+            return FScore(beta=float(s[1:]))
+        else:
+            raise ValueError(f"Unknown normalizer {s}")
 
 
 class Jaccard(Normalizer):
@@ -84,10 +101,11 @@ class FScore(Normalizer):
         if self.beta == 1.0:
             return "f1"
         else:
-            return f"f{self.beta}"
+            b = int(self.beta) if self.beta.is_integer() else self.beta
+            return f"f{b}"
 
 
-class NormalizingMetric(Metric[T]):
+class NormalizedMetric(Metric[T]):
     """A wrapper for the metric that normalizes another metric.
 
     This ensures that applying a [`Normalizer`] to a [`Metric`] is also a [`Metric`].

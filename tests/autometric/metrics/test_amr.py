@@ -1,9 +1,9 @@
 """Tests for SMatch derived from the AMR structure."""
 from pytest import approx
 
-from autometric.core.decorator import HasMetric
-from autometric.core.latent_alignment import Variable
-from autometric.metrics.amr import AMR, Prop
+from autometric.core.metric import Variable
+from autometric.structures.amr import AMR, Prop
+from autometric.metrics.semantic_parsing import s_match
 
 
 def test_smatch():
@@ -29,8 +29,4 @@ def test_smatch():
         ]
     )
 
-    if isinstance(AMR, HasMetric):
-        assert AMR.metric.score(amr1, amr2) == approx(0.73, abs=0.01)
-    else:
-        # In case of failure to derive the metric.
-        assert False
+    assert s_match.score(amr1, amr2) == approx(0.73, abs=0.01)
