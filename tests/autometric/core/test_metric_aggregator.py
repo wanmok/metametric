@@ -10,7 +10,7 @@ def test_metric_aggregator():
     b = [[0, 1, 2, 3], [2, 3], [1, 2, 3]]
 
     mf = am.family(
-        am.set_alignment[int, '<->', 'none'](...),
+        am.set_matching[int, '<->', 'none'](...),
         {
             "macro": am.macro_average(["precision", "recall", "f1", "f0.5", "f2"]),
             "micro": am.micro_average(["precision", "recall", "f1", "f0.5", "f2"]),

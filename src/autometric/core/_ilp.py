@@ -6,7 +6,7 @@ from typing import (Any, Callable, Collection, Generic, Iterator, List,
 import numpy as np
 import scipy as sp
 
-from autometric.core.constraint import AlignmentConstraint
+from autometric.core.constraint import MatchingConstraint
 from autometric.core.metric import Variable
 
 T = TypeVar('T')
@@ -32,14 +32,14 @@ class ConstraintBuilder(ABC):
 
 @dataclass
 class MatchingConstraintBuilder(ConstraintBuilder):
-    constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE
+    constraint: MatchingConstraint = MatchingConstraint.ONE_TO_ONE
 
     def build(self) -> Optional[sp.optimize.LinearConstraint]:
         constraint_matrix_ctor: Callable[[int, int], Optional[np.ndarray]] = {
-            AlignmentConstraint.ONE_TO_ONE: _get_one_to_one_constraint_matrix,
-            AlignmentConstraint.ONE_TO_MANY: _get_one_to_many_constraint_matrix,
-            AlignmentConstraint.MANY_TO_ONE: _get_many_to_one_constraint_matrix,
-            AlignmentConstraint.MANY_TO_MANY: lambda _0, _1: None,
+            MatchingConstraint.ONE_TO_ONE: _get_one_to_one_constraint_matrix,
+            MatchingConstraint.ONE_TO_MANY: _get_one_to_many_constraint_matrix,
+            MatchingConstraint.MANY_TO_ONE: _get_many_to_one_constraint_matrix,
+            MatchingConstraint.MANY_TO_MANY: lambda _0, _1: None,
         }[self.constraint]
         m = constraint_matrix_ctor(self.n_x, self.n_y)
         if m is not None:
@@ -100,7 +100,7 @@ class MonotonicityConstraintBuilder(ConstraintBuilder):
                     vec[self.index_pair(u0, v0)] = 1
                     vec[self.index_pair(u1, v1)] = 1
                     vectors.append(vec)
-                    # Enforce monotonicity of the alignment
+                    # Enforce monotonicity of the matching
                     #    [u0 ~ v0] & [u1 ~ v1] -> [u0 <= u1] ≡ [v0 <= v1]
                     # => 1 - ((1 - t[u0~v0]) + (1 - t[u1~v1])) <= 1[[u0 <= u1] ≡ [v0 <= v1]]
                     # => t[u0~v0] + t[u1~v1] <= 1[[u0 <= u1] ≡ [v0 <= v1]] + 1
@@ -183,7 +183,7 @@ class MatchingProblem(Generic[T]):
             self.n_y_vars = 0
         self.constraints: List[sp.optimize.LinearConstraint] = []
 
-    def add_matching_constraint(self, constraint_type: AlignmentConstraint):
+    def add_matching_constraint(self, constraint_type: MatchingConstraint):
         constraint = MatchingConstraintBuilder(
             n_x=self.n_x,
             n_y=self.n_y,

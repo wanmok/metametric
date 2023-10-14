@@ -133,7 +133,7 @@ class UnionMetric(Metric[T]):
 
 @dataclass(eq=True, frozen=True)
 class Variable:
-    """A variable in latent alignments."""
+    """A variable in latent matchings."""
 
     name: str
 
