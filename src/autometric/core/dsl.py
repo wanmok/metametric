@@ -24,12 +24,12 @@ else:
     else:
         Ell = type(...)
 
-from autometric.core.alignment import (
-    AlignmentConstraint,
-    GraphAlignmentMetric,
-    LatentSetAlignmentMetric,
-    SequenceAlignmentMetric,
-    SetAlignmentMetric,
+from autometric.core.constraint import MatchingConstraint
+from autometric.core.matching import (
+    GraphMatchingMetric,
+    LatentSetMatchingMetric,
+    SequenceMatchingMetric,
+    SetMatchingMetric,
 )
 from autometric.core.decorator import derive_metric
 from autometric.core.graph import Graph
@@ -43,15 +43,15 @@ S = TypeVar("S")
 
 DslConfig = Union[
     Type[T],
-    Tuple[Type[T], Union[AlignmentConstraint, str]],
-    Tuple[Type[T], Union[AlignmentConstraint, str], Union[Normalizer, str, None]],
+    Tuple[Type[T], Union[MatchingConstraint, str]],
+    Tuple[Type[T], Union[MatchingConstraint, str], Union[Normalizer, str, None]],
 ]
 
 
 @dataclass
 class _Config(Generic[T]):
     cls: Type[T]
-    constraint: AlignmentConstraint = AlignmentConstraint.ONE_TO_ONE
+    constraint: MatchingConstraint = MatchingConstraint.ONE_TO_ONE
     normalizer: Optional[Normalizer] = None
 
     @classmethod
@@ -68,10 +68,10 @@ class _Config(Generic[T]):
                 raise ValueError(f"Invalid config: {config}")
         else:
             t = config
-            constraint = AlignmentConstraint.ONE_TO_ONE
+            constraint = MatchingConstraint.ONE_TO_ONE
             normalizer = None
         if isinstance(constraint, str):
-            constraint = AlignmentConstraint.from_str(constraint)
+            constraint = MatchingConstraint.from_str(constraint)
         return cls(t, constraint, normalizer)
 
 
@@ -142,76 +142,76 @@ class _Union:
 union = _Union()
 
 
-class _SetAlignment:
+class _SetMatching:
     def __getitem__(self, config: DslConfig[T]) -> Callable[[Union[Ell, Metric[T]]], Metric[Collection[T]]]:
         cfg = _Config.standardize(config)
 
-        def alignment_metric(inner: Union[Ell, Metric[T]]) -> Metric[Collection[T]]:
+        def matching_metric(inner: Union[Ell, Metric[T]]) -> Metric[Collection[T]]:
             if inner is ...:
                 inner = auto[cfg.cls, cfg.constraint]
-            match = SetAlignmentMetric(inner, constraint=cfg.constraint)
+            match = SetMatchingMetric(inner, constraint=cfg.constraint)
             if cfg.normalizer is not None:
                 match = NormalizedMetric(match, cfg.normalizer)
             return match
 
-        return alignment_metric
+        return matching_metric
 
 
-set_alignment = _SetAlignment()
+set_matching = _SetMatching()
 
 
-class _SequenceAlignment:
+class _SequenceMatching:
     def __getitem__(self, config: DslConfig[T]) -> Callable[[Union[Ell, Metric[T]]], Metric[Sequence[T]]]:
         cfg = _Config.standardize(config)
 
-        def alignment_metric(inner: Union[Ell, Metric[T]]) -> Metric[Sequence[T]]:
+        def matching_metric(inner: Union[Ell, Metric[T]]) -> Metric[Sequence[T]]:
             if inner is ...:
                 inner = auto[cfg.cls, cfg.constraint]
-            match = SequenceAlignmentMetric(inner, constraint=cfg.constraint)
+            match = SequenceMatchingMetric(inner, constraint=cfg.constraint)
             if cfg.normalizer is not None:
                 match = NormalizedMetric(match, cfg.normalizer)
             return match
 
-        return alignment_metric
+        return matching_metric
 
 
-sequence_alignment = _SequenceAlignment()
+sequence_matching = _SequenceMatching()
 
 
-class _GraphAlignment:
+class _GraphMatching:
     def __getitem__(self, config: DslConfig[T]) -> Callable[[Union[Ell, Metric[T]]], Metric[Graph[T]]]:
         cfg = _Config.standardize(config)
 
-        def alignment_metric(inner: Union[Ell, Metric[T]]) -> Metric[Graph[T]]:
+        def matching_metric(inner: Union[Ell, Metric[T]]) -> Metric[Graph[T]]:
             if inner is ...:
                 inner = auto[cfg.cls, cfg.constraint]
-            match = GraphAlignmentMetric(inner, constraint=cfg.constraint)
+            match = GraphMatchingMetric(inner, constraint=cfg.constraint)
             if cfg.normalizer is not None:
                 match = NormalizedMetric(match, cfg.normalizer)
             return match
 
-        return alignment_metric
+        return matching_metric
 
 
-graph_alignment = _GraphAlignment()
+graph_matching = _GraphMatching()
 
 
-class _LatentSetAlignment:
+class _LatentSetMatching:
     def __getitem__(self, config: DslConfig[T]) -> Callable[[Union[Ell, Metric[T]]], Metric[Collection[T]]]:
         cfg = _Config.standardize(config)
 
-        def latent_alignment_metric(inner: Union[Ell, Metric[T]]) -> Metric[Collection[T]]:
+        def latent_matching_metric(inner: Union[Ell, Metric[T]]) -> Metric[Collection[T]]:
             if inner is ...:
                 inner = auto[cfg.cls, cfg.constraint]
-            match = LatentSetAlignmentMetric(cfg.cls, inner, constraint=cfg.constraint)
+            match = LatentSetMatchingMetric(cfg.cls, inner, constraint=cfg.constraint)
             if cfg.normalizer is not None:
                 match = NormalizedMetric(match, cfg.normalizer)
             return match
 
-        return latent_alignment_metric
+        return latent_matching_metric
 
 
-latent_set_alignment = _LatentSetAlignment()
+latent_set_matching = _LatentSetMatching()
 
 
 class _Normalize:

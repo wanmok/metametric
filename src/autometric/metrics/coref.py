@@ -13,7 +13,7 @@ def _muc_common_links(x: Entity, y: Entity) -> int:
 muc_link: Metric[Entity] = am.from_func(_muc_common_links)
 
 muc = am.dataclass[EntitySet]({
-    "entities": am.set_alignment[Entity, "~"](muc_link)
+    "entities": am.set_matching[Entity, "~"](muc_link)
 })
 
 
@@ -23,7 +23,7 @@ def _entity_set_to_membership_set(es: EntitySet) -> Collection[Membership]:
 
 b_cubed_precision = am.preprocess(
     _entity_set_to_membership_set,
-    am.set_alignment[Membership, "<->", "precision"](
+    am.set_matching[Membership, "<->", "precision"](
         am.dataclass[Membership]({
             "mention": ...,
             "entity": am.normalize["precision"](am.auto[Entity])
@@ -33,7 +33,7 @@ b_cubed_precision = am.preprocess(
 
 b_cubed_recall = am.preprocess(
     _entity_set_to_membership_set,
-    am.set_alignment[Membership, "<->", "recall"](
+    am.set_matching[Membership, "<->", "recall"](
         am.dataclass[Membership]({
             "mention": ...,
             "entity": am.normalize["recall"](am.auto[Entity])
@@ -43,9 +43,9 @@ b_cubed_recall = am.preprocess(
 
 
 ceaf_phi4 = am.dataclass[EntitySet]({
-    "entities": am.set_alignment[Entity, "<->"](
+    "entities": am.set_matching[Entity, "<->"](
         am.dataclass[Entity]({
-            "mentions": am.set_alignment[Mention, "<->", "f1"](...)
+            "mentions": am.set_matching[Mention, "<->", "f1"](...)
         })
     )
 })

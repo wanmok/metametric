@@ -1,9 +1,9 @@
-"""Alignment constraints for the alignment metric."""
+"""Matching constraints for the matching metric."""
 from enum import Enum, auto
 
 
-class AlignmentConstraint(Enum):
-    """Alignment constraints for the alignment metric."""
+class MatchingConstraint(Enum):
+    """Matching constraints for the matching metric."""
 
     ONE_TO_ONE = auto()
     ONE_TO_MANY = auto()
@@ -11,14 +11,14 @@ class AlignmentConstraint(Enum):
     MANY_TO_MANY = auto()
 
     @staticmethod
-    def from_str(s: str) -> "AlignmentConstraint":
+    def from_str(s: str) -> "MatchingConstraint":
         return {
-            "<->": AlignmentConstraint.ONE_TO_ONE,
-            "<-": AlignmentConstraint.ONE_TO_MANY,
-            "->": AlignmentConstraint.MANY_TO_ONE,
-            "~": AlignmentConstraint.MANY_TO_MANY,
-            "1:1": AlignmentConstraint.ONE_TO_ONE,
-            "1:*": AlignmentConstraint.ONE_TO_MANY,
-            "*:1": AlignmentConstraint.MANY_TO_ONE,
-            "*:*": AlignmentConstraint.MANY_TO_MANY,
+            "<->": MatchingConstraint.ONE_TO_ONE,
+            "<-": MatchingConstraint.ONE_TO_MANY,
+            "->": MatchingConstraint.MANY_TO_ONE,
+            "~": MatchingConstraint.MANY_TO_MANY,
+            "1:1": MatchingConstraint.ONE_TO_ONE,
+            "1:*": MatchingConstraint.ONE_TO_MANY,
+            "*:1": MatchingConstraint.MANY_TO_ONE,
+            "*:*": MatchingConstraint.MANY_TO_MANY,
         }[s]

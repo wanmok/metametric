@@ -3,9 +3,9 @@ from dataclasses import fields, is_dataclass
 from typing import (Annotated, Any, Callable, Collection, Literal, Type,
                     TypeVar, Union, get_args, get_origin)
 
-from autometric.core.alignment import (AlignmentConstraint,
-                                       LatentSetAlignmentMetric,
-                                       SetAlignmentMetric)
+from autometric.core.matching import (MatchingConstraint,
+                                      LatentSetMatchingMetric,
+                                      SetMatchingMetric)
 from autometric.core.metric import (DiscreteMetric, HasLatentMetric, HasMetric,
                                     Metric, ProductMetric, UnionMetric,
                                     Variable)
@@ -38,12 +38,12 @@ def dataclass_has_variable(cls: Type) -> bool:
 
 
 
-def derive_metric(cls: Type, constraint: AlignmentConstraint) -> Metric:
+def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:
     """Derive a unified metric from any type.
 
     Args:
         cls (`Type`): The type to derive the metric from.
-        constraint (`AlignmentConstraint`): The alignment constraint to use.
+        constraint (`MatchingConstraint`): The matching constraint to use.
 
     Returns:
         `Metric`: The derived metric.
@@ -75,18 +75,18 @@ def derive_metric(cls: Type, constraint: AlignmentConstraint) -> Metric:
         )
     # TODO: graph, dag, tree, sequence
 
-    # derive set alignment metric from collections
+    # derive set matching metric from collections
     elif cls_origin is not None and isinstance(cls_origin, type) and issubclass(cls_origin, Collection):
         elem_type = get_args(cls)[0]
         inner_metric = derive_metric(elem_type, constraint=constraint)
         if dataclass_has_variable(elem_type):
-            return LatentSetAlignmentMetric(
+            return LatentSetMatchingMetric(
                 cls=elem_type,
                 inner=inner_metric,
                 constraint=constraint,
             )
         else:
-            return SetAlignmentMetric(
+            return SetMatchingMetric(
                 inner=inner_metric,
                 constraint=constraint,
             )
@@ -101,7 +101,7 @@ def derive_metric(cls: Type, constraint: AlignmentConstraint) -> Metric:
 
 def autometric(
     normalizer: Union[NormalizerLiteral, Normalizer] = "none",
-    constraint: Union[ConstraintLiteral, AlignmentConstraint] = "<->",
+    constraint: Union[ConstraintLiteral, MatchingConstraint] = "<->",
 ) -> Callable[[Type], Type]:
     """Decorate a dataclass to have corresponding metric derived.
 
@@ -109,7 +109,7 @@ def autometric(
         normalizer (`Union[NormalizerLiteral, Normalizer]`, defaults to "none"):
             The normalizer to use.
         constraint (`ConstraintLiteral`, defaults to "<->"):
-            The alignment constraint to use.
+            The matching constraint to use.
 
     Returns:
         `Callable[[Type], Type]`: The class decorator.
@@ -117,10 +117,10 @@ def autometric(
 
     def class_decorator(cls: Type) -> Type:
         nonlocal normalizer, constraint
-        if isinstance(constraint, AlignmentConstraint):
+        if isinstance(constraint, MatchingConstraint):
             metric = derive_metric(cls, constraint=constraint)
         else:
-            metric = derive_metric(cls, constraint=AlignmentConstraint.from_str(constraint))
+            metric = derive_metric(cls, constraint=MatchingConstraint.from_str(constraint))
         if isinstance(normalizer, Normalizer):
             normalized_metric = NormalizedMetric(metric, normalizer=normalizer)
         else:
