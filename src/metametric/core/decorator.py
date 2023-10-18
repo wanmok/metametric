@@ -3,13 +3,13 @@ from dataclasses import fields, is_dataclass
 from typing import (Annotated, Any, Callable, Collection, Literal, Type,
                     TypeVar, Union, get_args, get_origin)
 
-from autometric.core.matching import (MatchingConstraint,
+from metametric.core.matching import (MatchingConstraint,
                                       LatentSetMatchingMetric,
                                       SetMatchingMetric)
-from autometric.core.metric import (DiscreteMetric, HasLatentMetric, HasMetric,
+from metametric.core.metric import (DiscreteMetric, HasLatentMetric, HasMetric,
                                     Metric, ProductMetric, UnionMetric,
                                     Variable)
-from autometric.core.normalizers import NormalizedMetric, Normalizer
+from metametric.core.normalizers import NormalizedMetric, Normalizer
 
 NormalizerLiteral = Literal["none", "jaccard", "dice", "f1"]
 ConstraintLiteral = Literal["<->", "<-", "->", "~", "1:1", "1:*", "*:1", "*:*"]
@@ -32,7 +32,7 @@ def dataclass_has_variable(cls: Type) -> bool:
     if cls is Variable:
         return True
     if is_dataclass(cls):
-        if any(may_be_variable(t.type) for t in cls.__dataclass_fields__.values()):
+        if any(may_be_variable(f.type) for f in fields(cls)):
             return True
     return False
 
@@ -99,7 +99,7 @@ def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:
         raise ValueError(f"Could not derive metric from type {cls}.")
 
 
-def autometric(
+def metametric(
     normalizer: Union[NormalizerLiteral, Normalizer] = "none",
     constraint: Union[ConstraintLiteral, MatchingConstraint] = "<->",
 ) -> Callable[[Type], Type]:

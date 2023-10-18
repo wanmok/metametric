@@ -1,8 +1,8 @@
 """Metric aggregator for computing metrics on a batch of predictions and references."""
 from typing import Callable, Collection, Dict, Optional, Protocol
 
-from autometric.core.normalizers import Normalizer
-from autometric.core.state import SingleMetricState
+from metametric.core.normalizers import Normalizer
+from metametric.core.state import SingleMetricState
 
 
 def _compute_normalized_metrics(

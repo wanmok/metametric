@@ -1,4 +1,4 @@
-site_name: 'Autometric'
+site_name: 'Metametric'
 site_description: 'A library to automatically derive metrics for structure prediction'
 site_author: 'Tongfei Chen, Yunmo Chen'
 copyright: 'Copyright &copy; 2023 Tongfei Chen, Yunmo Chen'
@@ -21,8 +21,8 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.tabbed
 
-repo_name: 'wanmok/autometric'
-repo_url: 'https://github.com/wanmok/autometric'
+repo_name: 'wanmok/metametric'
+repo_url: 'https://github.com/wanmok/metametric'
 
 extra_css: []
 

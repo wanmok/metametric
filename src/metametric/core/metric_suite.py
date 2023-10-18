@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import Callable, Dict, Protocol, Sequence, TypeVar
 
-from autometric.core.metric import Metric
-from autometric.core.reduction import Reduction
-from autometric.core.state import (MetricState, MultipleMetricStates,
+from metametric.core.metric import Metric
+from metametric.core.reduction import Reduction
+from metametric.core.state import (MetricState, MultipleMetricStates,
                                    SingleMetricState)
 
 T = TypeVar("T", contravariant=True)

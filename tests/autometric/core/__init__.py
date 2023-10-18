@@ -1,1 +1,1 @@
-"""Tests core functionality of autometric."""
+"""Tests core functionality of metametric."""

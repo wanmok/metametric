@@ -1,8 +1,8 @@
-## Autometric
+## Metametric
 
-Autometric is a Python library for automating the process of creating metrics for structure prediction models.
+Metametric is a Python library for automating the process of creating metrics (through metaprogramming) for structure prediction models.
 
 ```bash
-pip install autometric
+pip install metametric
 ```
 

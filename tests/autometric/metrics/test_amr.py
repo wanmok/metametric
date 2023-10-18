@@ -1,9 +1,9 @@
 """Tests for SMatch derived from the AMR structure."""
 from pytest import approx
 
-from autometric.core.metric import Variable
-from autometric.structures.amr import AMR, Prop
-from autometric.metrics.semantic_parsing import s_match
+from metametric.core.metric import Variable
+from metametric.structures.amr import AMR, Prop
+from metametric.metrics.semantic_parsing import s_match
 
 
 def test_smatch():

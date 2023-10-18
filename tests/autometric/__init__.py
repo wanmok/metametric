@@ -1,1 +1,1 @@
-"""Tests for the autometric package."""
+"""Tests for the metametric package."""

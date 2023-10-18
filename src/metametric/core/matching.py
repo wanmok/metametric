@@ -5,10 +5,10 @@ from typing import Collection, Sequence, Type, TypeVar, Union
 import numpy as np
 import scipy.optimize as spo
 
-from autometric.core._ilp import MatchingProblem
-from autometric.core.constraint import MatchingConstraint
-from autometric.core.graph import Graph, _reachability_matrix
-from autometric.core.metric import DiscreteMetric, Metric
+from metametric.core._ilp import MatchingProblem
+from metametric.core.constraint import MatchingConstraint
+from metametric.core.graph import Graph, _reachability_matrix
+from metametric.core.metric import DiscreteMetric, Metric
 
 T = TypeVar("T")
 

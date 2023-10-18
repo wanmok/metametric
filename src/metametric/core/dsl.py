@@ -24,19 +24,19 @@ else:
     else:
         Ell = type(...)
 
-from autometric.core.constraint import MatchingConstraint
-from autometric.core.matching import (
+from metametric.core.constraint import MatchingConstraint
+from metametric.core.matching import (
     GraphMatchingMetric,
     LatentSetMatchingMetric,
     SequenceMatchingMetric,
     SetMatchingMetric,
 )
-from autometric.core.decorator import derive_metric
-from autometric.core.graph import Graph
-from autometric.core.metric import ContramappedMetric, DiscreteMetric, Metric, ProductMetric, UnionMetric
-from autometric.core.metric_suite import MetricFamily, MetricSuite, MultipleMetricFamilies
-from autometric.core.normalizers import NormalizedMetric, Normalizer
-from autometric.core.reduction import MacroAverage, MicroAverage, MultipleReductions, Reduction
+from metametric.core.decorator import derive_metric
+from metametric.core.graph import Graph
+from metametric.core.metric import ContramappedMetric, DiscreteMetric, Metric, ProductMetric, UnionMetric
+from metametric.core.metric_suite import MetricFamily, MetricSuite, MultipleMetricFamilies
+from metametric.core.normalizers import NormalizedMetric, Normalizer
+from metametric.core.reduction import MacroAverage, MicroAverage, MultipleReductions, Reduction
 
 T = TypeVar("T", contravariant=True)
 S = TypeVar("S")

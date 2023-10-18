@@ -1,7 +1,7 @@
 """Tests for metric aggregators."""
 from pytest import approx
 
-import autometric.core.dsl as am
+import metametric.core.dsl as am
 
 
 def test_metric_aggregator():

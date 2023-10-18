@@ -1,5 +1,5 @@
 """Tests for metrics derived with alignments."""
-import autometric.core.dsl as am
+import metametric.core.dsl as am
 
 
 def test_solve_alignment():
