@@ -5,10 +5,10 @@ The data structures defined here can automatically derive commonly used metrics 
 from dataclasses import dataclass
 from typing import Collection
 
-from autometric.core.decorator import autometric
+from metametric.core.decorator import metametric
 
 
-@autometric()
+@metametric()
 @dataclass(eq=True, frozen=True)
 class Mention:
     """A mention span commonly used for .
@@ -26,7 +26,7 @@ class Mention:
     right: int
 
 
-@autometric()
+@metametric()
 @dataclass
 class Relation:
     """A relation between two mentions commonly used in relation extraction.
@@ -44,7 +44,7 @@ class Relation:
     obj: Mention
 
 
-@autometric()
+@metametric()
 class Trigger:
     """A trigger mention commonly used in event extraction.
 
@@ -57,7 +57,7 @@ class Trigger:
     type: str
 
 
-@autometric()
+@metametric()
 class Argument:
     """An argument mention commonly used in event extraction.
 
@@ -71,7 +71,7 @@ class Argument:
     role: str
 
 
-@autometric()
+@metametric()
 @dataclass
 class Event:
     """An event commonly used in event extraction.
@@ -86,7 +86,7 @@ class Event:
     args: Collection[Argument]
 
 
-@autometric()
+@metametric()
 @dataclass
 class EventSet:
     """A set of events to present predicted or referenced events."""
@@ -94,7 +94,7 @@ class EventSet:
     events: Collection[Event]
 
 
-@autometric()
+@metametric()
 @dataclass
 class RelationSet:
     """A set of relations to present predicted or referenced relations."""
@@ -109,7 +109,7 @@ class Entity:
     mentions: Collection[Mention]
 
 
-@autometric()
+@metametric()
 @dataclass
 class EntitySet:
     """A set of entities to present predicted or referenced entities."""
@@ -117,7 +117,7 @@ class EntitySet:
     entities: Collection[Entity]
 
 
-@autometric()
+@metametric()
 @dataclass
 class Membership:
     """A membership relation between an entity and a mention."""

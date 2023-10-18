@@ -1,7 +1,7 @@
 """Tests for metric aggregators."""
 from pytest import approx
 
-import autometric.core.dsl as am
+import metametric.core.dsl as mm
 
 
 def test_metric_aggregator():
@@ -9,11 +9,11 @@ def test_metric_aggregator():
     a = [[0, 1], [2], [1, 2]]
     b = [[0, 1, 2, 3], [2, 3], [1, 2, 3]]
 
-    mf = am.family(
-        am.set_matching[int, '<->', 'none'](...),
+    mf = mm.family(
+        mm.set_matching[int, '<->', 'none'](...),
         {
-            "macro": am.macro_average(["precision", "recall", "f1", "f0.5", "f2"]),
-            "micro": am.micro_average(["precision", "recall", "f1", "f0.5", "f2"]),
+            "macro": mm.macro_average(["precision", "recall", "f1", "f0.5", "f2"]),
+            "micro": mm.micro_average(["precision", "recall", "f1", "f0.5", "f2"]),
         }
     )
     agg = mf.new()

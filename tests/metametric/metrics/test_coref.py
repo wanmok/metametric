@@ -1,9 +1,9 @@
 """Tests for coreference metrics."""
 from pytest import fixture, approx
 
-import autometric.core.dsl as am
-from autometric.structures.ie import Mention, Entity, EntitySet
-from autometric.metrics.coref import muc, b_cubed_precision, b_cubed_recall, ceaf_phi4, coref_suite
+import metametric.core.dsl as am
+from metametric.structures.ie import Mention, Entity, EntitySet
+from metametric.metrics.coref import muc, b_cubed_precision, b_cubed_recall, ceaf_phi4, coref_suite
 
 
 @fixture

@@ -6,8 +6,8 @@ from typing import (Any, Callable, Collection, Generic, Iterator, List,
 import numpy as np
 import scipy as sp
 
-from autometric.core.constraint import MatchingConstraint
-from autometric.core.metric import Variable
+from metametric.core.constraint import MatchingConstraint
+from metametric.core.metric import Variable
 
 T = TypeVar('T')
 
