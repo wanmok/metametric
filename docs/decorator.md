@@ -1,6 +1,6 @@
 # Decorator
 
-`autometric` provides a Python decorator (`@autometric`) for automatically deriving a metric given an arbitrary dataclass `D`. Practically speaking, this instantiates a new `Metric` object based on the dataclass definition and on the arguments passed to the decorator, and assigns this object to a new `metric` class attribute (or `latent_metric` if the class has latent variables). To compute the derived metric for a pair of objects `p` and `r` of type `D`, one then need only call `D.metric.score(p,r)`.
+`metametric` provides a Python decorator (`@metametric`) for automatically deriving a metric given an arbitrary dataclass `D`. Practically speaking, this instantiates a new `Metric` object based on the dataclass definition and on the arguments passed to the decorator, and assigns this object to a new `metric` class attribute (or `latent_metric` if the class has latent variables). To compute the derived metric for a pair of objects `p` and `r` of type `D`, one then need only call `D.metric.score(p,r)`.
 
 The decorator takes two parameters, `normalizer` and `constraint`, which we detail below. We also provide an example of its use.
 
@@ -31,14 +31,14 @@ Here, we show an example of how to use the decorator to automatically derive a m
 An event trigger is just a word or phrase (i.e. a *mention*) in a passage of text that evokes an event, like "kick" or "bombing", and that's associated with some event type. First, we'll define a dataclass for mentions:
 
 ```python
-@autometric(normalizer="none", constraint="<->")
+@metametric(normalizer="none", constraint="<->")
 @dataclass(eq=True, frozen=True)
 class Mention:
 	left: int  # left character offset of the mention (inclusive)
 	right: int # right character offset of the mention (inclusive)
 ```
 
-The dataclass just has two attributes &mdash; a left index and a right index &mdash; indicating the character offsets of the start and end of mention within the passage of text. (We assume here they are both inclusive, though they need not be.) Note that above the `dataclass` decorator, we have added the `autometric` decorator as well, using the default values for the `normalizer` and `constraint` parameters (we could just as well have written `@autometric()`, but have written out the defaults explicitly for clarity). As discussed [above](#decorator), this sets a new `metric` attribute on the `Mention` dataclass. In this case, it's just about the simplest metric you could have &mdash; an indicator function (or [Kronecker delta](https://en.wikipedia.org/wiki/Kronecker_delta)) that returns 1 iff two mentions have the same `left` and `right` offsets, and zero otherwise. Let's try it out:
+The dataclass just has two attributes &mdash; a left index and a right index &mdash; indicating the character offsets of the start and end of mention within the passage of text. (We assume here they are both inclusive, though they need not be.) Note that above the `dataclass` decorator, we have added the `metametric` decorator as well, using the default values for the `normalizer` and `constraint` parameters (we could just as well have written `@metametric()`, but have written out the defaults explicitly for clarity). As discussed [above](#decorator), this sets a new `metric` attribute on the `Mention` dataclass. In this case, it's just about the simplest metric you could have &mdash; an indicator function (or [Kronecker delta](https://en.wikipedia.org/wiki/Kronecker_delta)) that returns 1 iff two mentions have the same `left` and `right` offsets, and zero otherwise. Let's try it out:
 
 ```python
 m1 = Mention(1,2)
@@ -48,10 +48,10 @@ m3 = Mention(1,3)
 > Mention.metric.score(m1, m2) # returns 1.0, since m1 == m2
 > Mention.metric.score(m1, m3) # returns 0.0, since m1 != m3
 ```
-You might wonder why one would go to all this trouble for such simple functionality. The value of the `@autometric` decorator becomes more apparent when working with more complex dataclasses, where some fields may *themselves* be dataclasses. The `Trigger` dataclass, which is just an event-denoting `Mention` paired with its type, is an example of this:
+You might wonder why one would go to all this trouble for such simple functionality. The value of the `@metametric` decorator becomes more apparent when working with more complex dataclasses, where some fields may *themselves* be dataclasses. The `Trigger` dataclass, which is just an event-denoting `Mention` paired with its type, is an example of this:
 
 ```python
-@autometric(normalizer="none", constraint="<->")
+@metametric(normalizer="none", constraint="<->")
 @dataclass
 class Trigger:
 	mention: Mention
@@ -69,7 +69,7 @@ Trigger.metric.score(t1, t3) # returns 0.0, since m1 != m2 (though t1.type == t2
 ```
 Setting aside the problem of *argument extraction*, let's imagine that the output for our trigger extraction task is just a collection of `Trigger`s. We can define a final `dataclass` for storing these outputs:
 ```python
-@autometric(normalizer="f1", constraint="<->")
+@metametric(normalizer="f1", constraint="<->")
 @dataclass
 class TriggerExtractionOutput:
 	triggers: Collection[Trigger]

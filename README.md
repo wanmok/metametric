@@ -1,2 +1,2 @@
-# autometric
-This is the codebase of the paper "A Unified View of Evaluation Metrics for Information Extraction".
+# metametric
+This is the codebase for the paper "A Unified View of Evaluation Metrics for Information Extraction". See [docs](./docs/) for details.

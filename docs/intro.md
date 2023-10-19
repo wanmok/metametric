@@ -1,6 +1,6 @@
-# autometric
+# metametric
 
-The `autometric` Python package offers a set of tools for quickly and easily defining and implementing evaluation metrics for a variety of structured prediction tasks in natural language processing (NLP) based on the framework presented in the following paper:
+The `metametric` Python package offers a set of tools for quickly and easily defining and implementing evaluation metrics for a variety of structured prediction tasks in natural language processing (NLP) based on the framework presented in the following paper:
 
 > [A Unified View of Evaluation Metrics for Structured Prediction](/insert/link/here). Yunmo Chen, William Gantt, Tongfei Chen, Aaron Steven White, and Benjamin Van Durme. *EMNLP 2023*.
 
