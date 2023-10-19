@@ -28,7 +28,7 @@ def may_be_variable(cls: Any) -> bool:
 
 
 def dataclass_has_variable(cls: Type) -> bool:
-    """Check if a dataclass has a field is in `Variable` type."""
+    """Check if a dataclass has a field with `Variable` in its type signature."""
     if cls is Variable:
         return True
     if is_dataclass(cls):
