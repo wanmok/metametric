@@ -24,7 +24,7 @@ The `constraint` parameter specifies restrictions on the *matching* (i.e. the al
 - **Many-to-One** (`<-` or `*:1`): this specifies a (non-bijective) *partial function* from *reference* objects to *predicted* objects: each reference object can be aligned to *at most one* predicted object, but the same predicted object can potentially be aligned to *multiple* reference ones. (**N.B.**: while we provide support for this constraint, we aren't aware of actual metrics that impose it.)
 - **No Constraints** (`~` or `*:*`): this specifies a generic *relation*: each predicted object can be aligned to multiple reference objects, and vice-versa.
 
-## Example: Event Trigger $\rm F_1$
+## Example: Event Trigger F1
 
 Here, we show an example of how to use the decorator to automatically derive a metric for a dataclass &mdash; specifically, $\rm F_1$ (dice score), commonly used for event extraction.
 
