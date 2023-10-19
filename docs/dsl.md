@@ -37,8 +37,8 @@ Lastly, `metametric` provides several off-the-shelf implementations of common st
 
 ### Coreference Resolution
 
-We support three of the most widely used metrics for coreference resolution, including [$\text{MUC}$](https://aclanthology.org/M95-1005/) (`muc`), [$B^3$](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=ccdacc60d9d68dfc1f94e7c68bd56646c000e4ab) (`b_cubed_precision`, `b_cubed_recall`), [$\text{CEAF}_{\phi_4}$](https://aclanthology.org/H05-1004/) (`ceaf_phi4`), as well as a metric suite (`coref_suite`) that includes all of these, plus the commonly reported average of all three. These metrics can be imported from `metametric.metrics.coref`.
+We support three of the most widely used metrics for coreference resolution, including $\text{MUC}$ (`muc`; [paper](https://aclanthology.org/M95-1005/)), $B^3$ [`b_cubed_precision`, `b_cubed_recall`; [paper](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=ccdacc60d9d68dfc1f94e7c68bd56646c000e4ab)) and $\text{CEAF}_{\phi_4}$ (`ceaf_phi4`; [paper](https://aclanthology.org/H05-1004/)), as well as a metric suite (`coref_suite`) that includes all of these, plus the commonly reported average of all three. These metrics can be imported from `metametric.metrics.coref`.
 
 ### Semantic Parsing
 
-We support the standard [Smatch score](https://aclanthology.org/P13-2131/) (`s_match`) for semantic parsing &mdash; most commonly used for AMR parsing. `s_match` can be imported from `metametrics.metrics.semantic_parsing`.
+We support the standard Smatch score (`s_match`; [paper](https://aclanthology.org/P13-2131/)) for semantic parsing &mdash; most commonly used for AMR parsing. `s_match` can be imported from `metametrics.metrics.semantic_parsing`.
