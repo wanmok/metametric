@@ -3,8 +3,6 @@ name: Deploy Docs to Pages
 
 on:
   # Runs on pushes targeting the default branch
-  pull_request:
-    branches: [ "main" ]
   release:
     types: [ published ]
 
