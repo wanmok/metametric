@@ -1,7 +1,7 @@
 site_name: 'Metametric'
 site_description: 'A library to automatically derive metrics for structure prediction'
-site_author: 'Tongfei Chen, Yunmo Chen'
-copyright: 'Copyright &copy; 2023 Tongfei Chen, Yunmo Chen'
+site_author: 'Tongfei Chen, Yunmo Chen, William Ganttt'
+copyright: 'Copyright &copy; 2023 Tongfei Chen, Yunmo Chen, William Gantt'
 
 theme:
   name: 'material'
@@ -20,13 +20,23 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.highlight
   - pymdownx.tabbed
+  - pymdownx.arithmatex:
+      generic: true
 
 repo_name: 'wanmok/metametric'
 repo_url: 'https://github.com/wanmok/metametric'
 
 extra_css: []
 
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+
 nav:
-  - 'Introduction': 'intro.md'
   - 'Decorator': 'decorator.md'
   - 'DSL': 'dsl.md'
+  - 'Tasks':
+      - 'Information extraction': "ie.md"
+      - 'Semantic parsing': "semparse.md"

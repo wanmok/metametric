@@ -1,44 +1,46 @@
-## DSL for creating a metric
-
 ```python
 import metametric.core.dsl as mm
 ```
+#### Auto
+`mm.auto[X]` derives an automatic metric for type `X`. This is the default behavior of the `@metametric` decorator.
 
-## Data Structures
+#### Discrete similarity
+`mm.discrete[X]` constructs a discrete similarity metric for type `X`. That is, given that type `X` has method `__eq__`, 
+the metric returns 1.0 if two objects of type `X` are equal, and 0.0 otherwise.
 
-The `metametric` package includes a number of pre-defined data structures commonly used for various structured prediction tasks. These come equipped with their own identity-based metrics and can be used to quickly define new, more complex metrics. All such data structures be found in `metametric.structures`. Those currently supported are listed below:
+$$ \text{sim}(x, y) = \begin{cases} 1 & \text{if } x = y \\ 0 & \text{otherwise} \end{cases} $$
 
-### Information Extraction
+#### Custom similarity
+`mm.from_func(f)` constructs a metric from a function `f: Callable[[X, X], float]` that takes two arguments of the same type and returns a `float`.
 
-Information Extraction (IE) tasks employ a wide array of data structures. We support the following, all of which can be imported from `metametric.structures.ie`:
+$$ \text{sim}(x, y) = f(x, y) $$
 
-- `Mention`: A span of text, defined by its starting and ending indices (inclusive or exclusive) in a passage of text.
-- `Relation`: A typed binary relation between two `Mention`s.
-- `RelationSet`: A collection of `Relation`s.
-- `Trigger`: A typed, event-denoting `Mention`.
-- `Argument`: A typed, entity-denoting `Mention` that satisfies a certain `role` in an event.
-- `Entity`: An entity, represented as a collection of `Mention`s that refer to it.
-- `EntitySet`: A collection of `Entity`s.
-- `Membership`: A membership relation between a particular `Mention` and the `Entity` it refers to.
-- `Event`: A complete event, represented by a particular `Trigger` together with all of its `Argument`s.
-- `EventSet`: A collection of `Event`s.
+#### With preprocessing
+`mm.preprocess(g, M)` is a metric that first applies a preprocessing function `g: Callable[[X], Y]` to both arguments, and then applies a metric `f: Metric[Y]` to the results. 
+This is the contramap operation of the metric type.
 
-### Semantic Parsing
+$$ \text{sim}(x, y) = f(g(x), g(y)) $$
 
-We support two essential data structures for [Abstract Meaning Representation (AMR)](https://aclanthology.org/W13-2322/) parsing, which can be imported from `metametric.structures.amr`:
+#### Product (dataclass) similarity
+`mm.dataclass[X](M)` constructs a metric for a dataclass `X` by taking the product of the metrics for each of its fields defined in `M: Dict[str, Metric[Any]]`.
 
-- `Prop`: A proposition, expressing some relation (`pred`) between a subject (`subj`) and an object (`obj`)
-- `AMR`: A (rooted, directed, acyclic) AMR graph, represented as a collection of `Prop`s.
+$$ \text{sim}(x, y) = \prod_{(f, m_f) \in M} m_f(x.\!f, y.\!f) $$
 
+#### Sum (union) similarity
+`mm.union[X](M)` constructs a metric for a union type `X` by a dictionary of each case of the union defined in `M: Dict[type, Metric[Any]]`.
 
-## Metric Implementations
+$$ \text{sim}(x, y) = \sum_{(t, m_t) \in M} \mathbb{1}_{x \in t} \mathbb{1}_{y \in t} m_t(x, y) $$ 
 
-Lastly, `metametric` provides several off-the-shelf implementations of common structured prediction metrics. The currently supported implementations are listed below, and this list may be expanded in the future. All implementations can be found in `metametric.metrics`.
+#### Set matching similarity
+`mm.set_matching[X, ◇, N](f)` constructs a set matching metric between two objects of type `Set[X]`, 
+with $\diamond \in \{\leftrightarrow, \to, \leftarrow, \sim\}$ as the matching constraint, and `N` as the normalizer. 
 
-### Coreference Resolution
+$$ \Sigma^{\diamond}[f](x, y) = \max_{M^\diamond} \sum_{(u, v) \in M^\diamond} f(u, v) $$
 
-We support three of the most widely used metrics for coreference resolution, including $\text{MUC}$ (`muc`; [paper](https://aclanthology.org/M95-1005/)), $B^3$ [`b_cubed_precision`, `b_cubed_recall`; [paper](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=ccdacc60d9d68dfc1f94e7c68bd56646c000e4ab)) and $\text{CEAF}_{\phi_4}$ (`ceaf_phi4`; [paper](https://aclanthology.org/H05-1004/)), as well as a metric suite (`coref_suite`) that includes all of these, plus the commonly reported average of all three. These metrics can be imported from `metametric.metrics.coref`.
+$$ \textrm{sim}(x, y) = \mathsf{N}(\Sigma^{\diamond}[f](x, y)) $$
 
-### Semantic Parsing
+#### Latent set matching similarity
 
-We support the standard Smatch score (`s_match`; [paper](https://aclanthology.org/P13-2131/)) for semantic parsing &mdash; most commonly used for AMR parsing. `s_match` can be imported from `metametrics.metrics.semantic_parsing`.
+#### Sequence matching similarity
+
+#### Graph matching similarity

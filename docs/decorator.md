@@ -6,23 +6,27 @@ The decorator takes two parameters, `normalizer` and `constraint`, which we deta
 
 ## Normalizer
 The `normalizer` parameter specifies how the raw score computed by the metric should be normalized. As illustrated in the [paper](link) associated with this package, these normalizers can be understood in terms of the **overlap** ($\Sigma$) between a predicted set $P$ and a reference set $R$, where $P, R \subseteq X$ for some set of discrete elements $X$:
+
 $$\Sigma_\delta(P,R) = \lvert P \cap R \rvert$$
+
 where $\delta$ is the similarity function used for elements of $X$.
 
 Currently, the following choices are supported:
-- `none` (*default*): No normalization. This is the default and will not apply any normalization to the raw metric score.
-- `precision`: Standard precision, i.e., the overlap normalized by the size of the *predicted* set, $P$. Formally, $\mathrm{P}(P,R) = \frac{\lvert P \cap R \rvert}{\lvert P \rvert} = \frac{\Sigma_\delta(P,R)}{\Sigma_\delta(P,P)}$.
-- `recall`: Standard recall, i.e., the overlap normalized by the size of the *reference* set, $R$. Formally, $\mathrm{R}(P,R) = \frac{\lvert P \cap R \rvert}{\lvert R \rvert} = \frac{\Sigma_\delta(P,R)}{\Sigma_\delta(R,R)}$.
-- `jaccard`: The Jaccard similarity or *intersection-over-union*, i.e., the overlap of $P$ and $R$ normalized by their union. Formally, $\mathrm{J}(P,R) = \frac{\lvert P \cap R \rvert}{\lvert R \rvert} = \frac{\Sigma_\delta(P,R)}{\Sigma_\delta(R,R) + \Sigma_\delta(P,P) - \Sigma_\delta(P,R)}$.
-- `dice`: The *dice score* more commonly known as *$\rm F_1$ score*, i.e., $\frac{2 * \text{precision} * \text{recall}}{\text{precision} + \text{recall}}$.
-- `f{beta}`: $\rm F_\beta$ score, or generalized $\rm F$ score, where $\beta$ is a positive real number that indicates the relative weighting of precision vs. recall: $(1 + \beta^2) * \frac{\text{precision} * \text{recall}}{(\beta^2 * \text{precision}) + \text{recall}}$. Note that $\beta = 1$ recovers the dice score. Any positive float may be used for `{beta}`, e.g., `f0.5`, `f2`, etc.
+
+ - `none` (*default*): No normalization. This is the default and will not apply any normalization to the raw metric score.
+ - `precision`: Standard precision, i.e., the overlap normalized by the size of the *predicted* set, $P$. Formally, $\mathrm{P}(P,R) = \frac{\lvert P \cap R \rvert}{\lvert P \rvert} = \frac{\Sigma_\delta(P,R)}{\Sigma_\delta(P,P)}$.
+ - `recall`: Standard recall, i.e., the overlap normalized by the size of the *reference* set, $R$. Formally, $\mathrm{R}(P,R) = \frac{\lvert P \cap R \rvert}{\lvert R \rvert} = \frac{\Sigma_\delta(P,R)}{\Sigma_\delta(R,R)}$.
+ - `jaccard`: The Jaccard similarity or *intersection-over-union*, i.e., the overlap of $P$ and $R$ normalized by their union. Formally, $\mathrm{J}(P,R) = \frac{\lvert P \cap R \rvert}{\lvert R \rvert} = \frac{\Sigma_\delta(P,R)}{\Sigma_\delta(R,R) + \Sigma_\delta(P,P) - \Sigma_\delta(P,R)}$.
+ - `dice`: The *dice score* more commonly known as *$\rm F_1$ score*, i.e., $\frac{2 * \text{precision} * \text{recall}}{\text{precision} + \text{recall}}$.
+ - `f{beta}`: $\rm F_\beta$ score, or generalized $\rm F$ score, where $\beta$ is a positive real number that indicates the relative weighting of precision vs. recall: $(1 + \beta^2) * \frac{\text{precision} * \text{recall}}{(\beta^2 * \text{precision}) + \text{recall}}$. Note that $\beta = 1$ recovers the dice score. Any positive float may be used for `{beta}`, e.g., `f0.5`, `f2`, etc.
 
 ## Constraint
 The `constraint` parameter specifies restrictions on the *matching* (i.e. the alignment) between predicted and reference objects of the dataclass's type. The following choices are supported; each choice can be written one of two ways:
-- **One-to-One** (`<->` or `1:1`; *default*): this specifies a *partial bijection* constraint: each predicted object can be aligned to *at most one* reference object, and vice-versa. The overwhelming majority of metrics impose this constraint, and so it is the default option.
-- **One-to-Many** (`->` or `1:*`): this specifies a (non-bijective) *partial function* from *predicted* objects to *reference* objects: each predicted object can be aligned to *at most one* reference object, but the same reference object can potentially be aligned to *multiple* predicted ones.
-- **Many-to-One** (`<-` or `*:1`): this specifies a (non-bijective) *partial function* from *reference* objects to *predicted* objects: each reference object can be aligned to *at most one* predicted object, but the same predicted object can potentially be aligned to *multiple* reference ones. (**N.B.**: while we provide support for this constraint, we aren't aware of actual metrics that impose it.)
-- **No Constraints** (`~` or `*:*`): this specifies a generic *relation*: each predicted object can be aligned to multiple reference objects, and vice-versa.
+
+ - **One-to-One** (`<->` or `1:1`; *default*): this specifies a *partial bijection* constraint: each predicted object can be aligned to *at most one* reference object, and vice-versa. The overwhelming majority of metrics impose this constraint, and so it is the default option.
+ - **One-to-Many** (`->` or `1:*`): this specifies a (non-bijective) *partial function* from *predicted* objects to *reference* objects: each predicted object can be aligned to *at most one* reference object, but the same reference object can potentially be aligned to *multiple* predicted ones.
+ - **Many-to-One** (`<-` or `*:1`): this specifies a (non-bijective) *partial function* from *reference* objects to *predicted* objects: each reference object can be aligned to *at most one* predicted object, but the same predicted object can potentially be aligned to *multiple* reference ones. (**N.B.**: while we provide support for this constraint, we aren't aware of actual metrics that impose it.)
+ - **No Constraints** (`~` or `*:*`): this specifies a generic *relation*: each predicted object can be aligned to multiple reference objects, and vice-versa.
 
 ## Example: Event Trigger F1
 
