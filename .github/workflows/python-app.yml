@@ -44,3 +44,14 @@ jobs:
     - name: Test with pytest
       run: |
         poetry run pytest
+    - name: Doc Cache
+      uses: actions/cache@v3
+      with:
+        key: mkdocs-cards-${{ github.ref }}-v1
+        path: .cache
+    - name: Build Docs
+      run: poetry run mkdocs build
+    - uses: actions/upload-artifact@v3
+      with:
+        name: docs-site
+        path: ./site/**
