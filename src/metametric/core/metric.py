@@ -34,7 +34,7 @@ class Metric(Generic[T]):
         return np.array([[self.score(x, y) for y in ys] for x in xs])
 
     def contramap(self, f: Callable[[S], T]) -> "Metric[S]":
-        """Returns a new metric by first preprocess the objects by a given function."""
+        """Returns a new metric by first preprocessing the objects by a given function."""
         return ContramappedMetric(self, f)
 
     @staticmethod
