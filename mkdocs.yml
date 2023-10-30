@@ -14,6 +14,16 @@ theme:
   icon:
     logo: material/chart-arc
 
+plugins:
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: false
+            show_root_heading: true
+            heading_level: 3
+
 markdown_extensions:
   - toc:
       permalink: true
@@ -41,3 +51,8 @@ nav:
   - 'Tasks':
       - 'Information extraction': "ie.md"
       - 'Semantic parsing': "semparse.md"
+  - 'API Reference':
+      - 'Metric': 'api/metric.md'
+      - 'Metric suites': 'api/suite.md'
+      - 'DSL': 'api/dsl.md'
+

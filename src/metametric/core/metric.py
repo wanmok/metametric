@@ -14,15 +14,21 @@ U = TypeVar("U")
 
 
 class Metric(Generic[T]):
-    """Metric interface."""
+    r"""The basic metric interface.
+
+    Here a *metric* is defined as a function $\phi: T \times T \to \mathbb{R}_{\ge 0}$ that takes two objects and
+    returns a non-negative number that quantifies their similarity.
+    It follows the common usage in machine learning and NLP literature, as in the phrase "evaluation metrics".
+    This is *not* the metric in the mathematical sense, where it is a generalization of *distances*.
+    """
 
     @abstractmethod
     def score(self, x: T, y: T) -> float:
-        """Score two objects."""
+        r"""Scores two objects using this metric: $\phi(x, y)$."""
         raise NotImplementedError()
 
     def score_self(self, x: T) -> float:
-        """Scores an object against itself.
+        r"""Scores an object against itself: $\phi(x, x)$.
 
         In many cases there is a faster way to compute this than the general pair case.
         In such cases, please override this function.
@@ -30,16 +36,36 @@ class Metric(Generic[T]):
         return self.score(x, x)
 
     def gram_matrix(self, xs: Collection[T], ys: Collection[T]) -> np.ndarray:
-        """Compute the gram matrix of the metric."""
+        r"""Computes the Gram matrix of the metric given two collections of objects.
+
+        Args:
+            xs: A collection of objects $\{x_1, \ldots, x_n\}$.
+            ys: A collection of objects $\{y_1, \ldots, y_m\}$.
+
+        Returns:
+            A Gram matrix $G$ where $G = \begin{bmatrix} \phi(x_1, y_1) & \cdots & \phi(x_1, y_m) \\
+                                \vdots & \ddots & \vdots \\
+                                \phi(x_n, y_1) & \cdots & \phi(x_n, y_m) \end{bmatrix}$.
+        """
         return np.array([[self.score(x, y) for y in ys] for x in xs])
 
     def contramap(self, f: Callable[[S], T]) -> "Metric[S]":
-        """Returns a new metric by first preprocessing the objects by a given function."""
+        r"""Returns a new metric $\phi^\prime$ by first preprocessing the objects by a given function $f: S \to T$.
+
+        \[ \phi^\prime(x, y) = \phi(f(x), f(y)) \]
+
+        Args:
+            f: A preprocessing function.
+
+        Returns:
+            A new metric $\phi^\prime$.
+
+        """
         return ContramappedMetric(self, f)
 
     @staticmethod
     def from_function(f: Callable[[T, T], float]) -> "Metric[T]":
-        """Create a metric from a function.
+        r"""Create a metric from a function $f: T \times T \to \mathbb{R}_{\ge 0}$.
 
         Args:
             f (`Callable[[T, T], float]`):

@@ -219,52 +219,40 @@ class _Normalize:
         if isinstance(normalizer, str):
             normalizer_obj = Normalizer.from_str(normalizer)
 
-        def normalize(metric: Metric[T]) -> Metric[T]:
+        def _normalize(metric: Metric[T]) -> Metric[T]:
             return metric if normalizer_obj is None else NormalizedMetric(metric, normalizer_obj)
 
-        return normalize
+        return _normalize
 
 
 normalize = _Normalize()
 
 
-class _MacroAverage:
-    def __call__(self, normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
-        normalizer_objs = [
-            Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer
-            for normalizer in normalizers
-        ]
-        return MacroAverage(normalizer_objs)
+def macro_average(normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
+    """Macro-average reduction."""
+    normalizer_objs = [
+        Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer
+        for normalizer in normalizers
+    ]
+    return MacroAverage(normalizer_objs)
 
 
-macro_average = _MacroAverage()
+def micro_average(normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
+    """Micro-average reduction."""
+    normalizer_objs = [
+        Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer
+        for normalizer in normalizers
+    ]
+    return MicroAverage(normalizer_objs)
 
 
-class _MicroAverage:
-    def __call__(self, normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
-        normalizer_objs = [
-            Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer
-            for normalizer in normalizers
-        ]
-        return MicroAverage(normalizer_objs)
+def family(metric: Metric[T], reduction: Union[Reduction, Dict[str, Reduction]]) -> MetricFamily[T]:
+    """Creates a metric family."""
+    if isinstance(reduction, dict):
+        reduction = MultipleReductions(reduction)
+    return MetricFamily(metric, reduction)
 
 
-micro_average = _MicroAverage()
-
-
-class _Family:
-    def __call__(self, metric: Metric[T], reduction: Union[Reduction, Dict[str, Reduction]]) -> MetricFamily[T]:
-        if isinstance(reduction, dict):
-            reduction = MultipleReductions(reduction)
-        return MetricFamily(metric, reduction)
-
-
-family = _Family()
-
-
-class _Suite:
-    def __call__(self, collection: Dict[str, MetricSuite[T]]) -> MetricSuite[T]:
-        return MultipleMetricFamilies(collection)
-
-
-suite = _Suite()
+def suite(collection: Dict[str, MetricSuite[T]]) -> MetricSuite[T]:
+    """Creates a metric suite."""
+    return MultipleMetricFamilies(collection)
