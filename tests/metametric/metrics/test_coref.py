@@ -1,7 +1,7 @@
 """Tests for coreference metrics."""
 from pytest import fixture, approx
 
-import metametric.core.dsl as am
+import metametric.dsl as mm
 from metametric.structures.ie import Mention, Entity, EntitySet
 from metametric.metrics.coref import muc, b_cubed_precision, b_cubed_recall, ceaf_phi4, coref_suite
 
@@ -38,8 +38,8 @@ def data():
 def test_muc(data):
     """MUC metric."""
     pred, ref = data
-    muc_precision = am.normalize["precision"](muc)
-    muc_recall = am.normalize["recall"](muc)
+    muc_precision = mm.normalize["precision"](muc)
+    muc_recall = mm.normalize["recall"](muc)
     assert muc_precision.score(pred, ref) == approx(0.40, abs=0.01)
     assert muc_recall.score(pred, ref) == approx(0.40, abs=0.01)
 
@@ -54,8 +54,8 @@ def test_b_cubed(data):
 def test_ceaf_phi4(data):
     """CEAF phi4 metric."""
     pred, ref = data
-    ceaf_phi4_precision = am.normalize["precision"](ceaf_phi4)
-    ceaf_phi4_recall = am.normalize["recall"](ceaf_phi4)
+    ceaf_phi4_precision = mm.normalize["precision"](ceaf_phi4)
+    ceaf_phi4_recall = mm.normalize["recall"](ceaf_phi4)
     assert ceaf_phi4_precision.score(pred, ref) == approx(0.43, abs=0.01)
     assert ceaf_phi4_recall.score(pred, ref) == approx(0.65, abs=0.01)
 

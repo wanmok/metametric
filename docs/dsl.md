@@ -1,5 +1,5 @@
 ```python
-import metametric.core.dsl as mm
+import metametric.dsl as mm
 ```
 #### Auto
 `mm.auto[X]` derives an automatic metric for type `X`. This is the default behavior of the `@metametric` decorator.

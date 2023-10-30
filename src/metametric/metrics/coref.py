@@ -1,7 +1,7 @@
 """Metric suite definitions for coreference resolution."""
 from typing import Collection
 
-import metametric.core.dsl as mm
+import metametric.dsl as mm
 from metametric.core.metric import Metric
 from metametric.structures.ie import Entity, EntitySet, Membership, Mention
 
