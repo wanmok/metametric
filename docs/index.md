@@ -19,7 +19,75 @@ To install, run:
 pip install metametric
 ```
 
-If you use this codebase in your work, please cite the following paper:
+# Quickstart
+
+## Scoring a Pair of Objects
+
+`metametric` comes with a set of prebuilt metrics for common structured prediction tasks. For example, to compute the
+standard evaluation metrics for coreference resolution, one has to report three metrics, namely
+$\text{MUC}$ (`muc`; [paper](https://aclanthology.org/M95-1005/)),
+$B^3$ [`b_cubed_precision`, `b_cubed_recall`; [paper](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=ccdacc60d9d68dfc1f94e7c68bd56646c000e4ab))
+and $\text{CEAF}_{\phi_4}$ (`ceaf_phi4`; [paper](https://aclanthology.org/H05-1004/)). To compute these metrics for a
+pair of predicted and reference coreference clusters, one can simply do:
+
+<div class="code-typing">
+
+```python
+from metametric.structures.ie import Mention, Entity, EntitySet
+from metametric.metrics.coref import coref_suite
+
+scorer = coref_suite.new()
+for p, r in zip(predicted_entities, reference_entities):
+    scorer.update_single(p, r)
+
+metrics = scorer.compute()
+
+>> {"muc-f1": 0.4, "b_cubed-f1": 0.45, "ceaf_phi4-f1": 0.52, "avg-f1": 0.46, ...}
+
+```
+
+</div>
+
+## Defining a Metric
+
+If you want to implement a new metric based on structure (and substructure) matching, you can simply leverage the
+built-in matching algorithms by **just focusing on the structure of interests**. For example, if you want to implement
+`s_match` for the [Abstract Meaning Representation (AMR)](https://aclanthology.org/W13-2322/) parsing task, what you have to do is to write down its structures (i.e., `Prop` and `AMR`), and then define the matching between them:
+
+<div class="code-typing">
+
+```python
+# Define structures
+@metametric()
+@dataclass(eq=True, frozen=True)
+class Prop:
+    """A Proposition in an AMR."""
+
+    subj: Variable
+    pred: str
+    obj: Union[Variable, str]
+
+
+@metametric()
+@dataclass
+class AMR:
+    """Abstract Meaning Representation (AMR) structure."""
+
+    props: Collection[Prop]
+    
+
+# Let metametric derives for you!
+s_match = mm.normalize["f1"](mm.auto[AMR])
+
+# `s_match` is now the scorer for you to use :-)
+
+```
+
+</div>
+
+# Citation
+
+If you use this codebase (package) in your work, please cite the following paper:
 
 ```tex
 @inproceedings{metametric,

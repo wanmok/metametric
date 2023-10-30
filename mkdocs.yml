@@ -36,13 +36,19 @@ markdown_extensions:
 repo_name: 'wanmok/metametric'
 repo_url: 'https://github.com/wanmok/metametric'
 
-extra_css: [ ]
+extra_css:
+  - css/termynal.css
+  - css/termynal-customs.css
 
 extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js
+  - https://unpkg.com/typeit@8.7.1/dist/index.umd.js
   - javascripts/mathjax.js
+  - javascripts/termynal.js
+  - javascripts/termynal-customs.js
+  - javascripts/typeit-code.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
-
 
 nav:
   - 'Introduction': 'index.md'
