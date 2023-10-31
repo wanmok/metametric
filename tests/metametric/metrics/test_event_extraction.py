@@ -1,3 +1,4 @@
+"""Tests for event extraction metrics."""
 from pytest import fixture, approx
 
 
@@ -55,6 +56,7 @@ def data():
 
 
 def test_event_extraction(data):
+    """Event extraction metrics."""
     pred, ref = data
     agg = event_extraction_suite.new()
     agg.update_single(pred, ref)
