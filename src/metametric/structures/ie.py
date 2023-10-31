@@ -45,6 +45,7 @@ class Relation:
 
 
 @metametric()
+@dataclass
 class Trigger:
     """A trigger mention commonly used in event extraction.
 
@@ -58,6 +59,7 @@ class Trigger:
 
 
 @metametric()
+@dataclass
 class Argument:
     """An argument mention commonly used in event extraction.
 

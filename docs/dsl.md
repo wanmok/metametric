@@ -52,6 +52,12 @@ $$ \Sigma^{\diamond}[f](x, y) = \max_{M^\diamond} \sum_{(u, v) \in M^\diamond} f
 $$ \textrm{sim}(x, y) = \mathsf{N}(\Sigma^{\diamond}[f](x, y)) $$
 
 #### Latent set matching similarity
+`mm.latet_set_matching[X, ◇, N](f)` constructs a latent set matching metric between two objects of type `Set[X]` where `X` has `Variable`s.
+
+\[ \Sigma(X, Y) = \max_{M^{\leftrightarrow}_V, M^\diamond} \sum_{(u, v) \in M^\diamond} \phi_T(u, v) \]
+
+where $M^\diamond$ is a matching between $X$ and $Y$ according to the specified matching constraint, and
+$M^\leftrightarrow_V$ is a one-to-one matching between the variables in $X$ and $Y$.
 
 `mm.latet_set_matching[X, ◇, N](f)` constructs a latent set matching metric between two objects of type `Set[X]`
 where `X` has `Variable`s.
