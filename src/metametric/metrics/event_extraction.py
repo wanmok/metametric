@@ -1,6 +1,7 @@
+"""Contains metrics for event extraction."""
 import metametric.dsl as mm
 
-from metametric.structures.ie import Mention, Event, EventSet, Trigger, Argument
+from metametric.structures.ie import Event, EventSet, Trigger, Argument
 
 trigger_identification = mm.dataclass[EventSet]({
     "events": mm.set_matching[Event, '<->'](
