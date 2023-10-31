@@ -23,7 +23,7 @@ $$ \text{sim}(x, y) = f(x, y) $$
 #### With preprocessing
 
 `mm.preprocess(g, M)` is a metric that first applies a preprocessing function `g: Callable[[X], Y]` to both arguments,
-and then applies a metric `f: Metric[Y]` to the results.
+then applies a metric `f: Metric[Y]` to the results.
 This is the contramap operation of the metric type.
 
 $$ \text{sim}(x, y) = f(g(x), g(y)) $$
@@ -51,6 +51,8 @@ $$ \Sigma^{\diamond}[f](x, y) = \max_{M^\diamond} \sum_{(u, v) \in M^\diamond} f
 
 $$ \textrm{sim}(x, y) = \mathsf{N}(\Sigma^{\diamond}[f](x, y)) $$
 
+See [here](https://metametric.omnuy.me/decorator/#constraint) for a description of matching constraints.
+
 #### Latent set matching similarity
 `mm.latet_set_matching[X, ◇, N](f)` constructs a latent set matching metric between two objects of type `Set[X]` where `X` has `Variable`s.
 
@@ -69,4 +71,8 @@ $M^\leftrightarrow_V$ is a one-to-one matching between the variables in $X$ and 
 
 #### Sequence matching similarity
 
+Coming soon!
+
 #### Graph matching similarity
+
+Coming soon!

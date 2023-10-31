@@ -23,12 +23,11 @@ pip install metametric
 
 ## Scoring a Pair of Objects
 
-`metametric` comes with a set of prebuilt metrics for common structured prediction tasks. For example, to compute the
-standard evaluation metrics for coreference resolution, one has to report three metrics, namely
+`metametric` comes with a set of prebuilt metrics for common structured prediction tasks. For example, to compute the standard suite of evaluation metrics for coreference resolution &mdash;
 $\text{MUC}$ (`muc`; [paper](https://aclanthology.org/M95-1005/)),
 $B^3$ [`b_cubed_precision`, `b_cubed_recall`; [paper](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=ccdacc60d9d68dfc1f94e7c68bd56646c000e4ab))
-and $\text{CEAF}_{\phi_4}$ (`ceaf_phi4`; [paper](https://aclanthology.org/H05-1004/)). To compute these metrics for a
-pair of predicted and reference coreference clusters, one can simply do:
+and $\text{CEAF}_{\phi_4}$ (`ceaf_phi4`; [paper](https://aclanthology.org/H05-1004/))
+&mdash; on a pair of predicted and reference coreference clusters, one can simply do:
 
 <div class="code-typing">
 
@@ -50,9 +49,9 @@ metrics = scorer.compute()
 
 ## Defining a Metric
 
-If you want to implement a new metric based on structure (and substructure) matching, you can simply leverage the
-built-in matching algorithms by **just focusing on the structure of interests**. For example, if you want to implement
-`s_match` for the [Abstract Meaning Representation (AMR)](https://aclanthology.org/W13-2322/) parsing task, what you have to do is to write down its structures (i.e., `Prop` and `AMR`), and then define the matching between them:
+If you want to implement a *new* metric based on structure (and substructure) matching, you can leverage the
+built-in matching algorithms and **just focus on the structure of interests**. For example, if you want to implement
+`s_match` for [Abstract Meaning Representation (AMR)](https://aclanthology.org/W13-2322/) parsing, you need only define dataclasses for the relevant structures (here, `Prop` for AMR propositions and `AMR` for AMR graphs), and then define the matching between them:
 
 <div class="code-typing">
 
@@ -76,10 +75,10 @@ class AMR:
     props: Collection[Prop]
     
 
-# Let metametric derives for you!
+# Let metametric derive Smatch for you!
 s_match = mm.normalize["f1"](mm.auto[AMR])
 
-# `s_match` is now the scorer for you to use :-)
+# `s_match` is now ready to use on any pair of `AMR` graphs!
 
 ```
 
