@@ -141,5 +141,5 @@ def metametric(
 
     if cls is None:  # called with parentheses
         return class_decorator
-    else:  # called with args
+    else:  # called without parentheses
         return class_decorator(cls)
