@@ -1,7 +1,7 @@
 """Decorator for deriving metrics from dataclasses."""
 from dataclasses import fields, is_dataclass
 from typing import (Annotated, Any, Callable, Collection, Literal, Type,
-                    TypeVar, Union, get_args, get_origin)
+                    TypeVar, Union, get_args, get_origin, Optional)
 
 from metametric.core.matching import (MatchingConstraint,
                                       LatentSetMatchingMetric,
@@ -100,12 +100,15 @@ def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:
 
 
 def metametric(
+    cls: Optional[Type] = None,
+    /,
     normalizer: Union[NormalizerLiteral, Normalizer] = "none",
     constraint: Union[ConstraintLiteral, MatchingConstraint] = "<->",
 ) -> Callable[[Type], Type]:
     """Decorate a dataclass to have corresponding metric derived.
 
     Args:
+        cls (`Type`, optional): The class to decorate.
         normalizer (`Union[NormalizerLiteral, Normalizer]`, defaults to "none"):
             The normalizer to use.
         constraint (`ConstraintLiteral`, defaults to "<->"):
@@ -136,4 +139,7 @@ def metametric(
             setattr(cls, "metric", normalized_metric)  # type: ignore
         return cls
 
-    return class_decorator
+    if cls is None:  # called with parentheses
+        return class_decorator
+    else:  # called with args
+        return class_decorator(cls)
