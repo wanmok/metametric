@@ -9,8 +9,8 @@ theme:
     primary: navy
     accent: blue
   font:
-    text: 'Source Sans Pro'
-    code: 'Source Code Pro'
+    text: 'Inter'
+    code: 'Noto Sans Mono'
   icon:
     logo: material/chart-arc
 
