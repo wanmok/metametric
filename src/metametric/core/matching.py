@@ -22,12 +22,12 @@ class SetMatchingMetric(Metric[Collection[T]]):
 
     def score(self, x: Collection[T], y: Collection[T]) -> float:
         """Score two sets of objects."""
-        if isinstance(self.inner, DiscreteMetric) and self.constraint == MatchingConstraint.ONE_TO_ONE:
-            return len(set(x) & set(y))
-        elif not x and not y:
+        if not x and not y:
            return 1.0
         elif not x or not y:
            return 0.0
+        elif isinstance(self.inner, DiscreteMetric) and self.constraint == MatchingConstraint.ONE_TO_ONE:
+            return len(set(x) & set(y))
         else:
             m = self.inner.gram_matrix(x, y)
             if self.constraint == MatchingConstraint.ONE_TO_ONE:
