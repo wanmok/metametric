@@ -42,7 +42,7 @@ repository = "https://github.com/wanmok/metametric"
 packages = [{ include = "metametric", from = "src" }]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.9"
 scipy = "^1.11.2"
 numpy = "^1.25.2"
 torchmetrics = { version = "^1.1.2", optional = true }
