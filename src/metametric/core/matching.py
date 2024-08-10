@@ -22,10 +22,12 @@ class SetMatchingMetric(Metric[Collection[T]]):
 
     def score(self, x: Collection[T], y: Collection[T]) -> float:
         """Score two sets of objects."""
-        if not x and not y:
-           return 1.0
-        elif not x or not y:
-           return 0.0
+        x_is_empty = len(x) == 0
+        y_is_empty = len(y) == 0
+        if x_is_empty and y_is_empty:
+            return 1.0
+        elif x_is_empty or y_is_empty:
+            return 0.0
         elif isinstance(self.inner, DiscreteMetric) and self.constraint == MatchingConstraint.ONE_TO_ONE:
             return len(set(x) & set(y))
         else:
@@ -46,7 +48,7 @@ class SetMatchingMetric(Metric[Collection[T]]):
 
     def score_self(self, x: Collection[T]) -> float:
         """Score a set of objects with itself."""
-        if not x:
+        if len(x) == 0:
             return 1.0
         elif self.constraint == MatchingConstraint.MANY_TO_MANY:
             return self.inner.gram_matrix(x, x).sum()
@@ -77,8 +79,7 @@ class SequenceMatchingMetric(Metric[Sequence[T]]):
                     elif self.constraint == MatchingConstraint.MANY_TO_ONE:
                         f[i, j] = max(f[i, j], f[i - 1, j] + m[i - 1, j - 1])
                     elif self.constraint == MatchingConstraint.MANY_TO_MANY:
-                        f[i, j] = max(f[i, j], f[i, j - 1] + m[i - 1, j - 1],
-                                      f[i - 1, j] + m[i - 1, j - 1])
+                        f[i, j] = max(f[i, j], f[i, j - 1] + m[i - 1, j - 1], f[i - 1, j] + m[i - 1, j - 1])
         return f[-1, -1].item()
 
     def score_self(self, x: Sequence[T]) -> float:
@@ -90,6 +91,7 @@ class SequenceMatchingMetric(Metric[Sequence[T]]):
 
 class GraphMatchingMetric(Metric[Graph[T]]):
     """A metric derived from the matching of two graphs (including trees, DAGs, and general graphs)."""
+
     def __init__(self, inner: Metric[T], constraint: Union[str, MatchingConstraint] = MatchingConstraint.ONE_TO_ONE):
         self.inner = inner
         self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
@@ -111,10 +113,10 @@ class LatentSetMatchingMetric(Metric[Collection[T]]):
     """A metric derived to support matching latent variables defined in structures."""
 
     def __init__(
-            self,
-            cls: Type[T],
-            inner: Metric[T],
-            constraint: Union[str, MatchingConstraint] = MatchingConstraint.ONE_TO_ONE
+        self,
+        cls: Type[T],
+        inner: Metric[T],
+        constraint: Union[str, MatchingConstraint] = MatchingConstraint.ONE_TO_ONE,
     ):
         if is_dataclass(cls):
             self.cls = cls
@@ -127,6 +129,15 @@ class LatentSetMatchingMetric(Metric[Collection[T]]):
         """Score two collections of objects."""
         x = list(x)
         y = list(y)
+
+        x_is_empty = len(x) == 0
+        y_is_empty = len(y) == 0
+
+        if x_is_empty and y_is_empty:
+            return 1.0
+        elif x_is_empty or y_is_empty:
+            return 0.0
+
         gram_matrix = self.inner.gram_matrix(x, y)
         problem = MatchingProblem(x, y, gram_matrix, has_vars=True)
         problem.add_matching_constraint(self.constraint)
@@ -137,4 +148,3 @@ class LatentSetMatchingMetric(Metric[Collection[T]]):
     def score_self(self, x: Collection[T]) -> float:
         """Score a collection of objects with itself."""
         return SetMatchingMetric(self.inner, self.constraint).score_self(x)
-
