@@ -2,6 +2,7 @@
 from pytest import approx
 
 from metametric import Variable
+from metametric.core.hook import Hooks, Hook
 from metametric.structures.amr import AMR, Prop
 from metametric.metrics.semantic_parsing import s_match
 
@@ -29,4 +30,9 @@ def test_smatch():
         ]
     )
 
-    assert s_match.score(amr1, amr2) == approx(0.73, abs=0.01)
+    hooks = Hooks.from_dict(
+        {
+            "props": Hook(lambda x, y, p, s: print(x, y, p, s))
+        }
+    )
+    assert s_match.score(amr1, amr2, hooks) == approx(0.73, abs=0.01)

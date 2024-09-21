@@ -37,7 +37,6 @@ def dataclass_has_variable(cls: Type) -> bool:
     return False
 
 
-
 def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:
     """Derive a unified metric from any type.
 

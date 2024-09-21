@@ -4,9 +4,11 @@ from dataclasses import dataclass, is_dataclass
 from functools import reduce
 from operator import mul
 from typing import (Callable, ClassVar, Collection, Dict, Generic, Protocol,
-                    Type, TypeVar, Union, get_origin, runtime_checkable)
+                    Type, TypeVar, Union, get_origin, runtime_checkable, Sequence)
 
 import numpy as np
+
+from metametric.core.hook import Hooks
 
 S = TypeVar("S", contravariant=True)
 T = TypeVar("T", contravariant=True)
@@ -23,7 +25,7 @@ class Metric(Generic[T]):
     """
 
     @abstractmethod
-    def score(self, x: T, y: T) -> float:
+    def score(self, x: T, y: T, hooks: Hooks | None = None) -> float:
         r"""Scores two objects using this metric: $\phi(x, y)$."""
         raise NotImplementedError()
 
@@ -35,7 +37,7 @@ class Metric(Generic[T]):
         """
         return self.score(x, x)
 
-    def gram_matrix(self, xs: Collection[T], ys: Collection[T]) -> np.ndarray:
+    def gram_matrix(self, xs: Sequence[T], ys: Sequence[T]) -> np.ndarray:
         r"""Computes the Gram matrix of the metric given two collections of objects.
 
         Args:
@@ -84,7 +86,7 @@ class MetricFromFunction(Metric[T]):
     def __init__(self, f: Callable[[T, T], float]):
         self.f = f
 
-    def score(self, x: T, y: T) -> float:
+    def score(self, x: T, y: T, hooks: Hooks | None = None) -> float:
         """Score two objects."""
         return self.f(x, y)
 
@@ -96,9 +98,9 @@ class ContramappedMetric(Metric[S]):
         self.inner = inner
         self.f = f
 
-    def score(self, x: S, y: S) -> float:
+    def score(self, x: S, y: S, hooks: Hooks | None = None) -> float:
         """Score two objects."""
-        return self.inner.score(self.f(x), self.f(y))
+        return self.inner.score(self.f(x), self.f(y), hooks)
 
     def score_self(self, x: S) -> float:
         """Scores an object against itself."""
@@ -112,9 +114,13 @@ class DiscreteMetric(Metric[T]):
         if getattr(cls, "__eq__", None) is None:
             raise ValueError("Class must implement __eq__")
 
-    def score(self, x: T, y: T) -> float:
+    def score(self, x: T, y: T, hooks: Hooks | None = None) -> float:
         """Score two objects."""
-        return float(x == y)
+        if x == y:
+            if hooks:
+                hooks.on_match(x, y, 1.0)
+            return 1.0
+        return 0.0
 
     def score_self(self, x: T) -> float:
         """Scores an object against itself."""
@@ -129,11 +135,22 @@ class ProductMetric(Metric[T]):
             raise ValueError(f"{cls} has to be a dataclass.")
         self.field_metrics = field_metrics
 
-    def score(self, x: T, y: T) -> float:
+    def score(self, x: T, y: T, hooks: Hooks | None = None) -> float:
         """Score two objects."""
-        return reduce(
-            mul, (self.field_metrics[fld].score(getattr(x, fld), getattr(y, fld)) for fld in self.field_metrics.keys())
+        s = reduce(
+            mul,
+            (
+                self.field_metrics[fld].score(
+                    getattr(x, fld),
+                    getattr(y, fld),
+                    None if hooks is None else hooks.advance(fld)
+                )
+                for fld in self.field_metrics.keys()
+            )
         )
+        if hooks is not None:
+            hooks.on_match(x, y, s)
+        return s
 
 
 class UnionMetric(Metric[T]):
@@ -144,13 +161,16 @@ class UnionMetric(Metric[T]):
             raise ValueError(f"{cls} has to be a union.")
         self.case_metrics = case_metrics
 
-    def score(self, x: T, y: T) -> float:
+    def score(self, x: T, y: T, hooks: Hooks | None = None) -> float:
         """Score two objects."""
         x_type = type(x)
         y_type = type(y)
         if x_type != y_type:
             return 0.0
-        return self.case_metrics[x_type].score(x, y)
+        s = self.case_metrics[x_type].score(x, y, hooks)
+        if hooks is not None:
+            hooks.on_match(x, y, s)
+        return s
 
     def score_self(self, x: T) -> float:
         """Scores an object against itself."""

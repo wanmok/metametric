@@ -143,10 +143,10 @@ union = _Union()
 
 
 class _SetMatching:
-    def __getitem__(self, config: DslConfig[T]) -> Callable[[Union[Ell, Metric[T]]], Metric[Collection[T]]]:
+    def __getitem__(self, config: DslConfig[T]) -> Callable[[Union[Ell, Metric[T]]], Metric[T]]:
         cfg = _Config.standardize(config)
 
-        def matching_metric(inner: Union[Ell, Metric[T]]) -> Metric[Collection[T]]:
+        def matching_metric(inner: Union[Ell, Metric[T]]) -> Metric[T]:
             if inner is ...:
                 inner = auto[cfg.cls, cfg.constraint]
             match = SetMatchingMetric(inner, constraint=cfg.constraint)

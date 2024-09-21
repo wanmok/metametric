@@ -7,6 +7,7 @@ import numpy as np
 import scipy as sp
 
 from metametric.core.constraint import MatchingConstraint
+from metametric.core.problem import MatchingProblem, Matching
 from metametric.core.metric import Variable
 
 T = TypeVar('T')
@@ -152,7 +153,7 @@ class LatentVariableConstraintBuilder(ConstraintBuilder, Generic[T]):
         )
 
 
-class MatchingProblem(Generic[T]):
+class ILPMatchingProblem(MatchingProblem[T]):
     """Creates a matching problem that is solved by ILP.
 
     The constrained ILP problem has variables
@@ -166,11 +167,9 @@ class MatchingProblem(Generic[T]):
             gram_matrix: np.ndarray,
             has_vars: bool = False,
     ):
-        self.x = x
-        self.y = y
+        super().__init__(x, y, gram_matrix)
         self.n_x = len(x)
         self.n_y = len(y)
-        self.gram_matrix = gram_matrix
         if has_vars:
             self.x_vars = list(_all_variables(x))
             self.y_vars = list(_all_variables(y))
@@ -257,7 +256,17 @@ class MatchingProblem(Generic[T]):
             bounds=sp.optimize.Bounds(lb=0, ub=1),
             integrality=np.ones_like(coef),
         )
-        return -result.fun
+        solution = result.x[:self.n_x * self.n_y].reshape([self.n_x, self.n_y])
+        matching = Matching(
+            self.x, self.y,
+            [
+                (i, j, self.gram_matrix[i, j].item())
+                for i in range(self.n_x)
+                for j in range(self.n_y)
+                if solution[i, j] > 0
+            ]
+        )
+        return -result.fun, matching
 
 
 def _get_one_to_many_constraint_matrix(n_x: int, n_y: int) -> np.ndarray:  # [Y, X * Y]

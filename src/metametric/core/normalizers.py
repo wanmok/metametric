@@ -1,6 +1,7 @@
 """Normalizers to normalize metrics as normalized metrics."""
 from typing import Optional, Protocol, TypeVar, runtime_checkable
 
+from metametric.core.hook import Hooks
 from metametric.core.metric import Metric
 
 T = TypeVar("T")
@@ -115,9 +116,9 @@ class NormalizedMetric(Metric[T]):
         self.inner = inner
         self.normalizer = normalizer
 
-    def score(self, x: T, y: T) -> float:
+    def score(self, x: T, y: T, hooks: Hooks | None = None) -> float:
         """Score two objects."""
-        sxy = self.inner.score(x, y)
+        sxy = self.inner.score(x, y, hooks)
         sxx = self.inner.score_self(x)
         syy = self.inner.score_self(y)
         return self.normalizer.normalize(sxy, sxx, syy)
