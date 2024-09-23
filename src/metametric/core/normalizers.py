@@ -116,9 +116,9 @@ class NormalizedMetric(Metric[T]):
         self.inner = inner
         self.normalizer = normalizer
 
-    def score(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
         """Score two objects."""
-        sxy, inner_matching = self.inner.score(x, y)
+        sxy, inner_matching = self.inner.compute(x, y)
         sxx = self.inner.score_self(x)
         syy = self.inner.score_self(y)
         normalized_score = self.normalizer.normalize(sxy, sxx, syy)

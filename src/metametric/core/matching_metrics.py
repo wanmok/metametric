@@ -41,7 +41,7 @@ class SetMatchingMetric(Metric[Collection[T]]):
         self.inner = inner
         self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
 
-    def score(self, x: Collection[T], y: Collection[T]) -> Tuple[float, Matching]:
+    def compute(self, x: Collection[T], y: Collection[T]) -> Tuple[float, Matching]:
         """Score two sets of objects."""
         original_x, original_y = x, y
         x, y = list(x), list(y)
@@ -92,7 +92,7 @@ class SequenceMatchingMetric(Metric[Sequence[T]]):
         self.inner = inner
         self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
 
-    def score(self, x: Sequence[T], y: Sequence[T]) -> Tuple[float, Matching]:
+    def compute(self, x: Sequence[T], y: Sequence[T]) -> Tuple[float, Matching]:
         m = self.inner.gram_matrix(x, y)
         f = np.zeros([m.shape[0] + 1, m.shape[1] + 1])
         for i in range(m.shape[0] + 1):
@@ -123,7 +123,7 @@ class GraphMatchingMetric(Metric[Graph[T]]):
         self.inner = inner
         self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
 
-    def score(self, x: Graph[T], y: Graph[T]) -> Tuple[float, Matching]:
+    def compute(self, x: Graph[T], y: Graph[T]) -> Tuple[float, Matching]:
         x_nodes = list(x.nodes())
         y_nodes = list(y.nodes())
         gram_matrix = self.inner.gram_matrix(x_nodes, y_nodes)
@@ -153,7 +153,7 @@ class LatentSetMatchingMetric(Metric[Collection[T]]):
         self.inner = inner
         self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
 
-    def score(self, x: Collection[T], y: Collection[T]) -> Tuple[float, Matching]:
+    def compute(self, x: Collection[T], y: Collection[T]) -> Tuple[float, Matching]:
         """Score two collections of objects."""
         original_x, original_y = x, y
         x = list(x)

@@ -25,9 +25,14 @@ class Metric(Generic[T]):
     """
 
     @abstractmethod
-    def score(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
+        r"""Scores two objects using this metric, and returns the score and a matching object."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def score(self, x: T, y: T) -> float:
         r"""Scores two objects using this metric: $\phi(x, y)$."""
-        raise NotImplementedError()
+        return self.compute(x, y)[0]
 
     def score_self(self, x: T) -> float:
         r"""Scores an object against itself: $\phi(x, x)$.
@@ -35,8 +40,7 @@ class Metric(Generic[T]):
         In many cases there is a faster way to compute this than the general pair case.
         In such cases, please override this function.
         """
-        score, _ = self.score(x, x)
-        return score
+        return self.score(x, x)
 
     def gram_matrix(self, xs: Sequence[T], ys: Sequence[T]) -> np.ndarray:
         r"""Computes the Gram matrix of the metric given two collections of objects.
@@ -50,7 +54,7 @@ class Metric(Generic[T]):
                                 \vdots & \ddots & \vdots \\
                                 \phi(x_n, y_1) & \cdots & \phi(x_n, y_m) \end{bmatrix}$.
         """
-        return np.array([[self.score(x, y)[0] for y in ys] for x in xs])
+        return np.array([[self.score(x, y) for y in ys] for x in xs])
 
     def contramap(self, f: Callable[[S], T]) -> "Metric[S]":
         r"""Returns a new metric $\phi^\prime$ by first preprocessing the objects by a given function $f: S \to T$.
@@ -87,7 +91,7 @@ class MetricFromFunction(Metric[T]):
     def __init__(self, f: Callable[[T, T], float]):
         self.f = f
 
-    def score(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
         """Score two objects."""
         score = self.f(x, y)
 
@@ -104,9 +108,9 @@ class ContramappedMetric(Metric[S]):
         self.inner = inner
         self.f = f
 
-    def score(self, x: S, y: S) -> Tuple[float, Matching]:
+    def compute(self, x: S, y: S) -> Tuple[float, Matching]:
         """Score two objects."""
-        return self.inner.score(self.f(x), self.f(y))
+        return self.inner.compute(self.f(x), self.f(y))
 
     def score_self(self, x: S) -> float:
         """Scores an object against itself."""
@@ -120,7 +124,7 @@ class DiscreteMetric(Metric[T]):
         if getattr(cls, "__eq__", None) is None:
             raise ValueError("Class must implement __eq__")
 
-    def score(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
         """Score two objects."""
         if x == y:
             return 1.0, Matching([Match(Path(), x, Path(), y, 1.0)])
@@ -139,10 +143,10 @@ class ProductMetric(Metric[T]):
             raise ValueError(f"{cls} has to be a dataclass.")
         self.field_metrics = field_metrics
 
-    def score(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
         """Score two objects."""
         field_scores = {
-            fld: self.field_metrics[fld].score(getattr(x, fld), getattr(y, fld))
+            fld: self.field_metrics[fld].compute(getattr(x, fld), getattr(y, fld))
             for fld in self.field_metrics.keys()
         }
         total_score = reduce(mul, (s for s, _ in field_scores.values()), 1.0)
@@ -163,13 +167,13 @@ class UnionMetric(Metric[T]):
             raise ValueError(f"{cls} has to be a union.")
         self.case_metrics = case_metrics
 
-    def score(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
         """Score two objects."""
         x_type = type(x)
         y_type = type(y)
         if x_type != y_type:
             return 0.0, Matching([])
-        return self.case_metrics[x_type].score(x, y)
+        return self.case_metrics[x_type].compute(x, y)
 
     def score_self(self, x: T) -> float:
         """Scores an object against itself."""

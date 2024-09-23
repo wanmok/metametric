@@ -40,7 +40,7 @@ class SingleMetricState(MetricState[T]):
         """Update the aggregator with a single prediction and its reference."""
         sxx = self.metric.score_self(pred)
         syy = self.metric.score_self(ref)
-        sxy, matching = self.metric.score(pred, ref)
+        sxy, matching = self.metric.compute(pred, ref)
         if hooks:
             matching.run_with_hooks(hooks)
         self.preds.append(sxx)
