@@ -25,7 +25,7 @@ else:
         Ell = type(...)
 
 from metametric.core.constraint import MatchingConstraint
-from metametric.core.matching import (
+from metametric.core.matching_metrics import (
     GraphMatchingMetric,
     LatentSetMatchingMetric,
     SequenceMatchingMetric,

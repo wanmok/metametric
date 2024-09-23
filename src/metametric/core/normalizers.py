@@ -1,7 +1,7 @@
 """Normalizers to normalize metrics as normalized metrics."""
-from typing import Optional, Protocol, TypeVar, runtime_checkable
+from typing import Optional, Protocol, TypeVar, runtime_checkable, Tuple
 
-from metametric.core.hook import Hooks
+from metametric.core.matching import Matching, Match, Path
 from metametric.core.metric import Metric
 
 T = TypeVar("T")
@@ -116,12 +116,21 @@ class NormalizedMetric(Metric[T]):
         self.inner = inner
         self.normalizer = normalizer
 
-    def score(self, x: T, y: T, hooks: Hooks | None = None) -> float:
+    def score(self, x: T, y: T) -> Tuple[float, Matching]:
         """Score two objects."""
-        sxy = self.inner.score(x, y, hooks)
+        sxy, inner_matching = self.inner.score(x, y)
         sxx = self.inner.score_self(x)
         syy = self.inner.score_self(y)
-        return self.normalizer.normalize(sxy, sxx, syy)
+        normalized_score = self.normalizer.normalize(sxy, sxx, syy)
+
+        def _matching():
+            for match in inner_matching:
+                if match.pred_path.is_root() and match.ref_path.is_root():
+                    yield Match(Path(), x, Path(), y, normalized_score)
+                else:
+                    yield match
+
+        return normalized_score, Matching(_matching())
 
     def score_self(self, x: T) -> float:
         """Score an object with itself."""

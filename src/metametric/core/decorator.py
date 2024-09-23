@@ -3,9 +3,9 @@ from dataclasses import fields, is_dataclass
 from typing import (Annotated, Any, Callable, Collection, Literal, Type,
                     TypeVar, Union, get_args, get_origin, Optional)
 
-from metametric.core.matching import (MatchingConstraint,
-                                      LatentSetMatchingMetric,
-                                      SetMatchingMetric)
+from metametric.core.matching_metrics import (MatchingConstraint,
+                                              LatentSetMatchingMetric,
+                                              SetMatchingMetric)
 from metametric.core.metric import (DiscreteMetric, HasLatentMetric, HasMetric,
                                     Metric, ProductMetric, UnionMetric,
                                     Variable)

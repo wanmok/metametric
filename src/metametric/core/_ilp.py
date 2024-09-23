@@ -7,7 +7,7 @@ import numpy as np
 import scipy as sp
 
 from metametric.core.constraint import MatchingConstraint
-from metametric.core.problem import MatchingProblem, Matching
+from metametric.core.problem import MatchingProblem
 from metametric.core.metric import Variable
 
 T = TypeVar('T')
@@ -257,15 +257,12 @@ class ILPMatchingProblem(MatchingProblem[T]):
             integrality=np.ones_like(coef),
         )
         solution = result.x[:self.n_x * self.n_y].reshape([self.n_x, self.n_y])
-        matching = Matching(
-            self.x, self.y,
-            [
-                (i, j, self.gram_matrix[i, j].item())
-                for i in range(self.n_x)
-                for j in range(self.n_y)
-                if solution[i, j] > 0
-            ]
-        )
+        matching = [
+            (i, j, self.gram_matrix[i, j].item())
+            for i in range(self.n_x)
+            for j in range(self.n_y)
+            if solution[i, j] > 0
+        ]
         return -result.fun, matching
 
 
