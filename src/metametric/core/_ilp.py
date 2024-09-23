@@ -7,7 +7,7 @@ import numpy as np
 import scipy as sp
 
 from metametric.core.constraint import MatchingConstraint
-from metametric.core.problem import MatchingProblem
+from metametric.core._problem import MatchingProblem
 from metametric.core.metric import Variable
 
 T = TypeVar('T')

@@ -40,15 +40,15 @@ def test_muc(data):
     pred, ref = data
     muc_precision = mm.normalize["precision"](muc)
     muc_recall = mm.normalize["recall"](muc)
-    assert muc_precision.score(pred, ref) == approx(0.40, abs=0.01)
-    assert muc_recall.score(pred, ref) == approx(0.40, abs=0.01)
+    assert muc_precision.score(pred, ref)[0] == approx(0.40, abs=0.01)
+    assert muc_recall.score(pred, ref)[0] == approx(0.40, abs=0.01)
 
 
 def test_b_cubed(data):
     """B-cubed metric."""
     pred, ref = data
-    assert b_cubed_precision.score(pred, ref) == approx(0.50, abs=0.01)
-    assert b_cubed_recall.score(pred, ref) == approx(0.42, abs=0.01)
+    assert b_cubed_precision.score(pred, ref)[0] == approx(0.50, abs=0.01)
+    assert b_cubed_recall.score(pred, ref)[0] == approx(0.42, abs=0.01)
 
 
 def test_ceaf_phi4(data):
@@ -56,8 +56,8 @@ def test_ceaf_phi4(data):
     pred, ref = data
     ceaf_phi4_precision = mm.normalize["precision"](ceaf_phi4)
     ceaf_phi4_recall = mm.normalize["recall"](ceaf_phi4)
-    assert ceaf_phi4_precision.score(pred, ref) == approx(0.43, abs=0.01)
-    assert ceaf_phi4_recall.score(pred, ref) == approx(0.65, abs=0.01)
+    assert ceaf_phi4_precision.score(pred, ref)[0] == approx(0.43, abs=0.01)
+    assert ceaf_phi4_recall.score(pred, ref)[0] == approx(0.65, abs=0.01)
 
 
 def test_coref_family(data):

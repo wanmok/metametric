@@ -1,20 +1,17 @@
 """Metric derivation with matching constraints."""
-from abc import abstractmethod
-from dataclasses import dataclass, is_dataclass
-from typing import Type, TypeVar, Union, Generic, Tuple
-from collections.abc import Collection, Mapping, Sequence, Set
-from collections import Counter, defaultdict
+from dataclasses import is_dataclass
+from typing import Type, TypeVar, Union, Tuple
+from collections.abc import Collection, Sequence
+from collections import defaultdict
 
 import numpy as np
-import scipy.optimize as spo
 
 from metametric.core._ilp import ILPMatchingProblem
 from metametric.core.constraint import MatchingConstraint
 from metametric.core.graph import Graph, _reachability_matrix
 from metametric.core.matching import Match, Matching, Path
 from metametric.core.metric import DiscreteMetric, Metric
-from metametric.core.normalizers import NormalizedMetric, Normalizer
-from metametric.core.problem import AssignmentProblem
+from metametric.core._problem import AssignmentProblem
 
 
 C = TypeVar("C")
