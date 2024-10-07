@@ -109,23 +109,23 @@ class Hook(ABC, Generic[T]):
     """A hook that is called when a match is found."""
 
     @abstractmethod
-    def on_match(self, pred_path: str, pred: T, ref_path: str, ref: T, score: float):
+    def on_match(self, data_id: int, pred_path: str, pred: T, ref_path: str, ref: T, score: float):
         """Called when a match is found."""
         raise NotImplementedError
 
     @staticmethod
-    def from_callable(func: Callable[[str, T, str, T, float], None]) -> 'Hook[T]':
+    def from_callable(func: Callable[[int, str, T, str, T, float], None]) -> 'Hook[T]':
         """Creates a hook from a callback."""
         return _HookFromCallable(func)
 
 
 class _HookFromCallable(Hook[T]):
 
-    def __init__(self, func: Callable[[str, T, str, T, float], None]):
+    def __init__(self, func: Callable[[int, str, T, str, T, float], None]):
         self.func = func
 
-    def on_match(self, pred_path: str, pred: T, ref_path: str, ref: T, score: float):
-        self.func(pred_path, pred, ref_path, ref, score)
+    def on_match(self, data_id: int, pred_path: str, pred: T, ref_path: str, ref: T, score: float):
+        self.func(data_id, pred_path, pred, ref_path, ref, score)
 
 
 class Matching(Iterable[Match[object]]):
@@ -138,10 +138,10 @@ class Matching(Iterable[Match[object]]):
         """Traverses all matching pairs of inner objects."""
         return iter(self.matches)
 
-    def run_with_hooks(self, hooks: Dict[str, Hook[Any]]):
+    def run_with_hooks(self, hooks: Dict[str, Hook[Any]], data_id: int = 0):
         """Runs hooks on the matches."""
         hooks = {Path.parse(selector): hook for selector, hook in hooks.items()}
         for match in self.matches:
             for selector, hook in hooks.items():
                 if selector.selects(match.pred_path):
-                    hook.on_match(str(match.pred_path), match.pred, str(match.ref_path), match.ref, match.score)
+                    hook.on_match(data_id, str(match.pred_path), match.pred, str(match.ref_path), match.ref, match.score)

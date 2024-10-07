@@ -42,7 +42,7 @@ class SingleMetricState(MetricState[T]):
         syy = self.metric.score_self(ref)
         sxy, matching = self.metric.compute(pred, ref)
         if hooks:
-            matching.run_with_hooks(hooks)
+            matching.run_with_hooks(hooks, data_id=len(self.matches))
         self.preds.append(sxx)
         self.refs.append(syy)
         self.matches.append(sxy)

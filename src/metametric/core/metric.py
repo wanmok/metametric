@@ -29,7 +29,6 @@ class Metric(Generic[T]):
         r"""Scores two objects using this metric, and returns the score and a matching object."""
         raise NotImplementedError
 
-    @abstractmethod
     def score(self, x: T, y: T) -> float:
         r"""Scores two objects using this metric: $\phi(x, y)$."""
         return self.compute(x, y)[0]

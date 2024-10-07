@@ -30,12 +30,12 @@ def test_smatch():
         ]
     )
 
-    score, matching = s_match.score(amr1, amr2)
+    score, matching = s_match.compute(amr1, amr2)
     assert score == approx(0.73, abs=0.01)
 
     matches = []
     hooks = {
-        "props[*]": Hook.from_callable(lambda pp, p, rp, r, s: matches.append((p, r)))
+        "props[*]": Hook.from_callable(lambda i, pp, p, rp, r, s: matches.append((p, r)))
     }
 
     matching.run_with_hooks(hooks)
