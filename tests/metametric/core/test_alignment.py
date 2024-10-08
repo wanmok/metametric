@@ -13,8 +13,9 @@ def test_solve_alignment():
     m2 = mm.set_matching[int, '<-', 'none'](...)
     m3 = mm.set_matching[int, '~', 'none'](...)
 
-    _, matching0 = m0.score_with_matching(a, b)
-    assert matching0.matches() == [(1, 1, 1.0), (2, 2, 1.0)]
+    _, matching0 = m0.compute(a, b)
+    matches = list(matching0.matches)
+    assert matches == [(1, 1, 1.0), (2, 2, 1.0)]
 
     # non-empty prediction and non-empty reference
     assert m0.score(a, b) == 2

@@ -36,7 +36,7 @@ class AssignmentProblem(MatchingProblem[T]):
                 maximize=True,
             )
             total = m[row_idx, col_idx].sum()
-            matching = [(i, j, m[i, j].item()) for i, j in zip(row_idx, col_idx)]
+            matching = [(i.item(), j.item(), m[i, j].item()) for i, j in zip(row_idx, col_idx)]
             return total, matching
         if self.constraint == MatchingConstraint.ONE_TO_MANY:
             total = m.max(axis=0).sum().item()
