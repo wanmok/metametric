@@ -20,7 +20,7 @@ class Graph(Protocol[T]):
         raise NotImplementedError()
 
 
-def _adjacency_matrix(graph: Graph[T]) -> np.ndarray:
+def _adjacency_matrix(graph: Graph) -> np.ndarray:
     """Get the adjacency matrix of a graph."""
     nodes = list(graph.nodes())
     node_to_id = {x: i for i, x in enumerate(nodes)}
@@ -33,7 +33,7 @@ def _adjacency_matrix(graph: Graph[T]) -> np.ndarray:
     return adj
 
 
-def _reachability_matrix(graph: Graph[T]) -> np.ndarray:
+def _reachability_matrix(graph: Graph) -> np.ndarray:
     """Get the reachability matrix of a graph."""
     a = _adjacency_matrix(graph)
     b = np.eye(a.shape[0], dtype=bool) + a

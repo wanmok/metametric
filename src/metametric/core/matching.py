@@ -1,150 +1,151 @@
-"""Metric derivation with matching constraints."""
-from dataclasses import is_dataclass
-from typing import Collection, Sequence, Type, TypeVar, Union
-
-import numpy as np
-import scipy.optimize as spo
-
-from metametric.core._ilp import MatchingProblem
-from metametric.core.constraint import MatchingConstraint
-from metametric.core.graph import Graph, _reachability_matrix
-from metametric.core.metric import DiscreteMetric, Metric
-
-T = TypeVar("T")
+"""Defines utilities for obtaining the inner matching after a metric is computed."""
+from abc import ABC, abstractmethod
+from typing import Generic, Tuple, TypeVar, Iterable, Union, Callable, Dict, Any
+from dataclasses import dataclass
 
 
-class SetMatchingMetric(Metric[Collection[T]]):
-    """A metric derived from the matching of two sets."""
+T = TypeVar("T", covariant=True)
+Tc = TypeVar("Tc", contravariant=True)
 
-    def __init__(self, inner: Metric[T], constraint: Union[str, MatchingConstraint] = MatchingConstraint.ONE_TO_ONE):
-        self.inner = inner
-        self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
 
-    def score(self, x: Collection[T], y: Collection[T]) -> float:
-        """Score two sets of objects."""
-        x_is_empty = len(x) == 0
-        y_is_empty = len(y) == 0
-        if x_is_empty and y_is_empty:
-            return 1.0
-        elif x_is_empty or y_is_empty:
-            return 0.0
-        elif isinstance(self.inner, DiscreteMetric) and self.constraint == MatchingConstraint.ONE_TO_ONE:
-            return len(set(x) & set(y))
+def _index_to_int_str(i: int) -> str:
+    return str(i) if i != -1 else "*"
+
+
+def _int_str_to_index(s: str) -> int:
+    return int(s) if s != "*" else -1
+
+
+def _component_covers(selector: Union[str, int], component: Union[str, int]) -> bool:
+    if isinstance(selector, int) and isinstance(component, int):
+        return selector == component or selector == -1
+    elif isinstance(selector, str) and isinstance(component, str):
+        return selector == component or selector == "*"
+    else:
+        return False
+
+
+@dataclass
+class Path:
+    """Represents a path selector. Its default string representation is in JMESPath format."""
+    components: Tuple[Union[str, int], ...] = ()  # [-1] means [*]
+
+    def is_root(self) -> bool:
+        """Returns True if the path is the root path."""
+        return len(self.components) == 0
+
+    def __hash__(self):
+        """Returns a hash of the path."""
+        return hash(self.components)
+
+    def __str__(self):
+        """Returns a string representation of the path in JMESPath format."""
+        if len(self.components) == 0:
+            return "@"
         else:
-            m = self.inner.gram_matrix(x, y)
-            if self.constraint == MatchingConstraint.ONE_TO_ONE:
-                row_idx, col_idx = spo.linear_sum_assignment(
-                    cost_matrix=m,
-                    maximize=True,
-                )
-                return m[row_idx, col_idx].sum()
-            if self.constraint == MatchingConstraint.ONE_TO_MANY:
-                return m.max(axis=0).sum()
-            if self.constraint == MatchingConstraint.MANY_TO_ONE:
-                return m.max(axis=1).sum()
-            if self.constraint == MatchingConstraint.MANY_TO_MANY:
-                return m.sum()
-            raise ValueError(f"Invalid constraint: {self.constraint}")
+            components = [
+                f"[{_index_to_int_str(item)}]" if isinstance(item, int) else f".{item}" if i != 0 else item
+                for i, item in enumerate(self.components)
+            ]
+            return "".join(components)
 
-    def score_self(self, x: Collection[T]) -> float:
-        """Score a set of objects with itself."""
-        if len(x) == 0:
-            return 1.0
-        elif self.constraint == MatchingConstraint.MANY_TO_MANY:
-            return self.inner.gram_matrix(x, x).sum()
-        elif self.constraint == MatchingConstraint.ONE_TO_ONE:
-            return sum(self.inner.score_self(u) for u in x)
-        else:
-            return self.score(x, x)
+    def prepend(self, item: Union[str, int]) -> 'Path':
+        """Prepends an item to the path."""
+        return Path((item,) + self.components)
 
+    def selects(self, other: 'Path') -> bool:
+        """Returns True if the other path is selected by this path selector."""
+        return len(self.components) == len(other.components) and all(
+            _component_covers(sel, comp) for sel, comp in zip(self.components, other.components)
+        )
 
-class SequenceMatchingMetric(Metric[Sequence[T]]):
-    """A metric derived from the matching of two sequences."""
-
-    def __init__(self, inner: Metric[T], constraint: Union[str, MatchingConstraint] = MatchingConstraint.ONE_TO_ONE):
-        self.inner = inner
-        self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
-
-    def score(self, x: Sequence[T], y: Sequence[T]) -> float:
-        m = self.inner.gram_matrix(x, y)
-        f = np.zeros([m.shape[0] + 1, m.shape[1] + 1])
-        for i in range(m.shape[0] + 1):
-            for j in range(m.shape[1] + 1):
-                if i == 0 or j == 0:
-                    f[i, j] = 0
-                else:
-                    f[i, j] = max(f[i - 1, j - 1] + m[i - 1, j - 1], f[i - 1, j], f[i, j - 1])
-                    if self.constraint == MatchingConstraint.ONE_TO_MANY:
-                        f[i, j] = max(f[i, j], f[i, j - 1] + m[i - 1, j - 1])
-                    elif self.constraint == MatchingConstraint.MANY_TO_ONE:
-                        f[i, j] = max(f[i, j], f[i - 1, j] + m[i - 1, j - 1])
-                    elif self.constraint == MatchingConstraint.MANY_TO_MANY:
-                        f[i, j] = max(f[i, j], f[i, j - 1] + m[i - 1, j - 1], f[i - 1, j] + m[i - 1, j - 1])
-        return f[-1, -1].item()
-
-    def score_self(self, x: Sequence[T]) -> float:
-        if self.constraint == MatchingConstraint.ONE_TO_ONE:
-            return sum(self.inner.score_self(u) for u in x)
-        else:
-            return self.score(x, x)
+    @classmethod
+    def parse(cls, s: str):
+        """Parses a string representation of the path in JMESPath format."""
+        tokens = []
+        t = ""
+        for c in s:
+            if c in ["@", ".", "[", "]"]:
+                if t:
+                    tokens.append(t)
+                    t = ""
+                tokens.append(c)
+            else:
+                t += c
+        if t:
+            tokens.append(t)
+        components = []
+        i = 0
+        while i < len(tokens):
+            if tokens[i] == "@":
+                i += 1
+                continue
+            if tokens[i] == ".":
+                i += 1
+                continue
+            elif tokens[i] == "[":
+                components.append(_int_str_to_index(tokens[i + 1]))
+                i += 3
+            else:
+                components.append(tokens[i])
+                i += 1
+        return Path(tuple(components))
 
 
-class GraphMatchingMetric(Metric[Graph[T]]):
-    """A metric derived from the matching of two graphs (including trees, DAGs, and general graphs)."""
+@dataclass
+class Match(Generic[T]):
+    """Represents a match between a pair of inner objects in a prediction and a reference."""
+    pred_path: Path
+    pred: T
+    ref_path: Path
+    ref: T
+    score: float
 
-    def __init__(self, inner: Metric[T], constraint: Union[str, MatchingConstraint] = MatchingConstraint.ONE_TO_ONE):
-        self.inner = inner
-        self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
-
-    def score(self, x: Graph[T], y: Graph[T]) -> float:
-        x_nodes = list(x.nodes())
-        y_nodes = list(y.nodes())
-        gram_matrix = self.inner.gram_matrix(x_nodes, y_nodes)
-        x_reach = _reachability_matrix(x)
-        y_reach = _reachability_matrix(y)
-
-        problem = MatchingProblem(x_nodes, y_nodes, gram_matrix, has_vars=False)
-        problem.add_matching_constraint(self.constraint)
-        problem.add_monotonicity_constraint(x_reach, y_reach)
-        return problem.solve()
+    def __str__(self):
+        """Returns a string representation of the match."""
+        return f"{self.pred_path} -> {self.ref_path} ({self.score})"
 
 
-class LatentSetMatchingMetric(Metric[Collection[T]]):
-    """A metric derived to support matching latent variables defined in structures."""
+class Hook(ABC, Generic[Tc]):
+    """A hook that is called when a match is found."""
 
-    def __init__(
-        self,
-        cls: Type[T],
-        inner: Metric[T],
-        constraint: Union[str, MatchingConstraint] = MatchingConstraint.ONE_TO_ONE,
-    ):
-        if is_dataclass(cls):
-            self.cls = cls
-        else:
-            raise ValueError(f"{cls} has to be a dataclass.")
-        self.inner = inner
-        self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
+    @abstractmethod
+    def on_match(self, data_id: int, pred_path: str, pred: Tc, ref_path: str, ref: Tc, score: float):
+        """Called when a match is found."""
+        raise NotImplementedError
 
-    def score(self, x: Collection[T], y: Collection[T]) -> float:
-        """Score two collections of objects."""
-        x = list(x)
-        y = list(y)
+    @staticmethod
+    def from_callable(func: Callable[[int, str, Tc, str, Tc, float], None]) -> 'Hook[Tc]':
+        """Creates a hook from a callback."""
+        return _HookFromCallable(func)
 
-        x_is_empty = len(x) == 0
-        y_is_empty = len(y) == 0
 
-        if x_is_empty and y_is_empty:
-            return 1.0
-        elif x_is_empty or y_is_empty:
-            return 0.0
+class _HookFromCallable(Hook[Tc]):
 
-        gram_matrix = self.inner.gram_matrix(x, y)
-        problem = MatchingProblem(x, y, gram_matrix, has_vars=True)
-        problem.add_matching_constraint(self.constraint)
-        problem.add_variable_matching_constraint()
-        problem.add_latent_variable_constraint(self.cls)
-        return problem.solve()
+    def __init__(self, func: Callable[[int, str, Tc, str, Tc, float], None]):
+        self.func = func
 
-    def score_self(self, x: Collection[T]) -> float:
-        """Score a collection of objects with itself."""
-        return SetMatchingMetric(self.inner, self.constraint).score_self(x)
+    def on_match(self, data_id: int, pred_path: str, pred: Tc, ref_path: str, ref: Tc, score: float):
+        self.func(data_id, pred_path, pred, ref_path, ref, score)
+
+
+class Matching(Iterable[Match[object]]):
+    """An object that can be used to iterate over matches and run hooks on them."""
+
+    def __init__(self, matches: Iterable[Match[object]]):
+        self.matches = matches
+
+    def __iter__(self):
+        """Traverses all matching pairs of inner objects."""
+        return iter(self.matches)
+
+    def run_with_hooks(self, hooks: Dict[str, Hook[Any]], data_id: int = 0):
+        """Runs hooks on the matches."""
+        parsed_hooks = {Path.parse(selector): hook for selector, hook in hooks.items()}
+        for match in self.matches:
+            for selector, hook in parsed_hooks.items():
+                if selector.selects(match.pred_path):
+                    hook.on_match(
+                        data_id,
+                        str(match.pred_path), match.pred, str(match.ref_path), match.ref, match.score
+                    )
