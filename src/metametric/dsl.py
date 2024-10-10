@@ -39,6 +39,7 @@ from metametric.core.normalizers import NormalizedMetric, Normalizer
 from metametric.core.reduction import MacroAverage, MicroAverage, MultipleReductions, Reduction
 from metametric.core.matching import Matching, Match, Hook
 
+
 T = TypeVar("T", contravariant=True)
 S = TypeVar("S")
 
@@ -257,3 +258,26 @@ def family(metric: Metric[T], reduction: Union[Reduction, Dict[str, Reduction]])
 def suite(collection: Dict[str, MetricSuite[T]]) -> MetricSuite[T]:
     """Creates a metric suite."""
     return MultipleMetricFamilies(collection)
+
+
+__all__ = [
+    "from_func",
+    "preprocess",
+    "auto",
+    "discrete",
+    "dataclass",
+    "union",
+    "set_matching",
+    "sequence_matching",
+    "graph_matching",
+    "latent_set_matching",
+    "normalize",
+    "macro_average",
+    "micro_average",
+    "family",
+    "suite",
+    "Metric",
+    "Match",
+    "Matching",
+    "Hook",
+]
