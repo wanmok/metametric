@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 
 T = TypeVar("T", covariant=True)
+Tc = TypeVar("Tc", contravariant=True)
 
 
 def _index_to_int_str(i: int) -> str:
@@ -105,26 +106,26 @@ class Match(Generic[T]):
         return f"{self.pred_path} -> {self.ref_path} ({self.score})"
 
 
-class Hook(ABC, Generic[T]):
+class Hook(ABC, Generic[Tc]):
     """A hook that is called when a match is found."""
 
     @abstractmethod
-    def on_match(self, data_id: int, pred_path: str, pred: T, ref_path: str, ref: T, score: float):
+    def on_match(self, data_id: int, pred_path: str, pred: Tc, ref_path: str, ref: Tc, score: float):
         """Called when a match is found."""
         raise NotImplementedError
 
     @staticmethod
-    def from_callable(func: Callable[[int, str, T, str, T, float], None]) -> 'Hook[T]':
+    def from_callable(func: Callable[[int, str, Tc, str, Tc, float], None]) -> 'Hook[Tc]':
         """Creates a hook from a callback."""
         return _HookFromCallable(func)
 
 
-class _HookFromCallable(Hook[T]):
+class _HookFromCallable(Hook[Tc]):
 
-    def __init__(self, func: Callable[[int, str, T, str, T, float], None]):
+    def __init__(self, func: Callable[[int, str, Tc, str, Tc, float], None]):
         self.func = func
 
-    def on_match(self, data_id: int, pred_path: str, pred: T, ref_path: str, ref: T, score: float):
+    def on_match(self, data_id: int, pred_path: str, pred: Tc, ref_path: str, ref: Tc, score: float):
         self.func(data_id, pred_path, pred, ref_path, ref, score)
 
 
@@ -140,8 +141,11 @@ class Matching(Iterable[Match[object]]):
 
     def run_with_hooks(self, hooks: Dict[str, Hook[Any]], data_id: int = 0):
         """Runs hooks on the matches."""
-        hooks = {Path.parse(selector): hook for selector, hook in hooks.items()}
+        parsed_hooks = {Path.parse(selector): hook for selector, hook in hooks.items()}
         for match in self.matches:
-            for selector, hook in hooks.items():
+            for selector, hook in parsed_hooks.items():
                 if selector.selects(match.pred_path):
-                    hook.on_match(data_id, str(match.pred_path), match.pred, str(match.ref_path), match.ref, match.score)
+                    hook.on_match(
+                        data_id,
+                        str(match.pred_path), match.pred, str(match.ref_path), match.ref, match.score
+                    )

@@ -113,7 +113,7 @@ class SequenceMatchingMetric(Metric[Sequence[T]]):
         if self.constraint == MatchingConstraint.ONE_TO_ONE:
             return sum(self.inner.score_self(u) for u in x)
         else:
-            return self.score(x, x)[0]
+            return self.score(x, x)
 
 
 class GraphMatchingMetric(Metric[Graph[T]]):

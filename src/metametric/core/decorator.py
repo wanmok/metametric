@@ -37,7 +37,7 @@ def dataclass_has_variable(cls: Type) -> bool:
     return False
 
 
-def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:
+def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:  # dependent type, can't enforce
     """Derive a unified metric from any type.
 
     Args:
@@ -64,7 +64,11 @@ def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:
     # derive product metric from dataclass
     elif is_dataclass(cls):
         return ProductMetric(
-            cls=cls, field_metrics={fld.name: derive_metric(fld.type, constraint=constraint) for fld in fields(cls)}
+            cls=cls,
+            field_metrics={
+                fld.name: derive_metric(fld.type, constraint=constraint)
+                for fld in fields(cls)
+            }
         )
 
     # derive union metric from unions
