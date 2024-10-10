@@ -37,6 +37,7 @@ from metametric.core.metric import ContramappedMetric, DiscreteMetric, Metric, P
 from metametric.core.metric_suite import MetricFamily, MetricSuite, MultipleMetricFamilies
 from metametric.core.normalizers import NormalizedMetric, Normalizer
 from metametric.core.reduction import MacroAverage, MicroAverage, MultipleReductions, Reduction
+from metametric.core.matching import Matching, Match, Hook
 
 T = TypeVar("T", contravariant=True)
 S = TypeVar("S")
