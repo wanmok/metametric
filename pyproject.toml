@@ -2,23 +2,23 @@
 line-length = 120
 src = ["src", "tests"]
 
-select = [
+lint.select = [
     "E", # pycodestyle
     "F", # pyflakes
     "UP", # pyupgrade
     "D", # pydocstyle
 ]
-ignore = [
+lint.ignore = [
     "D102", # Missing docstring in public method
     "D107", # Missing docstring in `__init__`
 ]
 
-fixable = ["ALL"]
+lint.fixable = ["ALL"]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 lines-after-imports = 2
 
 [tool.black]
@@ -52,11 +52,11 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
 pyright = "^1.1.327"
-ruff = "^0.6.9"
 networkx = "^3.1"
 mkdocs = "^1.5.3"
 mkdocs-material = "^9.4.2"
 mkdocstrings = {extras = ["python"], version = "^0.23.0"}
+ruff = "^0.7.0"
 
 [tool.poetry.extras]
 torchmetrics = ["torchmetrics"]
