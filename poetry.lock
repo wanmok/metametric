@@ -1135,4 +1135,4 @@ torchmetrics = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9"
-content-hash = "8f1e4e9b777144da0e929aca47c474dc4de4ea3a8c2a6454d38020d2f3aded92"
+content-hash = "6549a69f1ad8b7ee2fad5413dd84e85e14821a28a392a1d4a3f5728375074f13"
