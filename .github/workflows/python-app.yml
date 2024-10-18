@@ -20,7 +20,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Setup Poetry
-      run: pipx install poetry==1.6.1
+      run: pipx install poetry==1.8.4
     - name: Set up Python 3.9
       uses: actions/setup-python@v4
       with:
@@ -34,13 +34,9 @@ jobs:
       run: |
         echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
     - name: Run ruff
-      uses: chartboost/ruff-action@v1
-      with:
-        version: 0.0.290
+      uses: astral-sh/ruff-action@v1
     - name: Run pyright
-      uses: jakebailey/pyright-action@v1
-      with:
-        version: "1.1.327"
+      uses: jakebailey/pyright-action@v2
     - name: Test with pytest
       run: |
         poetry run pytest
