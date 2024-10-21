@@ -6,8 +6,7 @@ from typing import Callable, Dict, Protocol, Sequence, TypeVar, Optional, Any
 from metametric.core.matching import Hook
 from metametric.core.metric import Metric
 from metametric.core.reduction import Reduction
-from metametric.core.state import (MetricState, MultipleMetricStates,
-                                   SingleMetricState)
+from metametric.core.state import MetricState, MultipleMetricStates, SingleMetricState
 
 T = TypeVar("T", contravariant=True)
 
@@ -44,6 +43,7 @@ class Aggregator(Protocol[T]):
 
 class MetricSuite(Protocol[T]):
     """Metric suites are collections of metrics that are computed together."""
+
     def new(self, hooks: Optional[Dict[str, Hook[Any]]] = None) -> Aggregator[T]:
         """Create a new aggregator for the metric suite."""
         raise NotImplementedError()
@@ -59,6 +59,7 @@ class MetricFamily(MetricSuite[T]):
 
     For example, the precision, recall, and F-1 of event detection should be computed together within one family.
     """
+
     def __init__(self, metric: Metric[T], reduction: Reduction):
         self.metric = metric
         self.reduction = reduction
@@ -69,6 +70,7 @@ class MetricFamily(MetricSuite[T]):
 
 class MetricFamilyAggregator(Aggregator[T]):
     """Aggregator for a metric family."""
+
     def __init__(self, family: MetricFamily[T], hooks: Optional[Dict[str, Hook[Any]]] = None):
         self.family = family
         self._state = SingleMetricState(family.metric)
@@ -88,10 +90,8 @@ class MetricFamilyAggregator(Aggregator[T]):
 
 class MultipleMetricFamilies(MetricSuite[T]):
     """A collection of metric families, whose internal states are separate."""
-    def __init__(
-            self,
-            families: Dict[str, MetricSuite[T]]
-    ):
+
+    def __init__(self, families: Dict[str, MetricSuite[T]]):
         self.families = families
 
     def new(self, hooks: Optional[Dict[str, Hook[Any]]] = None) -> Aggregator[T]:
@@ -100,19 +100,14 @@ class MultipleMetricFamilies(MetricSuite[T]):
 
 class MultipleMetricFamiliesAggregator(Aggregator[T]):
     """Aggregator for multiple metric families."""
+
     def __init__(self, coll: MultipleMetricFamilies[T], hooks: Optional[Dict[str, Hook[Any]]] = None):
-        self.aggs: Dict[str, Aggregator[T]] = {
-            name: family.new()
-            for name, family in coll.families.items()
-        }
+        self.aggs: Dict[str, Aggregator[T]] = {name: family.new() for name, family in coll.families.items()}
         self._hooks = hooks
 
-    @cached_property
+    @property
     def state(self) -> MetricState[T]:
-        return MultipleMetricStates({
-            name: agg.state
-            for name, agg in self.aggs.items()
-        })
+        return MultipleMetricStates({name: agg.state for name, agg in self.aggs.items()})
 
     @property
     def hooks(self) -> Optional[Dict[str, Hook[Any]]]:
@@ -129,6 +124,7 @@ class MultipleMetricFamiliesAggregator(Aggregator[T]):
 
 class MetricSuiteWithExtra(MetricSuite[T]):
     """A metric suite with extra metrics."""
+
     def __init__(self, original: MetricSuite[T], extra: Callable[[Dict[str, float]], Dict[str, float]]):
         self.original = original
         self.extra = extra
@@ -139,6 +135,7 @@ class MetricSuiteWithExtra(MetricSuite[T]):
 
 class WithExtraAggregator(Aggregator[T]):
     """Aggregator for a metric suite with extra metrics."""
+
     def __init__(self, coll: MetricSuiteWithExtra[T], hooks: Optional[Dict[str, Hook[Any]]] = None):
         self.agg = coll.original.new(hooks)
         self.extra = coll.extra

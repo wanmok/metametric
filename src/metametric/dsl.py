@@ -220,6 +220,8 @@ class _Normalize:
     def __getitem__(self, normalizer: Union[Normalizer, str]) -> Callable[[Metric[T]], Metric[T]]:
         if isinstance(normalizer, str):
             normalizer_obj = Normalizer.from_str(normalizer)
+        else:
+            normalizer_obj = None
 
         def _normalize(metric: Metric[T]) -> Metric[T]:
             return metric if normalizer_obj is None else NormalizedMetric(metric, normalizer_obj)
@@ -233,8 +235,7 @@ normalize = _Normalize()
 def macro_average(normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
     """Macro-average reduction."""
     normalizer_objs = [
-        Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer
-        for normalizer in normalizers
+        Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer for normalizer in normalizers
     ]
     return MacroAverage(normalizer_objs)
 
@@ -242,8 +243,7 @@ def macro_average(normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
 def micro_average(normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
     """Micro-average reduction."""
     normalizer_objs = [
-        Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer
-        for normalizer in normalizers
+        Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer for normalizer in normalizers
     ]
     return MicroAverage(normalizer_objs)
 
