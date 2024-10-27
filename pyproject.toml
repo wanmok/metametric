@@ -42,8 +42,8 @@ repository = "https://github.com/wanmok/metametric"
 packages = [{ include = "metametric", from = "src" }]
 
 [tool.poetry.dependencies]
-python = ">=3.9"
-scipy = "^1.11.2"
+python = ">=3.10"
+scipy = "^1.14.0"
 numpy = "^1.25.2"
 
 [tool.poetry.group.dev]

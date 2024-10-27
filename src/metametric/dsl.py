@@ -115,7 +115,7 @@ class _DataClass:
         def product_metric(field_metrics: Dict[str, Union[Ell, Metric]]) -> Metric[T]:
             field_types = {fld.name: fld.type for fld in fields(cfg.cls)}
             field_metrics_no_ell: Dict[str, Metric] = {
-                fld: (auto[field_types[fld], cfg.constraint] if metric is ... else metric)
+                fld: (auto[field_types[fld], cfg.constraint] if metric is ... else metric)  # pyright: ignore
                 for fld, metric in field_metrics.items()
             }
             return ProductMetric(cls=cfg.cls, field_metrics=field_metrics_no_ell)

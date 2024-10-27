@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, is_dataclass
 from typing import (Any, Callable, Collection, Generic, Iterator, List,
                     Optional, Sequence, Type, TypeVar)
 
@@ -123,6 +123,9 @@ class LatentVariableConstraintBuilder(ConstraintBuilder, Generic[T]):
     cls: Type[T]
     gram_matrix: np.ndarray  # R[n_x, n_y]
 
+    def __post_init__(self):
+        assert is_dataclass(self.cls)
+
     def build(self) -> Optional[sp.optimize.LinearConstraint]:
         x_vars = list(_all_variables(self.x))
         y_vars = list(_all_variables(self.y))
@@ -132,7 +135,7 @@ class LatentVariableConstraintBuilder(ConstraintBuilder, Generic[T]):
         for i, a in enumerate(self.x):
             for j, b in enumerate(self.y):
                 if self.gram_matrix[i, j] > 0:
-                    for fld in fields(self.cls):
+                    for fld in fields(self.cls):  # pyright: ignore
                         a_fld = getattr(a, fld.name, None)
                         b_fld = getattr(b, fld.name, None)
                         if isinstance(a_fld, Variable) and isinstance(b_fld, Variable):

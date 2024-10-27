@@ -66,7 +66,7 @@ def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:  # depen
         return ProductMetric(
             cls=cls,
             field_metrics={
-                fld.name: derive_metric(fld.type, constraint=constraint)
+                fld.name: derive_metric(fld.type, constraint=constraint)  # pyright: ignore
                 for fld in fields(cls)
             }
         )
