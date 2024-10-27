@@ -3,9 +3,9 @@ from dataclasses import fields, is_dataclass
 from typing import (Annotated, Any, Callable, Collection, Literal, Type,
                     TypeVar, Union, get_args, get_origin, Optional)
 
-from metametric.core.matching import (MatchingConstraint,
-                                      LatentSetMatchingMetric,
-                                      SetMatchingMetric)
+from metametric.core.matching_metrics import (MatchingConstraint,
+                                              LatentSetMatchingMetric,
+                                              SetMatchingMetric)
 from metametric.core.metric import (DiscreteMetric, HasLatentMetric, HasMetric,
                                     Metric, ProductMetric, UnionMetric,
                                     Variable)
@@ -37,8 +37,7 @@ def dataclass_has_variable(cls: Type) -> bool:
     return False
 
 
-
-def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:
+def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:  # dependent type, can't enforce
     """Derive a unified metric from any type.
 
     Args:
@@ -65,7 +64,11 @@ def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:
     # derive product metric from dataclass
     elif is_dataclass(cls):
         return ProductMetric(
-            cls=cls, field_metrics={fld.name: derive_metric(fld.type, constraint=constraint) for fld in fields(cls)}
+            cls=cls,
+            field_metrics={
+                fld.name: derive_metric(fld.type, constraint=constraint)  # pyright: ignore
+                for fld in fields(cls)
+            }
         )
 
     # derive union metric from unions

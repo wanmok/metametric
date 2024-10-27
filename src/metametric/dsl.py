@@ -25,7 +25,7 @@ else:
         Ell = type(...)
 
 from metametric.core.constraint import MatchingConstraint
-from metametric.core.matching import (
+from metametric.core.matching_metrics import (
     GraphMatchingMetric,
     LatentSetMatchingMetric,
     SequenceMatchingMetric,
@@ -37,6 +37,8 @@ from metametric.core.metric import ContramappedMetric, DiscreteMetric, Metric, P
 from metametric.core.metric_suite import MetricFamily, MetricSuite, MultipleMetricFamilies
 from metametric.core.normalizers import NormalizedMetric, Normalizer
 from metametric.core.reduction import MacroAverage, MicroAverage, MultipleReductions, Reduction
+from metametric.core.matching import Matching, Match, Hook
+
 
 T = TypeVar("T", contravariant=True)
 S = TypeVar("S")
@@ -113,7 +115,7 @@ class _DataClass:
         def product_metric(field_metrics: Dict[str, Union[Ell, Metric]]) -> Metric[T]:
             field_types = {fld.name: fld.type for fld in fields(cfg.cls)}
             field_metrics_no_ell: Dict[str, Metric] = {
-                fld: (auto[field_types[fld], cfg.constraint] if metric is ... else metric)
+                fld: (auto[field_types[fld], cfg.constraint] if metric is ... else metric)  # pyright: ignore
                 for fld, metric in field_metrics.items()
             }
             return ProductMetric(cls=cfg.cls, field_metrics=field_metrics_no_ell)
@@ -218,6 +220,8 @@ class _Normalize:
     def __getitem__(self, normalizer: Union[Normalizer, str]) -> Callable[[Metric[T]], Metric[T]]:
         if isinstance(normalizer, str):
             normalizer_obj = Normalizer.from_str(normalizer)
+        else:
+            normalizer_obj = None
 
         def _normalize(metric: Metric[T]) -> Metric[T]:
             return metric if normalizer_obj is None else NormalizedMetric(metric, normalizer_obj)
@@ -231,8 +235,7 @@ normalize = _Normalize()
 def macro_average(normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
     """Macro-average reduction."""
     normalizer_objs = [
-        Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer
-        for normalizer in normalizers
+        Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer for normalizer in normalizers
     ]
     return MacroAverage(normalizer_objs)
 
@@ -240,8 +243,7 @@ def macro_average(normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
 def micro_average(normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
     """Micro-average reduction."""
     normalizer_objs = [
-        Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer
-        for normalizer in normalizers
+        Normalizer.from_str(normalizer) if isinstance(normalizer, str) else normalizer for normalizer in normalizers
     ]
     return MicroAverage(normalizer_objs)
 
@@ -256,3 +258,26 @@ def family(metric: Metric[T], reduction: Union[Reduction, Dict[str, Reduction]])
 def suite(collection: Dict[str, MetricSuite[T]]) -> MetricSuite[T]:
     """Creates a metric suite."""
     return MultipleMetricFamilies(collection)
+
+
+__all__ = [
+    "from_func",
+    "preprocess",
+    "auto",
+    "discrete",
+    "dataclass",
+    "union",
+    "set_matching",
+    "sequence_matching",
+    "graph_matching",
+    "latent_set_matching",
+    "normalize",
+    "macro_average",
+    "micro_average",
+    "family",
+    "suite",
+    "Metric",
+    "Match",
+    "Matching",
+    "Hook",
+]

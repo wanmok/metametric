@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, is_dataclass
 from typing import (Any, Callable, Collection, Generic, Iterator, List,
                     Optional, Sequence, Type, TypeVar)
 
@@ -7,6 +7,7 @@ import numpy as np
 import scipy as sp
 
 from metametric.core.constraint import MatchingConstraint
+from metametric.core._problem import MatchingProblem
 from metametric.core.metric import Variable
 
 T = TypeVar('T')
@@ -122,6 +123,9 @@ class LatentVariableConstraintBuilder(ConstraintBuilder, Generic[T]):
     cls: Type[T]
     gram_matrix: np.ndarray  # R[n_x, n_y]
 
+    def __post_init__(self):
+        assert is_dataclass(self.cls)
+
     def build(self) -> Optional[sp.optimize.LinearConstraint]:
         x_vars = list(_all_variables(self.x))
         y_vars = list(_all_variables(self.y))
@@ -131,7 +135,7 @@ class LatentVariableConstraintBuilder(ConstraintBuilder, Generic[T]):
         for i, a in enumerate(self.x):
             for j, b in enumerate(self.y):
                 if self.gram_matrix[i, j] > 0:
-                    for fld in fields(self.cls):
+                    for fld in fields(self.cls):  # pyright: ignore
                         a_fld = getattr(a, fld.name, None)
                         b_fld = getattr(b, fld.name, None)
                         if isinstance(a_fld, Variable) and isinstance(b_fld, Variable):
@@ -152,7 +156,7 @@ class LatentVariableConstraintBuilder(ConstraintBuilder, Generic[T]):
         )
 
 
-class MatchingProblem(Generic[T]):
+class ILPMatchingProblem(MatchingProblem[T]):
     """Creates a matching problem that is solved by ILP.
 
     The constrained ILP problem has variables
@@ -166,11 +170,9 @@ class MatchingProblem(Generic[T]):
             gram_matrix: np.ndarray,
             has_vars: bool = False,
     ):
-        self.x = x
-        self.y = y
+        super().__init__(x, y, gram_matrix)
         self.n_x = len(x)
         self.n_y = len(y)
-        self.gram_matrix = gram_matrix
         if has_vars:
             self.x_vars = list(_all_variables(x))
             self.y_vars = list(_all_variables(y))
@@ -257,7 +259,14 @@ class MatchingProblem(Generic[T]):
             bounds=sp.optimize.Bounds(lb=0, ub=1),
             integrality=np.ones_like(coef),
         )
-        return -result.fun
+        solution = result.x[:self.n_x * self.n_y].reshape([self.n_x, self.n_y])
+        matching = [
+            (i, j, self.gram_matrix[i, j].item())
+            for i in range(self.n_x)
+            for j in range(self.n_y)
+            if solution[i, j] > 0
+        ]
+        return -result.fun, matching
 
 
 def _get_one_to_many_constraint_matrix(n_x: int, n_y: int) -> np.ndarray:  # [Y, X * Y]

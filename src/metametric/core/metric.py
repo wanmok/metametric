@@ -3,10 +3,12 @@ from abc import abstractmethod
 from dataclasses import dataclass, is_dataclass
 from functools import reduce
 from operator import mul
-from typing import (Callable, ClassVar, Collection, Dict, Generic, Protocol,
-                    Type, TypeVar, Union, get_origin, runtime_checkable)
+from typing import (Callable, ClassVar, Dict, Generic, Protocol,
+                    Type, TypeVar, Union, get_origin, runtime_checkable, Sequence, Tuple)
 
 import numpy as np
+
+from metametric.core.matching import Matching, Match, Path
 
 S = TypeVar("S", contravariant=True)
 T = TypeVar("T", contravariant=True)
@@ -23,9 +25,13 @@ class Metric(Generic[T]):
     """
 
     @abstractmethod
+    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
+        r"""Scores two objects using this metric, and returns the score and a matching object."""
+        raise NotImplementedError
+
     def score(self, x: T, y: T) -> float:
         r"""Scores two objects using this metric: $\phi(x, y)$."""
-        raise NotImplementedError()
+        return self.compute(x, y)[0]
 
     def score_self(self, x: T) -> float:
         r"""Scores an object against itself: $\phi(x, x)$.
@@ -35,7 +41,7 @@ class Metric(Generic[T]):
         """
         return self.score(x, x)
 
-    def gram_matrix(self, xs: Collection[T], ys: Collection[T]) -> np.ndarray:
+    def gram_matrix(self, xs: Sequence[T], ys: Sequence[T]) -> np.ndarray:
         r"""Computes the Gram matrix of the metric given two collections of objects.
 
         Args:
@@ -84,9 +90,14 @@ class MetricFromFunction(Metric[T]):
     def __init__(self, f: Callable[[T, T], float]):
         self.f = f
 
-    def score(self, x: T, y: T) -> float:
+    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
         """Score two objects."""
-        return self.f(x, y)
+        score = self.f(x, y)
+
+        def _matching():
+            yield Match(Path(), x, Path(), y, score)
+
+        return self.f(x, y), Matching(_matching())
 
 
 class ContramappedMetric(Metric[S]):
@@ -96,9 +107,9 @@ class ContramappedMetric(Metric[S]):
         self.inner = inner
         self.f = f
 
-    def score(self, x: S, y: S) -> float:
+    def compute(self, x: S, y: S) -> Tuple[float, Matching]:
         """Score two objects."""
-        return self.inner.score(self.f(x), self.f(y))
+        return self.inner.compute(self.f(x), self.f(y))
 
     def score_self(self, x: S) -> float:
         """Scores an object against itself."""
@@ -112,9 +123,11 @@ class DiscreteMetric(Metric[T]):
         if getattr(cls, "__eq__", None) is None:
             raise ValueError("Class must implement __eq__")
 
-    def score(self, x: T, y: T) -> float:
+    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
         """Score two objects."""
-        return float(x == y)
+        if x == y:
+            return 1.0, Matching([Match(Path(), x, Path(), y, 1.0)])
+        return 0.0, Matching([])
 
     def score_self(self, x: T) -> float:
         """Scores an object against itself."""
@@ -129,11 +142,20 @@ class ProductMetric(Metric[T]):
             raise ValueError(f"{cls} has to be a dataclass.")
         self.field_metrics = field_metrics
 
-    def score(self, x: T, y: T) -> float:
+    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
         """Score two objects."""
-        return reduce(
-            mul, (self.field_metrics[fld].score(getattr(x, fld), getattr(y, fld)) for fld in self.field_metrics.keys())
-        )
+        field_scores = {
+            fld: self.field_metrics[fld].compute(getattr(x, fld), getattr(y, fld))
+            for fld in self.field_metrics.keys()
+        }
+        total_score = reduce(mul, (s for s, _ in field_scores.values()), 1.0)
+
+        def _matching():
+            yield Match(Path(), x, Path(), y, total_score)
+            for fld, (s, matching) in field_scores.items():
+                for m in matching.matches:
+                    yield Match(m.pred_path.prepend(fld), m.pred, m.ref_path.prepend(fld), m.ref, m.score)
+        return total_score, Matching(_matching())
 
 
 class UnionMetric(Metric[T]):
@@ -144,13 +166,13 @@ class UnionMetric(Metric[T]):
             raise ValueError(f"{cls} has to be a union.")
         self.case_metrics = case_metrics
 
-    def score(self, x: T, y: T) -> float:
+    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
         """Score two objects."""
         x_type = type(x)
         y_type = type(y)
         if x_type != y_type:
-            return 0.0
-        return self.case_metrics[x_type].score(x, y)
+            return 0.0, Matching([])
+        return self.case_metrics[x_type].compute(x, y)
 
     def score_self(self, x: T) -> float:
         """Scores an object against itself."""
