@@ -451,22 +451,24 @@ files = [
 
 [[package]]
 name = "mkdocstrings"
-version = "0.23.0"
+version = "0.26.2"
 description = "Automatic documentation from sources, for MkDocs."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "mkdocstrings-0.23.0-py3-none-any.whl", hash = "sha256:051fa4014dfcd9ed90254ae91de2dbb4f24e166347dae7be9a997fe16316c65e"},
-    {file = "mkdocstrings-0.23.0.tar.gz", hash = "sha256:d9c6a37ffbe7c14a7a54ef1258c70b8d394e6a33a1c80832bce40b9567138d1c"},
+    {file = "mkdocstrings-0.26.2-py3-none-any.whl", hash = "sha256:1248f3228464f3b8d1a15bd91249ce1701fe3104ac517a5f167a0e01ca850ba5"},
+    {file = "mkdocstrings-0.26.2.tar.gz", hash = "sha256:34a8b50f1e6cfd29546c6c09fbe02154adfb0b361bb758834bf56aa284ba876e"},
 ]
 
 [package.dependencies]
+click = ">=7.0"
 Jinja2 = ">=2.11.1"
-Markdown = ">=3.3"
+Markdown = ">=3.6"
 MarkupSafe = ">=1.1"
-mkdocs = ">=1.2"
-mkdocs-autorefs = ">=0.3.1"
+mkdocs = ">=1.4"
+mkdocs-autorefs = ">=1.2"
 mkdocstrings-python = {version = ">=0.5.2", optional = true, markers = "extra == \"python\""}
+platformdirs = ">=2.2"
 pymdown-extensions = ">=6.3"
 
 [package.extras]
@@ -476,18 +478,19 @@ python-legacy = ["mkdocstrings-python-legacy (>=0.2.1)"]
 
 [[package]]
 name = "mkdocstrings-python"
-version = "1.8.0"
+version = "1.12.2"
 description = "A Python handler for mkdocstrings."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "mkdocstrings_python-1.8.0-py3-none-any.whl", hash = "sha256:4209970cc90bec194568682a535848a8d8489516c6ed4adbe58bbc67b699ca9d"},
-    {file = "mkdocstrings_python-1.8.0.tar.gz", hash = "sha256:1488bddf50ee42c07d9a488dddc197f8e8999c2899687043ec5dd1643d057192"},
+    {file = "mkdocstrings_python-1.12.2-py3-none-any.whl", hash = "sha256:7f7d40d6db3cb1f5d19dbcd80e3efe4d0ba32b073272c0c0de9de2e604eda62a"},
+    {file = "mkdocstrings_python-1.12.2.tar.gz", hash = "sha256:7a1760941c0b52a2cd87b960a9e21112ffe52e7df9d0b9583d04d47ed2e186f3"},
 ]
 
 [package.dependencies]
-griffe = ">=0.37"
-mkdocstrings = ">=0.20"
+griffe = ">=0.49"
+mkdocs-autorefs = ">=1.2"
+mkdocstrings = ">=0.26"
 
 [[package]]
 name = "networkx"
@@ -1095,4 +1098,4 @@ torchmetrics = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10"
-content-hash = "2d4980e6d443260e2e2a1c8f8c4f9737ed54b58406ef24ad2e70246e3b9cfd99"
+content-hash = "7178ba86dd8b203d9131277f5a8f9b7dadbf017bf228165f9eee04c83c723998"
