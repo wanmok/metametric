@@ -1,6 +1,6 @@
 """Normalizers to normalize metrics as normalized metrics."""
 
-from typing import Optional, Protocol, TypeVar, runtime_checkable, Tuple
+from typing import Optional, Protocol, TypeVar, runtime_checkable
 
 from metametric.core.matching import Matching, Match, Path
 from metametric.core.metric import Metric
@@ -117,7 +117,7 @@ class NormalizedMetric(Metric[T]):
         self.inner = inner
         self.normalizer = normalizer
 
-    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> tuple[float, Matching]:
         """Score two objects."""
         sxy, inner_matching = self.inner.compute(x, y)
         sxx = self.inner.score_self(x)

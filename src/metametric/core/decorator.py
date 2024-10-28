@@ -1,7 +1,8 @@
 """Decorator for deriving metrics from dataclasses."""
 
 from dataclasses import fields, is_dataclass
-from typing import Annotated, Any, Callable, Collection, Literal, Type, TypeVar, Union, get_args, get_origin, Optional
+from typing import Annotated, Any, Callable, Literal, TypeVar, Union, get_args, get_origin, Optional
+from collections.abc import Collection
 
 from metametric.core.matching_metrics import MatchingConstraint, LatentSetMatchingMetric, SetMatchingMetric
 from metametric.core.metric import (
@@ -31,7 +32,7 @@ def may_be_variable(cls: Any) -> bool:
     return False
 
 
-def dataclass_has_variable(cls: Type) -> bool:
+def dataclass_has_variable(cls: type) -> bool:
     """Check if a dataclass has a field with `Variable` in its type signature."""
     if cls is Variable:
         return True
@@ -41,7 +42,7 @@ def dataclass_has_variable(cls: Type) -> bool:
     return False
 
 
-def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:  # dependent type, can't enforce
+def derive_metric(cls: type, constraint: MatchingConstraint) -> Metric:  # dependent type, can't enforce
     """Derive a unified metric from any type.
 
     Args:
@@ -107,11 +108,11 @@ def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:  # depen
 
 
 def metametric(
-    cls: Optional[Type] = None,
+    cls: Optional[type] = None,
     /,
     normalizer: Union[NormalizerLiteral, Normalizer] = "none",
     constraint: Union[ConstraintLiteral, MatchingConstraint] = "<->",
-) -> Callable[[Type], Type]:
+) -> Callable[[type], type]:
     """Decorate a dataclass to have corresponding metric derived.
 
     Args:
@@ -125,7 +126,7 @@ def metametric(
         `Callable[[Type], Type]`: The class decorator.
     """
 
-    def class_decorator(cls: Type) -> Type:
+    def class_decorator(cls: type) -> type:
         nonlocal normalizer, constraint
         if isinstance(constraint, MatchingConstraint):
             metric = derive_metric(cls, constraint=constraint)

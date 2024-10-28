@@ -7,17 +7,14 @@ from operator import mul
 from typing import (
     Callable,
     ClassVar,
-    Dict,
     Generic,
     Protocol,
-    Type,
     TypeVar,
     Union,
     get_origin,
     runtime_checkable,
-    Sequence,
-    Tuple,
 )
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -38,7 +35,7 @@ class Metric(Generic[T]):
     """
 
     @abstractmethod
-    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> tuple[float, Matching]:
         r"""Scores two objects using this metric, and returns the score and a matching object."""
         raise NotImplementedError
 
@@ -103,7 +100,7 @@ class MetricFromFunction(Metric[T]):
     def __init__(self, f: Callable[[T, T], float]):
         self.f = f
 
-    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> tuple[float, Matching]:
         """Score two objects."""
         score = self.f(x, y)
 
@@ -120,7 +117,7 @@ class ContramappedMetric(Metric[S]):
         self.inner = inner
         self.f = f
 
-    def compute(self, x: S, y: S) -> Tuple[float, Matching]:
+    def compute(self, x: S, y: S) -> tuple[float, Matching]:
         """Score two objects."""
         return self.inner.compute(self.f(x), self.f(y))
 
@@ -132,11 +129,11 @@ class ContramappedMetric(Metric[S]):
 class DiscreteMetric(Metric[T]):
     """A metric for discrete objects."""
 
-    def __init__(self, cls: Type[T]):
+    def __init__(self, cls: type[T]):
         if getattr(cls, "__eq__", None) is None:
             raise ValueError("Class must implement __eq__")
 
-    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> tuple[float, Matching]:
         """Score two objects."""
         if x == y:
             return 1.0, Matching([Match(Path(), x, Path(), y, 1.0)])
@@ -150,12 +147,12 @@ class DiscreteMetric(Metric[T]):
 class ProductMetric(Metric[T]):
     """A metric that is the product of other metrics."""
 
-    def __init__(self, cls: Type[T], field_metrics: Dict[str, Metric]):
+    def __init__(self, cls: type[T], field_metrics: dict[str, Metric]):
         if not is_dataclass(cls):
             raise ValueError(f"{cls} has to be a dataclass.")
         self.field_metrics = field_metrics
 
-    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> tuple[float, Matching]:
         """Score two objects."""
         field_scores = {
             fld: self.field_metrics[fld].compute(getattr(x, fld), getattr(y, fld)) for fld in self.field_metrics.keys()
@@ -174,12 +171,12 @@ class ProductMetric(Metric[T]):
 class UnionMetric(Metric[T]):
     """A metric that is the union of other metrics."""
 
-    def __init__(self, cls: Type[T], case_metrics: Dict[type, Metric]):
+    def __init__(self, cls: type[T], case_metrics: dict[type, Metric]):
         if get_origin(cls) is not Union:
             raise ValueError(f"{cls} has to be a union.")
         self.case_metrics = case_metrics
 
-    def compute(self, x: T, y: T) -> Tuple[float, Matching]:
+    def compute(self, x: T, y: T) -> tuple[float, Matching]:
         """Score two objects."""
         x_type = type(x)
         y_type = type(y)

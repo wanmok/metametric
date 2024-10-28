@@ -1,6 +1,6 @@
 """Metric suite definitions for coreference resolution."""
 
-from typing import Collection
+from collections.abc import Collection
 
 import metametric.dsl as mm
 from metametric.core.metric import Metric
