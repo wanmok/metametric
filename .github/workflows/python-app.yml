@@ -40,7 +40,7 @@ jobs:
       with:
         version: 0.7.1
         args: "format --check"
-    - run: echo "$(uv run which python)" >> $GITHUB_PATH
+    - run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
     - name: Run pyright
       uses: jakebailey/pyright-action@v2
       with:
