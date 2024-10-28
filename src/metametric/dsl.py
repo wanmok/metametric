@@ -4,18 +4,14 @@ import sys
 from dataclasses import dataclass, fields, is_dataclass
 from typing import (
     Callable,
-    Collection,
-    Dict,
     Generic,
     Optional,
-    Sequence,
-    Tuple,
-    Type,
     TypeVar,
     Union,
     get_origin,
     TYPE_CHECKING,
 )
+from collections.abc import Collection, Sequence
 
 if sys.version_info >= (3, 10):
     from types import EllipsisType as Ell
@@ -45,15 +41,15 @@ T = TypeVar("T", contravariant=True)
 S = TypeVar("S")
 
 DslConfig = Union[
-    Type[T],
-    Tuple[Type[T], Union[MatchingConstraint, str]],
-    Tuple[Type[T], Union[MatchingConstraint, str], Union[Normalizer, str, None]],
+    type[T],
+    tuple[type[T], Union[MatchingConstraint, str]],
+    tuple[type[T], Union[MatchingConstraint, str], Union[Normalizer, str, None]],
 ]
 
 
 @dataclass
 class _Config(Generic[T]):
-    cls: Type[T]
+    cls: type[T]
     constraint: MatchingConstraint = MatchingConstraint.ONE_TO_ONE
     normalizer: Optional[Normalizer] = None
 
@@ -101,7 +97,7 @@ auto = _Auto()
 
 
 class _Discrete:
-    def __getitem__(self, t: Type[T]) -> Metric[T]:
+    def __getitem__(self, t: type[T]) -> Metric[T]:
         return DiscreteMetric(t)
 
 
@@ -109,13 +105,13 @@ discrete = _Discrete()
 
 
 class _DataClass:
-    def __getitem__(self, config: DslConfig[T]) -> Callable[[Dict[str, Union[Ell, Metric]]], Metric[T]]:
+    def __getitem__(self, config: DslConfig[T]) -> Callable[[dict[str, Union[Ell, Metric]]], Metric[T]]:
         cfg = _Config.standardize(config)
         assert is_dataclass(cfg.cls)
 
-        def product_metric(field_metrics: Dict[str, Union[Ell, Metric]]) -> Metric[T]:
+        def product_metric(field_metrics: dict[str, Union[Ell, Metric]]) -> Metric[T]:
             field_types = {fld.name: fld.type for fld in fields(cfg.cls)}
-            field_metrics_no_ell: Dict[str, Metric] = {
+            field_metrics_no_ell: dict[str, Metric] = {
                 fld: (auto[field_types[fld], cfg.constraint] if metric is ... else metric)  # pyright: ignore
                 for fld, metric in field_metrics.items()
             }
@@ -128,12 +124,12 @@ dataclass = _DataClass()
 
 
 class _Union:
-    def __getitem__(self, config: DslConfig[T]) -> Callable[[Dict[Type, Union[Ell, Metric]]], Metric[T]]:
+    def __getitem__(self, config: DslConfig[T]) -> Callable[[dict[type, Union[Ell, Metric]]], Metric[T]]:
         cfg = _Config.standardize(config)
 
-        def union_metric(case_metrics: Dict[Type, Union[Ell, Metric]]) -> Metric[T]:
+        def union_metric(case_metrics: dict[type, Union[Ell, Metric]]) -> Metric[T]:
             assert get_origin(cfg.cls) is Union
-            case_metrics_no_ell: Dict[type, Metric] = {
+            case_metrics_no_ell: dict[type, Metric] = {
                 case: (auto[case, cfg.constraint] if metric is ... else metric) for case, metric in case_metrics.items()
             }
             return UnionMetric(cls=cfg.cls, case_metrics=case_metrics_no_ell)
@@ -248,14 +244,14 @@ def micro_average(normalizers: Collection[Union[Normalizer, str]]) -> Reduction:
     return MicroAverage(normalizer_objs)
 
 
-def family(metric: Metric[T], reduction: Union[Reduction, Dict[str, Reduction]]) -> MetricFamily[T]:
+def family(metric: Metric[T], reduction: Union[Reduction, dict[str, Reduction]]) -> MetricFamily[T]:
     """Creates a metric family."""
     if isinstance(reduction, dict):
         reduction = MultipleReductions(reduction)
     return MetricFamily(metric, reduction)
 
 
-def suite(collection: Dict[str, MetricSuite[T]]) -> MetricSuite[T]:
+def suite(collection: dict[str, MetricSuite[T]]) -> MetricSuite[T]:
     """Creates a metric suite."""
     return MultipleMetricFamilies(collection)
 

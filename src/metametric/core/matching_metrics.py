@@ -1,7 +1,7 @@
 """Metric derivation with matching constraints."""
 
 from dataclasses import is_dataclass
-from typing import Type, TypeVar, Union, Tuple
+from typing import TypeVar, Union
 from collections.abc import Collection, Sequence
 from collections import defaultdict
 
@@ -25,7 +25,7 @@ def _matching_from_triples(
     score: float,
     x: Sequence[T],
     y: Sequence[T],
-    matches: Collection[Tuple[int, int, float]],
+    matches: Collection[tuple[int, int, float]],
 ) -> Matching:
     def _matching():
         yield Match(Path(), original_x, Path(), original_y, score)
@@ -42,7 +42,7 @@ class SetMatchingMetric(Metric[Collection[T]]):
         self.inner = inner
         self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
 
-    def compute(self, x: Collection[T], y: Collection[T]) -> Tuple[float, Matching]:
+    def compute(self, x: Collection[T], y: Collection[T]) -> tuple[float, Matching]:
         """Score two sets of objects."""
         original_x, original_y = x, y
         x, y = list(x), list(y)
@@ -93,7 +93,7 @@ class SequenceMatchingMetric(Metric[Sequence[T]]):
         self.inner = inner
         self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
 
-    def compute(self, x: Sequence[T], y: Sequence[T]) -> Tuple[float, Matching]:
+    def compute(self, x: Sequence[T], y: Sequence[T]) -> tuple[float, Matching]:
         m = self.inner.gram_matrix(x, y)
         f = np.zeros([m.shape[0] + 1, m.shape[1] + 1])
         for i in range(m.shape[0] + 1):
@@ -124,7 +124,7 @@ class GraphMatchingMetric(Metric[Graph[T]]):
         self.inner = inner
         self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
 
-    def compute(self, x: Graph[T], y: Graph[T]) -> Tuple[float, Matching]:
+    def compute(self, x: Graph[T], y: Graph[T]) -> tuple[float, Matching]:
         x_nodes = list(x.nodes())
         y_nodes = list(y.nodes())
         gram_matrix = self.inner.gram_matrix(x_nodes, y_nodes)
@@ -143,7 +143,7 @@ class LatentSetMatchingMetric(Metric[Collection[T]]):
 
     def __init__(
         self,
-        cls: Type[T],
+        cls: type[T],
         inner: Metric[T],
         constraint: Union[str, MatchingConstraint] = MatchingConstraint.ONE_TO_ONE,
     ):
@@ -154,7 +154,7 @@ class LatentSetMatchingMetric(Metric[Collection[T]]):
         self.inner = inner
         self.constraint = MatchingConstraint.from_str(constraint) if isinstance(constraint, str) else constraint
 
-    def compute(self, x: Collection[T], y: Collection[T]) -> Tuple[float, Matching]:
+    def compute(self, x: Collection[T], y: Collection[T]) -> tuple[float, Matching]:
         """Score two collections of objects."""
         original_x, original_y = x, y
         x = list(x)

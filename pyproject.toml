@@ -1,3 +1,44 @@
+[project]
+name = "metametric"
+version = "0.2.0"
+description = "A Unified View of Evaluation Metrics for Structured Prediction"
+authors = [
+    {name = "Tongfei Chen", email = "tongfei@pm.me"},
+    {name = "Yunmo Chen", email = "chanwanmok@gmail.com"},
+    {name = "Will Gantt", email = "wgantt.iv@gmail.com"}
+]
+readme = "README.md"
+homepage = "https://omnuy.me/metametric"
+repository = "https://github.com/wanmok/metametric"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=2.0.2",
+    "scipy>=1.13.1",
+]
+#packages = [{ include = "metametric", from = "src" }]
+
+[dependency-groups]
+dev = [
+    "griffe>=1.5.1",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.5.42",
+    "pyright>=1.1.386",
+    "pytest>=8.3.3",
+    "ruff>=0.7.1",
+    "mkdocstrings[python]>=0.26.2",
+    "networkx>=3.2.1",
+    "setuptools>=75.2.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "src",
+]
+
 [tool.ruff]
 line-length = 120
 src = ["src", "tests"]
@@ -21,6 +62,9 @@ convention = "google"
 [tool.ruff.lint.isort]
 lines-after-imports = 2
 
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D100", "D103", "F841"]
+
 [tool.black]
 line-length = 119
 
@@ -30,41 +74,3 @@ include = ["src", "tests"]
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = ["tests"]
-
-[tool.poetry]
-name = "metametric"
-version = "0.2.0"
-description = "A Unified View of Evaluation Metrics for Structured Prediction"
-authors = ["Tongfei Chen <tongfei@pm.me>", "Yunmo Chen <yunmo@jhu.edu>", "Will Gantt <wgantt.iv@gmail.com>"]
-readme = "README.md"
-homepage = "https://omnuy.me/metametric"
-repository = "https://github.com/wanmok/metametric"
-packages = [{ include = "metametric", from = "src" }]
-
-[tool.poetry.dependencies]
-python = ">=3.10"
-scipy = "^1.14.0"
-numpy = "^1.25.2"
-
-[tool.poetry.group.dev]
-optional = true
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.2"
-pyright = "^1.1.385"
-networkx = "^3.1"
-mkdocs = "^1.5.3"
-mkdocs-material = "^9.4.2"
-mkdocstrings = {extras = ["python"], version = "^0.26.2"}
-ruff = "^0.7.0"
-griffe = "^1.5.1"
-
-[tool.poetry.extras]
-torchmetrics = ["torchmetrics"]
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D100", "D103", "F841"]

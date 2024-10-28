@@ -1,6 +1,7 @@
 """Define a `Graph` protocol that `networkx.DiGraph` satisfies."""
 
-from typing import Collection, Iterator, Protocol, TypeVar, runtime_checkable
+from typing import Protocol, TypeVar, runtime_checkable
+from collections.abc import Collection, Iterator
 
 import numpy as np
 

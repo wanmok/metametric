@@ -4,7 +4,7 @@ The data structures defined here can automatically derive commonly used metrics 
 """
 
 from dataclasses import dataclass
-from typing import Collection
+from collections.abc import Collection
 
 from metametric.core.decorator import metametric
 

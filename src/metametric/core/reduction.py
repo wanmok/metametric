@@ -1,6 +1,7 @@
 """Metric aggregator for computing metrics on a batch of predictions and references."""
 
-from typing import Callable, Collection, Dict, Optional, Protocol
+from typing import Callable, Optional, Protocol
+from collections.abc import Collection
 
 from metametric.core.normalizers import Normalizer
 from metametric.core.state import SingleMetricState
@@ -8,7 +9,7 @@ from metametric.core.state import SingleMetricState
 
 def _compute_normalized_metrics(
     normalizers: Collection[Optional[Normalizer]], sxy: float, sxx: float, syy: float
-) -> Dict[str, float]:
+) -> dict[str, float]:
     normalized_metrics = {
         normalizer.name: normalizer.normalize(sxy, sxx, syy) for normalizer in normalizers if normalizer is not None
     }
@@ -23,11 +24,11 @@ class Reduction(Protocol):
     Examples include macro-averaging and micro-averaging.
     """
 
-    def compute(self, state: SingleMetricState) -> Dict[str, float]:
+    def compute(self, state: SingleMetricState) -> dict[str, float]:
         """Compute the metrics from the aggregator."""
         raise NotImplementedError()
 
-    def with_extra(self, extra: Callable[[Dict[str, float]], Dict[str, float]]):
+    def with_extra(self, extra: Callable[[dict[str, float]], dict[str, float]]):
         return ReductionWithExtra(self, extra)
 
 
@@ -40,7 +41,7 @@ class MacroAverage(Reduction):
         if None in normalizers:
             self.normalizer_names.append("")
 
-    def compute(self, state: SingleMetricState) -> Dict[str, float]:
+    def compute(self, state: SingleMetricState) -> dict[str, float]:
         n = len(state)
         metrics_per_sample = [
             _compute_normalized_metrics(self.normalizers, sxy, sxx, syy)
@@ -56,7 +57,7 @@ class MicroAverage(Reduction):
     def __init__(self, normalizers: Collection[Optional[Normalizer]]):
         self.normalizers = normalizers
 
-    def compute(self, state: SingleMetricState) -> Dict[str, float]:
+    def compute(self, state: SingleMetricState) -> dict[str, float]:
         sxy_total = sum(state.matches)
         sxx_total = sum(state.preds)
         syy_total = sum(state.refs)
@@ -70,10 +71,10 @@ class MicroAverage(Reduction):
 class MultipleReductions(Reduction):
     """A collection of multiple reductions."""
 
-    def __init__(self, reductions: Dict[str, Reduction]):
+    def __init__(self, reductions: dict[str, Reduction]):
         self.reductions = reductions
 
-    def compute(self, state: SingleMetricState) -> Dict[str, float]:
+    def compute(self, state: SingleMetricState) -> dict[str, float]:
         return {
             (f"{prefix}-{name}" if name != "" else prefix): value
             for prefix, family in self.reductions.items()
@@ -84,11 +85,11 @@ class MultipleReductions(Reduction):
 class ReductionWithExtra(Reduction):
     """Equip a downstream function after reduction is computed."""
 
-    def __init__(self, original: Reduction, extra: Callable[[Dict[str, float]], Dict[str, float]]):
+    def __init__(self, original: Reduction, extra: Callable[[dict[str, float]], dict[str, float]]):
         self.original = original
         self.extra = extra
 
-    def compute(self, state: SingleMetricState) -> Dict[str, float]:
+    def compute(self, state: SingleMetricState) -> dict[str, float]:
         metrics = self.original.compute(state)
         metrics.update(self.extra(metrics))
         return metrics

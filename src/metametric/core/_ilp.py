@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields, is_dataclass
-from typing import Any, Callable, Collection, Generic, Iterator, List, Optional, Sequence, Type, TypeVar
+from typing import Any, Callable, Generic, Optional, TypeVar
+from collections.abc import Collection, Iterator, Sequence
 
 import numpy as np
 import scipy as sp
@@ -115,7 +116,7 @@ class MonotonicityConstraintBuilder(ConstraintBuilder):
 class LatentVariableConstraintBuilder(ConstraintBuilder, Generic[T]):
     x: Collection[T]
     y: Collection[T]
-    cls: Type[T]
+    cls: type[T]
     gram_matrix: np.ndarray  # R[n_x, n_y]
 
     def __post_init__(self):
@@ -179,7 +180,7 @@ class ILPMatchingProblem(MatchingProblem[T]):
             self.y_vars = []
             self.n_x_vars = 0
             self.n_y_vars = 0
-        self.constraints: List[sp.optimize.LinearConstraint] = []
+        self.constraints: list[sp.optimize.LinearConstraint] = []
 
     def add_matching_constraint(self, constraint_type: MatchingConstraint):
         constraint = MatchingConstraintBuilder(
@@ -215,7 +216,7 @@ class ILPMatchingProblem(MatchingProblem[T]):
         if constraint is not None:
             self.constraints.append(constraint)
 
-    def add_latent_variable_constraint(self, cls: Type[T]):
+    def add_latent_variable_constraint(self, cls: type[T]):
         constraint = LatentVariableConstraintBuilder(
             n_x=self.n_x,
             n_y=self.n_y,

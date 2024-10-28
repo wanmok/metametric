@@ -1,7 +1,8 @@
 """Defines utilities for obtaining the inner matching after a metric is computed."""
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Iterable, Callable, Dict, Any
+from typing import Generic, TypeVar, Callable, Any
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 from metametric.core.path import Path
@@ -57,7 +58,7 @@ class Matching(Iterable[Match[object]]):
         """Traverses all matching pairs of inner objects."""
         return iter(self.matches)
 
-    def run_with_hooks(self, hooks: Dict[str, Hook[Any]], data_id: int = 0):
+    def run_with_hooks(self, hooks: dict[str, Hook[Any]], data_id: int = 0):
         """Runs hooks on the matches."""
         parsed_hooks = {Path.parse(selector): hook for selector, hook in hooks.items()}
         for match in self.matches:

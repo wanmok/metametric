@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import Sequence, TypeVar, Generic, Tuple, Collection
+from typing import TypeVar, Generic
+from collections.abc import Sequence, Collection
 
 import numpy as np
 import scipy.optimize as spo
@@ -18,7 +19,7 @@ class MatchingProblem(Generic[T]):
         self.gram_matrix = gram_matrix
 
     @abstractmethod
-    def solve(self) -> Tuple[float, Collection[Tuple[int, int, float]]]:
+    def solve(self) -> tuple[float, Collection[tuple[int, int, float]]]:
         """Solves the matching problem."""
         raise NotImplementedError
 
@@ -28,7 +29,7 @@ class AssignmentProblem(MatchingProblem[T]):
         super().__init__(x, y, gram_matrix)
         self.constraint = constraint
 
-    def solve(self) -> Tuple[float, Collection[Tuple[int, int, float]]]:
+    def solve(self) -> tuple[float, Collection[tuple[int, int, float]]]:
         m = self.gram_matrix
         if self.constraint == MatchingConstraint.ONE_TO_ONE:
             row_idx, col_idx = spo.linear_sum_assignment(
