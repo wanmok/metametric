@@ -9,8 +9,8 @@ permissions:
 
 jobs:
   deploy:
-    environment: release
     runs-on: ubuntu-latest
+    environment: release
     steps:
     - uses: actions/checkout@v4
     - name: Install uv
