@@ -1,4 +1,5 @@
 """Metric suites are collections of metrics that are computed together."""
+
 from dataclasses import dataclass
 from typing import Callable, Dict, Protocol, Sequence, TypeVar, Optional, Any
 

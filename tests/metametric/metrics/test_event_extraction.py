@@ -1,4 +1,5 @@
 """Tests for event extraction metrics."""
+
 from pytest import fixture, approx
 
 
@@ -22,7 +23,7 @@ def data():
             Argument(mention=baghdad, role="place"),
             Argument(mention=cameraman, role="victim"),
             Argument(mention=american_tank, role="instrument"),
-        ]
+        ],
     )
     ref_attack = Event(
         trigger=Trigger(mention=fired, type="attack"),
@@ -31,7 +32,7 @@ def data():
             Argument(mention=baghdad, role="place"),
             Argument(mention=cameraman, role="target"),
             Argument(mention=palestine_hotel, role="target"),
-        ]
+        ],
     )
 
     pred_die = Event(
@@ -39,7 +40,7 @@ def data():
         args=[
             Argument(mention=palestine_hotel, role="place"),
             Argument(mention=cameraman, role="victim"),
-        ]
+        ],
     )
     pred_attack = Event(
         trigger=Trigger(mention=fired, type="attack"),
@@ -47,7 +48,7 @@ def data():
             Argument(mention=american_tank, role="attacker"),
             Argument(mention=baghdad, role="place"),
             Argument(mention=palestine_hotel, role="target"),
-        ]
+        ],
     )
 
     pred = EventSet(events=[pred_die, pred_attack])
@@ -76,4 +77,3 @@ def test_event_extraction(data):
     assert metrics["argument_classification-precision"] == approx(0.6, abs=0.01)
     assert metrics["argument_classification-recall"] == approx(0.43, abs=0.01)
     assert metrics["argument_classification-f1"] == approx(0.5, abs=0.01)
-

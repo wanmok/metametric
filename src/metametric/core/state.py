@@ -1,4 +1,5 @@
 """Defines the states of metric aggregators."""
+
 from typing import Dict, Protocol, Sequence, TypeVar, Any, Optional
 
 from metametric.core.matching import Hook
@@ -30,6 +31,7 @@ class MetricState(Protocol[T]):
 
 class SingleMetricState(MetricState[T]):
     """Encapsulates the state of a single metric aggregator."""
+
     def __init__(self, metric: Metric[T]):
         self.metric = metric
         self.preds = []
@@ -60,6 +62,7 @@ class SingleMetricState(MetricState[T]):
 
 class MultipleMetricStates(MetricState[T]):
     """Encapsulates the state of multiple metric aggregators."""
+
     def __init__(self, states: Dict[str, MetricState[T]]):
         self.states = states
 

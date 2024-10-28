@@ -1,4 +1,5 @@
 """Metric definitions for semantic parsing tasks."""
+
 import metametric.dsl as mm
 from metametric.structures.amr import AMR
 

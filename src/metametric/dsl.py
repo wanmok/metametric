@@ -1,4 +1,5 @@
 """This module contains the domain-specific language (DSL) for defining metrics."""
+
 import sys
 from dataclasses import dataclass, fields, is_dataclass
 from typing import (
@@ -133,8 +134,7 @@ class _Union:
         def union_metric(case_metrics: Dict[Type, Union[Ell, Metric]]) -> Metric[T]:
             assert get_origin(cfg.cls) is Union
             case_metrics_no_ell: Dict[type, Metric] = {
-                case: (auto[case, cfg.constraint] if metric is ... else metric)
-                for case, metric in case_metrics.items()
+                case: (auto[case, cfg.constraint] if metric is ... else metric) for case, metric in case_metrics.items()
             }
             return UnionMetric(cls=cfg.cls, case_metrics=case_metrics_no_ell)
 

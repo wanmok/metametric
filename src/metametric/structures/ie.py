@@ -2,6 +2,7 @@
 
 The data structures defined here can automatically derive commonly used metrics in IE.
 """
+
 from dataclasses import dataclass
 from typing import Collection
 
@@ -123,7 +124,6 @@ class EntitySet:
 @dataclass
 class Membership:
     """A membership relation between an entity and a mention."""
+
     mention: Mention
     entity: Entity
-
-

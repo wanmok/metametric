@@ -1,4 +1,5 @@
 """Tests for metric aggregators."""
+
 from pytest import approx
 
 import metametric.dsl as mm
@@ -10,11 +11,11 @@ def test_metric_aggregator():
     b = [[0, 1, 2, 3], [2, 3], [1, 2, 3]]
 
     mf = mm.family(
-        mm.set_matching[int, '<->', 'none'](...),
+        mm.set_matching[int, "<->", "none"](...),
         {
             "macro": mm.macro_average(["precision", "recall", "f1", "f0.5", "f2"]),
             "micro": mm.micro_average(["precision", "recall", "f1", "f0.5", "f2"]),
-        }
+        },
     )
     agg = mf.new()
     agg.update_batch(a, b)

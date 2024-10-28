@@ -1,4 +1,5 @@
 """Tests for SMatch derived from the AMR structure."""
+
 from pytest import approx
 
 from metametric import Variable
@@ -34,9 +35,7 @@ def test_smatch():
     assert score == approx(0.73, abs=0.01)
 
     matches = []
-    hooks = {
-        "props[*]": Hook.from_callable(lambda i, pp, p, rp, r, s: matches.append((p, r)))
-    }
+    hooks = {"props[*]": Hook.from_callable(lambda i, pp, p, rp, r, s: matches.append((p, r)))}
 
     matching.run_with_hooks(hooks)
     assert matches == [

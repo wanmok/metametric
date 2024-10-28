@@ -1,4 +1,5 @@
 """Define a `Graph` protocol that `networkx.DiGraph` satisfies."""
+
 from typing import Collection, Iterator, Protocol, TypeVar, runtime_checkable
 
 import numpy as np
@@ -42,4 +43,3 @@ def _reachability_matrix(graph: Graph) -> np.ndarray:
         b = c
         c = b @ b
     return c
-

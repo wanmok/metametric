@@ -1,4 +1,5 @@
 """Metric derivation with matching constraints."""
+
 from dataclasses import is_dataclass
 from typing import Type, TypeVar, Union, Tuple
 from collections.abc import Collection, Sequence
@@ -19,12 +20,12 @@ T = TypeVar("T")
 
 
 def _matching_from_triples(
-        original_x: C,
-        original_y: C,
-        score: float,
-        x: Sequence[T],
-        y: Sequence[T],
-        matches: Collection[Tuple[int, int, float]]
+    original_x: C,
+    original_y: C,
+    score: float,
+    x: Sequence[T],
+    y: Sequence[T],
+    matches: Collection[Tuple[int, int, float]],
 ) -> Matching:
     def _matching():
         yield Match(Path(), original_x, Path(), original_y, score)

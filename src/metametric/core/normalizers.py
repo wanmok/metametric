@@ -1,4 +1,5 @@
 """Normalizers to normalize metrics as normalized metrics."""
+
 from typing import Optional, Protocol, TypeVar, runtime_checkable, Tuple
 
 from metametric.core.matching import Matching, Match, Path
