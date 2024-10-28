@@ -45,14 +45,15 @@ jobs:
       uses: jakebailey/pyright-action@v2
       with:
         version: 1.1.386
-    - name: Doc Cache
-      uses: actions/cache@v4
-      with:
-        key: mkdocs-cards-${{ github.ref }}-v1
-        path: .cache
     - name: Build Docs
       run: uv run mkdocs build
+    - name: Build package
+      run: uv build
     - uses: actions/upload-artifact@v4
       with:
         name: docs-site
         path: ./site/**
+    - uses: actions/upload-artifact@v4
+      with:
+        name: build
+        path: ./dist/**
