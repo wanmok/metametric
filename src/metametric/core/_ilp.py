@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields, is_dataclass
-from typing import (Any, Callable, Collection, Generic, Iterator, List,
-                    Optional, Sequence, Type, TypeVar)
+from typing import Any, Callable, Collection, Generic, Iterator, List, Optional, Sequence, Type, TypeVar
 
 import numpy as np
 import scipy as sp
@@ -10,7 +9,7 @@ from metametric.core.constraint import MatchingConstraint
 from metametric.core._problem import MatchingProblem
 from metametric.core.metric import Variable
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass
@@ -48,7 +47,7 @@ class MatchingConstraintBuilder(ConstraintBuilder):
                 [
                     m,
                     np.zeros([m.shape[0], self.n_x_vars * self.n_y_vars]),
-                ],   # pad with zeros for the latent variables
+                ],  # pad with zeros for the latent variables
                 axis=1,
             )
             return sp.optimize.LinearConstraint(
@@ -61,7 +60,6 @@ class MatchingConstraintBuilder(ConstraintBuilder):
 
 @dataclass
 class VariableMatchingConstraintBuilder(ConstraintBuilder):
-
     def build(self) -> Optional[sp.optimize.LinearConstraint]:
         if self.n_x_vars == 0 or self.n_y_vars == 0:
             return None
@@ -89,10 +87,7 @@ class MonotonicityConstraintBuilder(ConstraintBuilder):
     def build(self) -> Optional[sp.optimize.LinearConstraint]:
         vectors = []
         possible_matching_pairs = [
-            (u, v)
-            for u in range(self.n_x)
-            for v in range(self.n_y)
-            if self.gram_matrix[u, v] > 0
+            (u, v) for u in range(self.n_x) for v in range(self.n_y) if self.gram_matrix[u, v] > 0
         ]
         for u0, v0 in possible_matching_pairs:
             for u1, v1 in possible_matching_pairs:
@@ -163,12 +158,13 @@ class ILPMatchingProblem(MatchingProblem[T]):
     - for each pair of elements in X and Y, and
     - for each pair of potential latent variables in X and Y.
     """
+
     def __init__(
-            self,
-            x: Sequence[T],
-            y: Sequence[T],
-            gram_matrix: np.ndarray,
-            has_vars: bool = False,
+        self,
+        x: Sequence[T],
+        y: Sequence[T],
+        gram_matrix: np.ndarray,
+        has_vars: bool = False,
     ):
         super().__init__(x, y, gram_matrix)
         self.n_x = len(x)
@@ -259,7 +255,7 @@ class ILPMatchingProblem(MatchingProblem[T]):
             bounds=sp.optimize.Bounds(lb=0, ub=1),
             integrality=np.ones_like(coef),
         )
-        solution = result.x[:self.n_x * self.n_y].reshape([self.n_x, self.n_y])
+        solution = result.x[: self.n_x * self.n_y].reshape([self.n_x, self.n_y])
         matching = [
             (i, j, self.gram_matrix[i, j].item())
             for i in range(self.n_x)

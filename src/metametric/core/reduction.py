@@ -1,4 +1,5 @@
 """Metric aggregator for computing metrics on a batch of predictions and references."""
+
 from typing import Callable, Collection, Dict, Optional, Protocol
 
 from metametric.core.normalizers import Normalizer

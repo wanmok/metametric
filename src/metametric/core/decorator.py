@@ -1,14 +1,18 @@
 """Decorator for deriving metrics from dataclasses."""
-from dataclasses import fields, is_dataclass
-from typing import (Annotated, Any, Callable, Collection, Literal, Type,
-                    TypeVar, Union, get_args, get_origin, Optional)
 
-from metametric.core.matching_metrics import (MatchingConstraint,
-                                              LatentSetMatchingMetric,
-                                              SetMatchingMetric)
-from metametric.core.metric import (DiscreteMetric, HasLatentMetric, HasMetric,
-                                    Metric, ProductMetric, UnionMetric,
-                                    Variable)
+from dataclasses import fields, is_dataclass
+from typing import Annotated, Any, Callable, Collection, Literal, Type, TypeVar, Union, get_args, get_origin, Optional
+
+from metametric.core.matching_metrics import MatchingConstraint, LatentSetMatchingMetric, SetMatchingMetric
+from metametric.core.metric import (
+    DiscreteMetric,
+    HasLatentMetric,
+    HasMetric,
+    Metric,
+    ProductMetric,
+    UnionMetric,
+    Variable,
+)
 from metametric.core.normalizers import NormalizedMetric, Normalizer
 
 NormalizerLiteral = Literal["none", "jaccard", "dice", "f1"]
@@ -68,7 +72,7 @@ def derive_metric(cls: Type, constraint: MatchingConstraint) -> Metric:  # depen
             field_metrics={
                 fld.name: derive_metric(fld.type, constraint=constraint)  # pyright: ignore
                 for fld in fields(cls)
-            }
+            },
         )
 
     # derive union metric from unions

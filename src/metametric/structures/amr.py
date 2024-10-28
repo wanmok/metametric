@@ -1,4 +1,5 @@
 """Abstract Meaning Representation (AMR) structure."""
+
 from dataclasses import dataclass
 from typing import Collection, Union
 

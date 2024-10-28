@@ -1,10 +1,23 @@
 """Metric interface and implementations for commonly used metrics."""
+
 from abc import abstractmethod
 from dataclasses import dataclass, is_dataclass
 from functools import reduce
 from operator import mul
-from typing import (Callable, ClassVar, Dict, Generic, Protocol,
-                    Type, TypeVar, Union, get_origin, runtime_checkable, Sequence, Tuple)
+from typing import (
+    Callable,
+    ClassVar,
+    Dict,
+    Generic,
+    Protocol,
+    Type,
+    TypeVar,
+    Union,
+    get_origin,
+    runtime_checkable,
+    Sequence,
+    Tuple,
+)
 
 import numpy as np
 
@@ -145,8 +158,7 @@ class ProductMetric(Metric[T]):
     def compute(self, x: T, y: T) -> Tuple[float, Matching]:
         """Score two objects."""
         field_scores = {
-            fld: self.field_metrics[fld].compute(getattr(x, fld), getattr(y, fld))
-            for fld in self.field_metrics.keys()
+            fld: self.field_metrics[fld].compute(getattr(x, fld), getattr(y, fld)) for fld in self.field_metrics.keys()
         }
         total_score = reduce(mul, (s for s, _ in field_scores.values()), 1.0)
 
@@ -155,6 +167,7 @@ class ProductMetric(Metric[T]):
             for fld, (s, matching) in field_scores.items():
                 for m in matching.matches:
                     yield Match(m.pred_path.prepend(fld), m.pred, m.ref_path.prepend(fld), m.ref, m.score)
+
         return total_score, Matching(_matching())
 
 

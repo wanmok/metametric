@@ -1,4 +1,5 @@
 """Matching constraints for the matching metric."""
+
 from enum import Enum, auto
 
 

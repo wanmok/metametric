@@ -1,4 +1,5 @@
 """Tests for coreference metrics."""
+
 from pytest import fixture, approx
 
 import metametric.dsl as mm

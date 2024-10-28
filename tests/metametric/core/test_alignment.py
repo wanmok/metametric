@@ -1,4 +1,5 @@
 """Tests for metrics derived with alignments."""
+
 import metametric.dsl as mm
 
 
@@ -7,17 +8,15 @@ def test_solve_alignment():
     a = [1, 2, 2]
     b = [1, 1, 1, 2]
     c = []
-    
-    m0 = mm.set_matching[int, '<->', 'none'](...)
-    m1 = mm.set_matching[int, '->', 'none'](...)
-    m2 = mm.set_matching[int, '<-', 'none'](...)
-    m3 = mm.set_matching[int, '~', 'none'](...)
+
+    m0 = mm.set_matching[int, "<->", "none"](...)
+    m1 = mm.set_matching[int, "->", "none"](...)
+    m2 = mm.set_matching[int, "<-", "none"](...)
+    m3 = mm.set_matching[int, "~", "none"](...)
 
     _, matching0 = m0.compute(a, b)
     matches = []
-    hooks = {
-        "[*]": mm.Hook.from_callable(lambda i, pp, p, rp, r, s: matches.append((p, r)))
-    }
+    hooks = {"[*]": mm.Hook.from_callable(lambda i, pp, p, rp, r, s: matches.append((p, r)))}
     matching0.run_with_hooks(hooks)
     assert matches == [(1, 1), (2, 2)]
 
@@ -51,5 +50,5 @@ def test_solve_alignment():
 
     assert m0.score(c, c) == 1
     assert m1.score(c, c) == 1
-    assert mm.set_matching[int, '<-', 'none'](...).score(c, c) == 1
-    assert mm.set_matching[int, '~', 'none'](...).score(c, c) == 1
+    assert mm.set_matching[int, "<-", "none"](...).score(c, c) == 1
+    assert mm.set_matching[int, "~", "none"](...).score(c, c) == 1
