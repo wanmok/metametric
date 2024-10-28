@@ -35,4 +35,4 @@ jobs:
         name: build
         path: ./dist/
     - name: Publish package
-      run: uv publish
+      run: uv publish --trusted-publishing always
