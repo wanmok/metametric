@@ -1,0 +1,34 @@
+name: Upload Python Package
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    environment: release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        # Install a specific version of uv.
+        version: "0.4.27"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+    - name: "Set up Python"
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+    - name: Install the project
+      run: uv sync --all-extras --dev
+    - name: Run tests
+      run: uv run pytest tests
+    - name: Build package
+      run: uv build
+    - name: Publish package
+      run: uv publish
