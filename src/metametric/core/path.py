@@ -5,7 +5,7 @@ The `Path` object has a string representation in JMESPath format. However, it do
 """
 
 from dataclasses import dataclass
-from typing import Tuple, Union, SupportsInt
+from typing import Tuple, Union, SupportsInt, overload
 
 
 def _index_to_int_str(i: int) -> str:
@@ -31,13 +31,20 @@ class Path:
 
     components: Tuple[Union[str, int], ...] = ()  # [-1] means [*]
 
-    def __getitem__(self, item: Union[SupportsInt, slice]) -> Tuple[Union[str, int], ...]:
-        """Returns a component of the path. This does not consider the root path."""
-        if isinstance(item, SupportsInt):
-            item = slice(item, int(item) + 1)
+    @overload
+    def __getitem__(self, item: SupportsInt) -> Union[str, int]:
+        ...
 
+    @overload
+    def __getitem__(self, item: slice) -> Tuple[Union[str, int], ...]:
+        ...
+
+    def __getitem__(self, item):
+        """Returns a component of the path. This does not consider the root path."""
         if isinstance(item, slice):
             return self.components[item]
+        elif isinstance(item, SupportsInt):
+            return self.components[int(item)]
         else:
             raise NotImplementedError(f"Unsupported item type: {type(item)}")
 

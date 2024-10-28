@@ -1,3 +1,5 @@
+import pytest
+
 from metametric.core.path import Path
 
 
@@ -25,6 +27,9 @@ def test_path_getitem():
     assert path_to_test[2] == "c"
     assert path_to_test[0:2] == ("a", "b")
     assert path_to_test[1:] == ("b", "c")
+    assert path_to_test[-1] == "c"
+    with pytest.raises(IndexError):
+        path_to_test[5]
 
 
 def test_path_append():
