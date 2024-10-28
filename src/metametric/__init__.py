@@ -1,6 +1,6 @@
 """The core functionality of metametric package."""
 
-__version__ = "0.2.0rc0"
+__version__ = "0.2.0"
 
 from metametric.core.metric import Metric, Variable  # noqa: F401
 from metametric.core.reduction import Reduction  # noqa: F401
