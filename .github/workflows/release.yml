@@ -20,15 +20,19 @@ jobs:
         version: "0.4.27"
         enable-cache: true
         cache-dependency-glob: "uv.lock"
-    - name: "Set up Python"
-      uses: actions/setup-python@v5
+    - name: Clean build
+      run: |
+        rm -rf ./dist
+        mkdir ./dist
+    - name: Download Artifact build
+      id: download
+      uses: dawidd6/action-download-artifact@v6
       with:
-        python-version-file: ".python-version"
-    - name: Install the project
-      run: uv sync --all-extras --dev
-    - name: Run tests
-      run: uv run pytest tests
-    - name: Build package
-      run: uv build
+        if_no_artifact_found: ignore
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        workflow: python-app.yml
+        run_id: ${{ github.event.workflow_run.id }}
+        name: build
+        path: ./dist/
     - name: Publish package
       run: uv publish
