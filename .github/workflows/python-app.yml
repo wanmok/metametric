@@ -14,32 +14,36 @@ permissions:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
-    - name: Setup Poetry
-      run: pipx install poetry==1.8.4
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
       with:
-        python-version: "3.10"
-        cache: "poetry"
-    - name: Install dependencies
-      run: |
-        poetry env use python3.10
-        poetry install --with dev --extras torchmetrics
-    - name: Ensure Poetry envs
-      run: |
-        echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
+        # Install a specific version of uv.
+        version: "0.4.27"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+    - name: "Set up Python"
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+    - name: Install the project
+      run: uv sync --all-extras --dev
+    - name: Run tests
+      run: uv run pytest tests
     - name: Run ruff
       uses: astral-sh/ruff-action@v1
+      with:
+        version: 0.7.1
+    - uses: astral-sh/ruff-action@v1
+      with:
+        version: 0.7.1
+        args: "format --check"
     - name: Run pyright
       uses: jakebailey/pyright-action@v2
-    - name: Test with pytest
-      run: |
-        poetry run pytest
+      with:
+        version: 1.1.386
     - name: Doc Cache
       uses: actions/cache@v3
       with:
