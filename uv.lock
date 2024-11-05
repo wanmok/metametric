@@ -312,8 +312,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "numpy", specifier = ">=2.0.2" },
-    { name = "scipy", specifier = ">=1.13.1" },
+    { name = "numpy" },
+    { name = "scipy" },
 ]
 
 [package.metadata.dependency-groups]
