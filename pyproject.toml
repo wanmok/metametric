@@ -1,6 +1,6 @@
 [project]
 name = "metametric"
-version = "0.2.0"
+version = "0.2.1"
 description = "A Unified View of Evaluation Metrics for Structured Prediction"
 authors = [
     {name = "Tongfei Chen", email = "tongfei@pm.me"},
