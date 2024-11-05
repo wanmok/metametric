@@ -1,9 +1,13 @@
 """The core functionality of metametric package."""
 
-__version__ = "0.2.0"
+import importlib.metadata
 
-from metametric.core.metric import Metric, Variable  # noqa: F401
-from metametric.core.reduction import Reduction  # noqa: F401
-from metametric.core.metric_suite import MetricSuite, MetricFamily  # noqa: F401
+
+__version__ = importlib.metadata.version(__package__ or __name__)
+
+
 from metametric.core.constraint import MatchingConstraint  # noqa: F401
+from metametric.core.metric import Metric, Variable  # noqa: F401
+from metametric.core.metric_suite import MetricFamily, MetricSuite  # noqa: F401
 from metametric.core.path import Path  # noqa: F401
+from metametric.core.reduction import Reduction  # noqa: F401
