@@ -12,10 +12,9 @@ homepage = "https://omnuy.me/metametric"
 repository = "https://github.com/wanmok/metametric"
 requires-python = ">=3.9"
 dependencies = [
-    "numpy>=2.0.2",
-    "scipy>=1.13.1",
+    "numpy",
+    "scipy"
 ]
-#packages = [{ include = "metametric", from = "src" }]
 
 [dependency-groups]
 dev = [
