@@ -1,7 +1,7 @@
 """Decorator for deriving metrics from dataclasses."""
 
 from dataclasses import fields, is_dataclass
-from typing import Annotated, Any, Callable, Literal, TypeVar, Union, get_args, get_origin, Optional
+from typing import Annotated, Any, Callable, Literal, TypeVar, Union, get_args, get_origin, Optional, cast
 from collections.abc import Collection
 
 from metametric.core.matching_metrics import MatchingConstraint, LatentSetMatchingMetric, SetMatchingMetric
@@ -42,7 +42,7 @@ def dataclass_has_variable(cls: type) -> bool:
     return False
 
 
-def derive_metric(cls: type, constraint: MatchingConstraint) -> Metric:  # dependent type, can't enforce
+def derive_metric(cls: type[T], constraint: MatchingConstraint) -> Metric[T]:
     """Derive a unified metric from any type.
 
     Args:
@@ -88,16 +88,17 @@ def derive_metric(cls: type, constraint: MatchingConstraint) -> Metric:  # depen
         elem_type = get_args(cls)[0]
         inner_metric = derive_metric(elem_type, constraint=constraint)
         if dataclass_has_variable(elem_type):
-            return LatentSetMatchingMetric(
+            mm = LatentSetMatchingMetric(
                 cls=elem_type,
                 inner=inner_metric,
                 constraint=constraint,
             )
         else:
-            return SetMatchingMetric(
+            mm = SetMatchingMetric(
                 inner=inner_metric,
                 constraint=constraint,
             )
+        return cast(Metric[T], mm)
 
     # derive discrete metric from equality
     elif getattr(cls, "__eq__", None) is not None:
