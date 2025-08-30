@@ -5,6 +5,7 @@ from collections.abc import Collection, Iterator, Sequence
 
 import numpy as np
 import scipy as sp
+from jaxtyping import Float
 
 from metametric.core.constraint import MatchingConstraint
 from metametric.core._problem import MatchingProblem
@@ -81,9 +82,9 @@ class VariableMatchingConstraintBuilder(ConstraintBuilder):
 
 @dataclass
 class MonotonicityConstraintBuilder(ConstraintBuilder):
-    gram_matrix: np.ndarray  # R[n_x, n_y]
-    x_reachability: np.ndarray  # R[n_x, n_x]
-    y_reachability: np.ndarray  # R[n_y, n_y]
+    gram_matrix: Float[np.ndarray, "nx ny"]
+    x_reachability: Float[np.ndarray, "nx nx"]
+    y_reachability: Float[np.ndarray, "ny ny"]
 
     def build(self) -> Optional[sp.optimize.LinearConstraint]:
         vectors = []
@@ -117,7 +118,7 @@ class LatentVariableConstraintBuilder(ConstraintBuilder, Generic[T]):
     x: Collection[T]
     y: Collection[T]
     cls: type[T]
-    gram_matrix: np.ndarray  # R[n_x, n_y]
+    gram_matrix: Float[np.ndarray, "nx ny"]
 
     def __post_init__(self):
         assert is_dataclass(self.cls)
@@ -164,7 +165,7 @@ class ILPMatchingProblem(MatchingProblem[T]):
         self,
         x: Sequence[T],
         y: Sequence[T],
-        gram_matrix: np.ndarray,
+        gram_matrix: Float[np.ndarray, "nx ny"],
         has_vars: bool = False,
     ):
         super().__init__(x, y, gram_matrix)
@@ -203,7 +204,11 @@ class ILPMatchingProblem(MatchingProblem[T]):
         if constraint is not None:
             self.constraints.append(constraint)
 
-    def add_monotonicity_constraint(self, x_reachability: np.ndarray, y_reachability: np.ndarray):
+    def add_monotonicity_constraint(
+            self,
+            x_reachability: Float[np.ndarray, "nx nx"],
+            y_reachability: Float[np.ndarray, "ny ny"]
+    ):
         constraint = MonotonicityConstraintBuilder(
             n_x=self.n_x,
             n_y=self.n_y,
@@ -266,21 +271,21 @@ class ILPMatchingProblem(MatchingProblem[T]):
         return -result.fun, matching
 
 
-def _get_one_to_many_constraint_matrix(n_x: int, n_y: int) -> np.ndarray:  # [Y, X * Y]
+def _get_one_to_many_constraint_matrix(n_x: int, n_y: int) -> Float[np.ndarray, "ny nx*ny"]:
     mask_y = np.zeros([n_y, n_x, n_y])
     mask_y[np.arange(n_y), :, np.arange(n_y)] = 1
     mask_y = mask_y.reshape([n_y, n_x * n_y])
     return mask_y
 
 
-def _get_many_to_one_constraint_matrix(n_x: int, n_y: int) -> np.ndarray:  # [X, X * Y]
+def _get_many_to_one_constraint_matrix(n_x: int, n_y: int) -> Float[np.ndarray, "nx nx*ny"]:
     mask_x = np.zeros([n_x, n_x, n_y])
     mask_x[np.arange(n_x), np.arange(n_x), :] = 1
     mask_x = mask_x.reshape([n_x, n_x * n_y])
     return mask_x
 
 
-def _get_one_to_one_constraint_matrix(n_x: int, n_y: int) -> np.ndarray:  # [X + Y, X * Y]
+def _get_one_to_one_constraint_matrix(n_x: int, n_y: int) -> Float[np.ndarray, "nx+ny nx*ny"]:
     mask_x = _get_one_to_many_constraint_matrix(n_x, n_y)
     mask_y = _get_many_to_one_constraint_matrix(n_x, n_y)
     return np.concatenate([mask_x, mask_y], axis=0)

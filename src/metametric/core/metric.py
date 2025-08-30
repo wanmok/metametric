@@ -17,6 +17,7 @@ from typing import (
 from collections.abc import Sequence
 
 import numpy as np
+from jaxtyping import Float
 
 from metametric.core.matching import Matching, Match, Path
 
@@ -51,7 +52,7 @@ class Metric(Generic[T]):
         """
         return self.score(x, x)
 
-    def gram_matrix(self, xs: Sequence[T], ys: Sequence[T]) -> np.ndarray:
+    def gram_matrix(self, xs: Sequence[T], ys: Sequence[T]) -> Float[np.ndarray, "nx ny"]:
         r"""Computes the Gram matrix of the metric given two collections of objects.
 
         Args:

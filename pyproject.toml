@@ -12,8 +12,9 @@ homepage = "https://omnuy.me/metametric"
 repository = "https://github.com/wanmok/metametric"
 requires-python = ">=3.9"
 dependencies = [
+    "jaxtyping>=0.2.36",
     "numpy",
-    "scipy"
+    "scipy",
 ]
 
 [dependency-groups]
@@ -51,6 +52,7 @@ lint.select = [
 lint.ignore = [
     "D102", # Missing docstring in public method
     "D107", # Missing docstring in `__init__`
+    "F722",
 ]
 
 lint.fixable = ["ALL"]
