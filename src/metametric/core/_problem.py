@@ -53,4 +53,10 @@ class AssignmentProblem(MatchingProblem[T]):
             total = m.sum().item()
             matching = [(i, j, m[i, j].item()) for i in range(m.shape[0]) for j in range(m.shape[1])]
             return total, matching
-        raise ValueError(f"Invalid constraint: {self.constraint}")
+        if self.constraint == MatchingConstraint.MAX_PAIR:
+            if m.size == 0:
+                return 0.0, []
+            i, j = np.unravel_index(m.argmax(), m.shape)
+            total = m[i, j].item()
+            matching = [(i, j, total)]
+            return total, matching

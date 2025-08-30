@@ -82,6 +82,8 @@ class SetMatchingMetric(Metric[Collection[T]]):
             return self.inner.gram_matrix(x, x).sum()
         elif self.constraint == MatchingConstraint.ONE_TO_ONE:
             return sum(self.inner.score_self(u) for u in x)
+        elif self.constraint == MatchingConstraint.MAX_PAIR:
+            return max((self.inner.score_self(u) for u in x), default=0.0)
         else:
             return self.score(x, x)
 
