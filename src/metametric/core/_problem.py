@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import TypeVar, Generic
 from collections.abc import Sequence, Collection
 
@@ -11,7 +11,7 @@ from metametric.core.constraint import MatchingConstraint
 T = TypeVar("T")
 
 
-class MatchingProblem(Generic[T]):
+class MatchingProblem(ABC, Generic[T]):
     """A matching between two collections of objects."""
 
     def __init__(self, x: Sequence[T], y: Sequence[T], gram_matrix: Float[np.ndarray, "nx ny"]):
@@ -27,11 +27,7 @@ class MatchingProblem(Generic[T]):
 
 class AssignmentProblem(MatchingProblem[T]):
     def __init__(
-            self,
-            x: Sequence[T],
-            y: Sequence[T],
-            gram_matrix: Float[np.ndarray, "nx ny"],
-            constraint: MatchingConstraint
+        self, x: Sequence[T], y: Sequence[T], gram_matrix: Float[np.ndarray, "nx ny"], constraint: MatchingConstraint
     ):
         super().__init__(x, y, gram_matrix)
         self.constraint = constraint

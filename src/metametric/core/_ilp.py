@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, fields, is_dataclass
-from typing import Any, Callable, Generic, Optional, TypeVar
+from typing import Callable, Generic, Optional, TypeVar
 from collections.abc import Collection, Iterator, Sequence
 
 import numpy as np
 import scipy as sp
-from jaxtyping import Float
+from jaxtyping import Bool, Float
 
 from metametric.core.constraint import MatchingConstraint
 from metametric.core._problem import MatchingProblem
@@ -83,8 +83,8 @@ class VariableMatchingConstraintBuilder(ConstraintBuilder):
 @dataclass
 class MonotonicityConstraintBuilder(ConstraintBuilder):
     gram_matrix: Float[np.ndarray, "nx ny"]
-    x_reachability: Float[np.ndarray, "nx nx"]
-    y_reachability: Float[np.ndarray, "ny ny"]
+    x_reachability: Bool[np.ndarray, "nx nx"]
+    y_reachability: Bool[np.ndarray, "ny ny"]
 
     def build(self) -> Optional[sp.optimize.LinearConstraint]:
         vectors = []
@@ -205,9 +205,7 @@ class ILPMatchingProblem(MatchingProblem[T]):
             self.constraints.append(constraint)
 
     def add_monotonicity_constraint(
-            self,
-            x_reachability: Float[np.ndarray, "nx nx"],
-            y_reachability: Float[np.ndarray, "ny ny"]
+        self, x_reachability: Bool[np.ndarray, "nx nx"], y_reachability: Bool[np.ndarray, "ny ny"]
     ):
         constraint = MonotonicityConstraintBuilder(
             n_x=self.n_x,
@@ -291,7 +289,7 @@ def _get_one_to_one_constraint_matrix(n_x: int, n_y: int) -> Float[np.ndarray, "
     return np.concatenate([mask_x, mask_y], axis=0)
 
 
-def _all_variables(obj: Any) -> Iterator[Variable]:
+def _all_variables(obj: object) -> Iterator[Variable]:
     if isinstance(obj, Variable):
         yield obj
     elif isinstance(obj, Collection) and not isinstance(obj, str):

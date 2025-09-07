@@ -1,6 +1,6 @@
 """Metric interface and implementations for commonly used metrics."""
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, is_dataclass
 from functools import reduce
 from operator import mul
@@ -26,7 +26,7 @@ T = TypeVar("T", contravariant=True)
 U = TypeVar("U")
 
 
-class Metric(Generic[T]):
+class Metric(ABC, Generic[T]):
     r"""The basic metric interface.
 
     Here a *metric* is defined as a function $\phi: T \times T \to \mathbb{R}_{\ge 0}$ that takes two objects and

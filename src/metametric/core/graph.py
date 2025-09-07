@@ -4,7 +4,7 @@ from typing import Protocol, TypeVar, runtime_checkable
 from collections.abc import Collection, Iterator
 
 import numpy as np
-from jaxtyping import Float
+from jaxtyping import Bool
 
 T = TypeVar("T")
 
@@ -23,7 +23,7 @@ class Graph(Protocol[T]):
         raise NotImplementedError()
 
 
-def _adjacency_matrix(graph: Graph) -> Float[np.ndarray, "n n"]:
+def _adjacency_matrix(graph: Graph) -> Bool[np.ndarray, "n n"]:
     """Get the adjacency matrix of a graph."""
     nodes = list(graph.nodes())
     node_to_id = {x: i for i, x in enumerate(nodes)}
@@ -36,7 +36,7 @@ def _adjacency_matrix(graph: Graph) -> Float[np.ndarray, "n n"]:
     return adj
 
 
-def _reachability_matrix(graph: Graph) -> Float[np.ndarray, "n n"]:
+def _reachability_matrix(graph: Graph) -> Bool[np.ndarray, "n n"]:
     """Get the reachability matrix of a graph."""
     a = _adjacency_matrix(graph)
     b = np.eye(a.shape[0], dtype=bool) + a
