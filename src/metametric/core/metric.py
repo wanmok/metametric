@@ -1,6 +1,6 @@
 """Metric interface and implementations for commonly used metrics."""
 
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from dataclasses import dataclass, is_dataclass
 from functools import reduce
 from operator import mul
@@ -23,9 +23,36 @@ from metametric.core.matching import Matching, Match, Path
 S = TypeVar("S", contravariant=True)
 T = TypeVar("T", contravariant=True)
 U = TypeVar("U")
+R = TypeVar("R", covariant=True, default=float)
 
 
-class Metric(Generic[T]):
+class GenMetric(ABC, Generic[T, R]):
+    """A more general metric interface that allows for return types other than `float`.
+
+    This is useful for metrics that return multiple values, such as precision and recall at $k$.
+    """
+
+    @abstractmethod
+    def compute(self, x: T, y: T) -> tuple[R, Matching]:
+        raise NotImplementedError
+
+    def score(self, x: T, y: T) -> R:
+        r"""Scores two objects using this metric: $\phi(x, y)$."""
+        return self.compute(x, y)[0]
+
+    def score_self(self, x: T) -> R:
+        r"""Scores an object against itself: $\phi(x, x)$.
+
+        In many cases there is a faster way to compute this than the general pair case.
+        In such cases, please override this function.
+        """
+        return self.score(x, x)
+
+    def contramap(self, f: Callable[[S], T]) -> "GenMetric[S, R]":
+        return ContramappedMetric(self, f)
+
+
+class Metric(GenMetric[T, float], Generic[T]):
     r"""The basic metric interface.
 
     Here a *metric* is defined as a function $\phi: T \times T \to \mathbb{R}_{\ge 0}$ that takes two objects and
@@ -38,18 +65,6 @@ class Metric(Generic[T]):
     def compute(self, x: T, y: T) -> tuple[float, Matching]:
         r"""Scores two objects using this metric, and returns the score and a matching object."""
         raise NotImplementedError
-
-    def score(self, x: T, y: T) -> float:
-        r"""Scores two objects using this metric: $\phi(x, y)$."""
-        return self.compute(x, y)[0]
-
-    def score_self(self, x: T) -> float:
-        r"""Scores an object against itself: $\phi(x, x)$.
-
-        In many cases there is a faster way to compute this than the general pair case.
-        In such cases, please override this function.
-        """
-        return self.score(x, x)
 
     def gram_matrix(self, xs: Sequence[T], ys: Sequence[T]) -> np.ndarray:
         r"""Computes the Gram matrix of the metric given two collections of objects.
