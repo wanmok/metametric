@@ -1,6 +1,6 @@
 """Metric interface and implementations for commonly used metrics."""
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, is_dataclass
 from functools import reduce
 from operator import mul
@@ -17,6 +17,7 @@ from typing import (
 from collections.abc import Sequence
 
 import numpy as np
+from jaxtyping import Float
 
 from metametric.core.matching import Matching, Match, Path
 
@@ -25,7 +26,7 @@ T = TypeVar("T", contravariant=True)
 U = TypeVar("U")
 
 
-class Metric(Generic[T]):
+class Metric(ABC, Generic[T]):
     r"""The basic metric interface.
 
     Here a *metric* is defined as a function $\phi: T \times T \to \mathbb{R}_{\ge 0}$ that takes two objects and
@@ -51,7 +52,7 @@ class Metric(Generic[T]):
         """
         return self.score(x, x)
 
-    def gram_matrix(self, xs: Sequence[T], ys: Sequence[T]) -> np.ndarray:
+    def gram_matrix(self, xs: Sequence[T], ys: Sequence[T]) -> Float[np.ndarray, "nx ny"]:
         r"""Computes the Gram matrix of the metric given two collections of objects.
 
         Args:
