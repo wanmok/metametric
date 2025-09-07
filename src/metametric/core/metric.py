@@ -1,6 +1,6 @@
 """Metric interface and implementations for commonly used metrics."""
 
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, is_dataclass
 from functools import reduce
 from operator import mul
@@ -17,14 +17,15 @@ from typing import (
 from collections.abc import Sequence
 
 import numpy as np
+from jaxtyping import Float
 
 from metametric.core.matching import Matching, Match, Path
 
 S = TypeVar("S", contravariant=True)
 T = TypeVar("T", contravariant=True)
 U = TypeVar("U")
-R = TypeVar("R", covariant=True, default=float)
-
+R = TypeVar("R", covariant=True)
+;;
 
 class GenMetric(ABC, Generic[T, R]):
     """A more general metric interface that allows for return types other than `float`.
@@ -66,7 +67,7 @@ class Metric(GenMetric[T, float], Generic[T]):
         r"""Scores two objects using this metric, and returns the score and a matching object."""
         raise NotImplementedError
 
-    def gram_matrix(self, xs: Sequence[T], ys: Sequence[T]) -> np.ndarray:
+    def gram_matrix(self, xs: Sequence[T], ys: Sequence[T]) -> Float[np.ndarray, "nx ny"]:
         r"""Computes the Gram matrix of the metric given two collections of objects.
 
         Args:

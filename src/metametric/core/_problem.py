@@ -1,19 +1,20 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import TypeVar, Generic
 from collections.abc import Sequence, Collection
 
 import numpy as np
 import scipy.optimize as spo
+from jaxtyping import Float
 
 from metametric.core.constraint import MatchingConstraint
 
 T = TypeVar("T")
 
 
-class MatchingProblem(Generic[T]):
+class MatchingProblem(ABC, Generic[T]):
     """A matching between two collections of objects."""
 
-    def __init__(self, x: Sequence[T], y: Sequence[T], gram_matrix: np.ndarray):
+    def __init__(self, x: Sequence[T], y: Sequence[T], gram_matrix: Float[np.ndarray, "nx ny"]):
         self.x = x
         self.y = y
         self.gram_matrix = gram_matrix
@@ -25,7 +26,9 @@ class MatchingProblem(Generic[T]):
 
 
 class AssignmentProblem(MatchingProblem[T]):
-    def __init__(self, x: Sequence[T], y: Sequence[T], gram_matrix: np.ndarray, constraint: MatchingConstraint):
+    def __init__(
+        self, x: Sequence[T], y: Sequence[T], gram_matrix: Float[np.ndarray, "nx ny"], constraint: MatchingConstraint
+    ):
         super().__init__(x, y, gram_matrix)
         self.constraint = constraint
 

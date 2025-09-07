@@ -60,10 +60,8 @@ class MetricFamily(MetricSuite[T]):
 
     For example, the precision, recall, and F-1 of event detection should be computed together within one family.
     """
-
-    def __init__(self, metric: Metric[T], reduction: Reduction):
-        self.metric = metric
-        self.reduction = reduction
+    metric: Metric[T]
+    reduction: Reduction
 
     def new(self, hooks: Optional[dict[str, Hook[Any]]] = None) -> Aggregator[T]:
         return MetricFamilyAggregator(self, hooks)
