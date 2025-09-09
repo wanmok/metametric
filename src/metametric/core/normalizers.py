@@ -40,6 +40,12 @@ class Normalizer(Protocol[RI, RO]):
             return Jaccard()
         elif s == "precision" or s == "p":
             return Precision()
+        elif s == "precision@k" or s == "p@k":
+            return PrecisionAtK()
+        elif s == "recall@k" or s == "r@k":
+            return RecallAtK()
+        elif s == "ranking_average_precision" or s == "ranking_ap":
+            return RankingAveragePrecision()
         elif s == "recall" or s == "r":
             return Recall()
         elif s == "dice" or s == "f":
@@ -118,6 +124,21 @@ class RecallAtK(Normalizer[Float[np.ndarray, "k"], Float[np.ndarray, "k"]]):
     ) -> Float[np.ndarray, "k"]:
         """Normalize the metric using recall@k metric."""
         return score_xy / score_yy
+
+
+class RankingAveragePrecision(Normalizer[Float[np.ndarray, "k"], float]):
+    """Average precision metric."""
+
+    name = "ranking_average_precision"
+
+    def normalize(
+        self, score_xy: Float[np.ndarray, "k"], score_xx: Float[np.ndarray, "k"], score_yy: Float[np.ndarray, "k"]
+    ) -> float:
+        """Normalize the metric using average precision metric."""
+        p = score_xy / score_xx
+        r = score_xy / score_yy
+        dr = np.diff(r, prepend=0.0)
+        return np.dot(p, dr).item()
 
 
 class NormalizedParametrizedMetric(ParameterizedMetric[T, RO]):

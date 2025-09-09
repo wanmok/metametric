@@ -1,25 +1,6 @@
 """Metric definitions for retrieval tasks."""
 
-from typing import TypeVar
-
-from metametric.core.normalizers import PrecisionAtK, NormalizedParametrizedMetric, RecallAtK
-from metametric.core.ranking_metrics import RankingMetric
-from metametric.core.metric import DiscreteMetric
-
-T = TypeVar("T")
-
-predicted = [
-    ("a", 0.4),
-    ("b", 0.3),
-    ("c", 0.2),
-    ("d", 0.1),
-]
-
-reference = [
-    ("c", 1.0),
-    ("d", 1.0),
-    ("e", 1.0),
-]
+import metametric.dsl as mm
 
 
 def sort_by_score(x: list[tuple[str, float]]) -> list[str]:
@@ -27,12 +8,8 @@ def sort_by_score(x: list[tuple[str, float]]) -> list[str]:
     return [u for u, _ in sorted(x, key=lambda t: t[1], reverse=True)]
 
 
-rm = RankingMetric(DiscreteMetric(str), max_k=10).contramap(sort_by_score)
-rmp = NormalizedParametrizedMetric(rm, PrecisionAtK())
-rmr = NormalizedParametrizedMetric(rm, RecallAtK())
+ranking_match = mm.preprocess_param[sort_by_score](mm.ranking[10](mm.auto[str]))
 
-z, _ = rm.compute(predicted, reference)
-pk = rmp.compute(predicted, reference)
-rk = rmr.compute(predicted, reference)
-
-print(z)
+p_at_k = mm.normalize_param["precision@k"](ranking_match)
+r_at_k = mm.normalize_param["recall@k"](ranking_match)
+ranking_ap = mm.normalize_param["ranking_ap"](ranking_match)
