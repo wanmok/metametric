@@ -2,11 +2,12 @@
 
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, Callable, Any
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass
 
 from metametric.core.path import Path
 
+C = TypeVar("C")
 T = TypeVar("T", covariant=True)
 Tc = TypeVar("Tc", contravariant=True)
 
@@ -67,3 +68,19 @@ class Matching(Iterable[Match[object]]):
                     hook.on_match(
                         data_id, str(match.pred_path), match.pred, str(match.ref_path), match.ref, match.score
                     )
+
+
+def _matching_from_triples(
+    original_x: C,
+    original_y: C,
+    score: float,
+    x: Sequence[T],
+    y: Sequence[T],
+    matches: Collection[tuple[int, int, float]],
+) -> Matching:
+    def _matching():
+        yield Match(Path(), original_x, Path(), original_y, score)
+        for i, j, s in matches:
+            yield Match(Path().prepend(i), x[i], Path().prepend(j), y[j], s)
+
+    return Matching(_matching())

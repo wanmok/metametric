@@ -10,29 +10,13 @@ import numpy as np
 from metametric.core._ilp import ILPMatchingProblem
 from metametric.core.constraint import MatchingConstraint
 from metametric.core.graph import Graph, _reachability_matrix
-from metametric.core.matching import Match, Matching, Path
+from metametric.core.matching import Match, Matching, Path, _matching_from_triples
 from metametric.core.metric import DiscreteMetric, Metric
 from metametric.core._problem import AssignmentProblem
 
 
 C = TypeVar("C")
 T = TypeVar("T")
-
-
-def _matching_from_triples(
-    original_x: C,
-    original_y: C,
-    score: float,
-    x: Sequence[T],
-    y: Sequence[T],
-    matches: Collection[tuple[int, int, float]],
-) -> Matching:
-    def _matching():
-        yield Match(Path(), original_x, Path(), original_y, score)
-        for i, j, s in matches:
-            yield Match(Path().prepend(i), x[i], Path().prepend(j), y[j], s)
-
-    return Matching(_matching())
 
 
 class SetMatchingMetric(Metric[Collection[T]]):

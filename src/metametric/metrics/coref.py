@@ -20,15 +20,13 @@ def _entity_set_to_membership_set(es: EntitySet) -> Collection[Membership]:
     return [Membership(mention=m, entity=e) for e in es.entities for m in e.mentions]
 
 
-b_cubed_precision = mm.preprocess(
-    _entity_set_to_membership_set,
+b_cubed_precision = mm.preprocess[_entity_set_to_membership_set](
     mm.set_matching[Membership, "<->", "precision"](
         mm.dataclass[Membership]({"mention": ..., "entity": mm.normalize["precision"](mm.auto[Entity])})
     ),
 )
 
-b_cubed_recall = mm.preprocess(
-    _entity_set_to_membership_set,
+b_cubed_recall = mm.preprocess[_entity_set_to_membership_set](
     mm.set_matching[Membership, "<->", "recall"](
         mm.dataclass[Membership]({"mention": ..., "entity": mm.normalize["recall"](mm.auto[Entity])})
     ),

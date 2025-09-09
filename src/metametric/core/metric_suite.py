@@ -60,6 +60,7 @@ class MetricFamily(MetricSuite[T]):
 
     For example, the precision, recall, and F-1 of event detection should be computed together within one family.
     """
+
     metric: Metric[T]
     reduction: Reduction
 
