@@ -79,12 +79,22 @@ def from_func(func: Callable[[T, T], float]) -> Metric[T]:
     return Metric.from_function(func)
 
 
-def preprocess(func: Callable[[S], T], m: Metric[T]) -> Metric[S]:
-    """Preprocess the input by some function then apply a metric.
+class _Preprocess:
+    def __getitem__(
+        self, fg: Union[Callable[[S], T], tuple[Callable[[S], T], Callable[[S], T]]]
+    ) -> Callable[[Metric[T]], Metric[S]]:
+        def _preprocess(m: Metric[T]) -> Metric[S]:
+            if isinstance(fg, tuple):
+                f_pred, f_ref = fg
+            else:
+                f_pred = fg
+                f_ref = fg
+            return ContramappedMetric(m, f_pred, f_ref)
 
-    This is the `contramap` operation on the metric functor.
-    """
-    return ContramappedMetric(m, func)
+        return _preprocess
+
+
+preprocess = _Preprocess()
 
 
 class _Auto:

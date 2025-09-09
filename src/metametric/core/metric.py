@@ -13,6 +13,7 @@ from typing import (
     Union,
     get_origin,
     runtime_checkable,
+    Optional,
 )
 from collections.abc import Sequence
 
@@ -25,16 +26,18 @@ S = TypeVar("S", contravariant=True)
 T = TypeVar("T", contravariant=True)
 U = TypeVar("U")
 R = TypeVar("R", covariant=True)
-;;
 
-class GenMetric(ABC, Generic[T, R]):
-    """A more general metric interface that allows for return types other than `float`.
 
-    This is useful for metrics that return multiple values, such as precision and recall at $k$.
+class ParameterizedMetric(ABC, Generic[T, R]):
+    """A metric that is parametric in a set of parameters.
+
+    When computed, it outputs a `ndarray` of metrics.
+    For example, in retrieval, precision@k is parametrized by `k`.
     """
 
     @abstractmethod
     def compute(self, x: T, y: T) -> tuple[R, Matching]:
+        r"""Scores two objects using this metric, and returns the score and a matching object."""
         raise NotImplementedError
 
     def score(self, x: T, y: T) -> R:
@@ -49,11 +52,26 @@ class GenMetric(ABC, Generic[T, R]):
         """
         return self.score(x, x)
 
-    def contramap(self, f: Callable[[S], T]) -> "GenMetric[S, R]":
-        return ContramappedMetric(self, f)
+    def contramap(
+        self, f_pred: Callable[[S], T], f_ref: Optional[Callable[[S], T]] = None
+    ) -> "ParameterizedMetric[S, R]":
+        r"""Returns a new metric $\phi^\prime$ by first preprocessing the objects by a given function $f: S \to T$.
+
+        \[ \phi^\prime(x, y) = \phi(f(x), f(y)) \]
+
+        Args:
+            f_pred (`Callable[[S], T]`): A function that preprocesses the predicted objects.
+            f_ref (`Callable[[S], T]`, optional): A function that preprocesses the reference objects.
+                If not provided, the preprocessing function for the predicted objects will be used.
+
+        Returns:
+            A new metric $\phi^\prime$.
+
+        """
+        return ContramappedParameterizedMetric(self, f_pred, f_ref)
 
 
-class Metric(GenMetric[T, float], Generic[T]):
+class Metric(ParameterizedMetric[T, float], ABC, Generic[T]):
     r"""The basic metric interface.
 
     Here a *metric* is defined as a function $\phi: T \times T \to \mathbb{R}_{\ge 0}$ that takes two objects and
@@ -61,11 +79,6 @@ class Metric(GenMetric[T, float], Generic[T]):
     It follows the common usage in machine learning and NLP literature, as in the phrase "evaluation metrics".
     This is *not* the metric in the mathematical sense, where it is a generalization of *distances*.
     """
-
-    @abstractmethod
-    def compute(self, x: T, y: T) -> tuple[float, Matching]:
-        r"""Scores two objects using this metric, and returns the score and a matching object."""
-        raise NotImplementedError
 
     def gram_matrix(self, xs: Sequence[T], ys: Sequence[T]) -> Float[np.ndarray, "nx ny"]:
         r"""Computes the Gram matrix of the metric given two collections of objects.
@@ -81,19 +94,21 @@ class Metric(GenMetric[T, float], Generic[T]):
         """
         return np.array([[self.score(x, y) for y in ys] for x in xs])
 
-    def contramap(self, f: Callable[[S], T]) -> "Metric[S]":
+    def contramap(self, f_pred: Callable[[S], T], f_ref: Optional[Callable[[S], T]] = None) -> "Metric[S]":
         r"""Returns a new metric $\phi^\prime$ by first preprocessing the objects by a given function $f: S \to T$.
 
         \[ \phi^\prime(x, y) = \phi(f(x), f(y)) \]
 
         Args:
-            f: A preprocessing function.
+            f_pred (`Callable[[S], T]`): A function that preprocesses the predicted objects.
+            f_ref (`Callable[[S], T]`, optional): A function that preprocesses the reference objects.
+                If not provided, the preprocessing function for the predicted objects will be used.
 
         Returns:
             A new metric $\phi^\prime$.
 
         """
-        return ContramappedMetric(self, f)
+        return ContramappedMetric(self, f_pred, f_ref)
 
     @staticmethod
     def from_function(f: Callable[[T, T], float]) -> "Metric[T]":
@@ -126,20 +141,36 @@ class MetricFromFunction(Metric[T]):
         return self.f(x, y), Matching(_matching())
 
 
-class ContramappedMetric(Metric[S]):
-    """A metric contramapped by a function."""
+class ContramappedParameterizedMetric(ParameterizedMetric[S, R]):
+    """A metric contramapped by a pair of functions that operate on either of the predicted and reference objects."""
 
-    def __init__(self, inner: Metric[T], f: Callable[[S], T]):
+    def __init__(self, inner: ParameterizedMetric[T, R], f_pred: Callable[[S], T], f_ref: Optional[Callable[[S], T]]):
         self.inner = inner
-        self.f = f
+        self.f_pred = f_pred
+        if f_ref is None:
+            self.symmetric = True
+            f_ref = f_pred
+        else:
+            self.symmetric = False
+        self.f_ref = f_ref
 
-    def compute(self, x: S, y: S) -> tuple[float, Matching]:
+    def compute(self, x: S, y: S) -> tuple[R, Matching]:
         """Score two objects."""
-        return self.inner.compute(self.f(x), self.f(y))
+        return self.inner.compute(self.f_pred(x), self.f_ref(y))
 
-    def score_self(self, x: S) -> float:
+    def score_self(self, x: S) -> R:
         """Scores an object against itself."""
-        return self.inner.score_self(self.f(x))
+        if self.symmetric:
+            return self.inner.score_self(self.f_pred(x))
+        else:
+            return self.inner.score(self.f_pred(x), self.f_ref(x))
+
+
+class ContramappedMetric(ContramappedParameterizedMetric[S, float], Metric[S]):
+    """A metric contramapped by a pair of functions that operate on either of the predicted and reference objects."""
+
+    def __init__(self, inner: Metric[T], f_pred: Callable[[S], T], f_ref: Optional[Callable[[S], T]]):
+        super().__init__(inner, f_pred, f_ref)
 
 
 class DiscreteMetric(Metric[T]):
