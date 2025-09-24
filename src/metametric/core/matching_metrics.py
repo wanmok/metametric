@@ -10,7 +10,7 @@ import numpy as np
 from metametric.core._ilp import ILPMatchingProblem
 from metametric.core.constraint import MatchingConstraint
 from metametric.core.graph import Graph, _reachability_matrix
-from metametric.core.matching import Match, Matching, Path
+from metametric.core.matching import Match, Matching, Path, _matching_from_triples
 from metametric.core.metric import DiscreteMetric, Metric
 from metametric.core._problem import AssignmentProblem
 
@@ -19,20 +19,21 @@ C = TypeVar("C")
 T = TypeVar("T")
 
 
-def _matching_from_triples(
-    original_x: C,
-    original_y: C,
-    score: float,
-    x: Sequence[T],
-    y: Sequence[T],
-    matches: Collection[tuple[int, int, float]],
-) -> Matching:
-    def _matching():
-        yield Match(Path(), original_x, Path(), original_y, score)
-        for i, j, s in matches:
-            yield Match(Path().prepend(i), x[i], Path().prepend(j), y[j], s)
+class MaxPairMatchingMetric(Metric[Collection[T]]):
+    """A metric derived from the maximal pairwise similarity."""
 
-    return Matching(_matching())
+    def __init__(self, inner: Metric[T]):
+        self.inner = inner
+
+    def compute(self, x: Collection[T], y: Collection[T]) -> tuple[float, Matching]:
+        xs, ys = list(x), list(y)
+        m = self.inner.gram_matrix(xs, ys)
+        i, j = np.unravel_index(m.argmax(), m.shape)
+        return m[i, j].item(), Matching([Match(Path(), x, Path(), y, m[i, j].item())])
+
+    def score_self(self, x: Collection[T]) -> float:
+        """Score a collection of objects with itself."""
+        return max((self.inner.score_self(u) for u in x), default=0.0)
 
 
 class SetMatchingMetric(Metric[Collection[T]]):
@@ -82,8 +83,6 @@ class SetMatchingMetric(Metric[Collection[T]]):
             return self.inner.gram_matrix(x, x).sum()
         elif self.constraint == MatchingConstraint.ONE_TO_ONE:
             return sum(self.inner.score_self(u) for u in x)
-        elif self.constraint == MatchingConstraint.MAX_PAIR:
-            return max((self.inner.score_self(u) for u in x), default=0.0)
         else:
             return self.score(x, x)
 

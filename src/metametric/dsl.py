@@ -12,6 +12,10 @@ from typing import (
     TYPE_CHECKING,
 )
 from collections.abc import Collection, Sequence
+import numpy as np
+from jaxtyping import Float
+
+from metametric.core.ranking_metrics import RankingMetric
 
 if sys.version_info >= (3, 10):
     from types import EllipsisType as Ell
@@ -27,18 +31,28 @@ from metametric.core.matching_metrics import (
     LatentSetMatchingMetric,
     SequenceMatchingMetric,
     SetMatchingMetric,
+    MaxPairMatchingMetric,
 )
 from metametric.core.decorator import derive_metric
 from metametric.core.graph import Graph
-from metametric.core.metric import ContramappedMetric, DiscreteMetric, Metric, ProductMetric, UnionMetric
+from metametric.core.metric import (
+    ContramappedMetric,
+    DiscreteMetric,
+    Metric,
+    ProductMetric,
+    UnionMetric,
+    ParameterizedMetric,
+    ContramappedParameterizedMetric,
+)
 from metametric.core.metric_suite import MetricFamily, MetricSuite, MultipleMetricFamilies
-from metametric.core.normalizers import NormalizedMetric, Normalizer
+from metametric.core.normalizers import NormalizedMetric, Normalizer, NormalizedParametrizedMetric
 from metametric.core.reduction import MacroAverage, MicroAverage, MultipleReductions, Reduction
 from metametric.core.matching import Matching, Match, Hook
 
 
 T = TypeVar("T", contravariant=True)
 S = TypeVar("S")
+R = TypeVar("R")
 
 DslConfig = Union[
     type[T],
@@ -79,12 +93,40 @@ def from_func(func: Callable[[T, T], float]) -> Metric[T]:
     return Metric.from_function(func)
 
 
-def preprocess(func: Callable[[S], T], m: Metric[T]) -> Metric[S]:
-    """Preprocess the input by some function then apply a metric.
+class _Preprocess:
+    def __getitem__(
+        self, fg: Union[Callable[[S], T], tuple[Callable[[S], T], Callable[[S], T]]]
+    ) -> Callable[[Metric[T]], Metric[S]]:
+        def _preprocess(m: Metric[T]) -> Metric[S]:
+            if isinstance(fg, tuple):
+                f_pred, f_ref = fg
+            else:
+                f_pred = fg
+                f_ref = fg
+            return ContramappedMetric(m, f_pred, f_ref)
 
-    This is the `contramap` operation on the metric functor.
-    """
-    return ContramappedMetric(m, func)
+        return _preprocess
+
+
+preprocess = _Preprocess()
+
+
+class _PreprocessParameterized:
+    def __getitem__(
+        self, fg: Union[Callable[[S], T], tuple[Callable[[S], T], Callable[[S], T]]]
+    ) -> Callable[[ParameterizedMetric[T, R]], ParameterizedMetric[S, R]]:
+        def _preprocess(m: ParameterizedMetric[T, R]) -> ParameterizedMetric[S, R]:
+            if isinstance(fg, tuple):
+                f_pred, f_ref = fg
+            else:
+                f_pred = fg
+                f_ref = fg
+            return ContramappedParameterizedMetric(m, f_pred, f_ref)
+
+        return _preprocess
+
+
+preprocess_param = _PreprocessParameterized()
 
 
 class _Auto:
@@ -138,6 +180,10 @@ class _Union:
 
 
 union = _Union()
+
+
+def max_pair(inner: Metric[T]) -> Metric[Collection[T]]:
+    return MaxPairMatchingMetric(inner)
 
 
 class _SetMatching:
@@ -212,6 +258,19 @@ class _LatentSetMatching:
 latent_set_matching = _LatentSetMatching()
 
 
+class _Ranking:
+    def __getitem__(
+        self, max_k: int
+    ) -> Callable[[Metric[T]], ParameterizedMetric[Sequence[T], Float[np.ndarray, "k"]]]:
+        def ranking_metric(inner: Metric[T]) -> ParameterizedMetric[Sequence[T], Float[np.ndarray, "k"]]:
+            return RankingMetric(inner, max_k=max_k)
+
+        return ranking_metric
+
+
+ranking = _Ranking()
+
+
 class _Normalize:
     def __getitem__(self, normalizer: Union[Normalizer, str]) -> Callable[[Metric[T]], Metric[T]]:
         if isinstance(normalizer, str):
@@ -226,6 +285,24 @@ class _Normalize:
 
 
 normalize = _Normalize()
+
+
+class _NormalizeParameterized:
+    def __getitem__(
+        self, normalizer: Union[Normalizer, str]
+    ) -> Callable[[ParameterizedMetric[T, R]], ParameterizedMetric[T, R]]:
+        if isinstance(normalizer, str):
+            normalizer_obj = Normalizer.from_str(normalizer)
+        else:
+            normalizer_obj = None
+
+        def _normalize(metric: ParameterizedMetric[T, R]) -> ParameterizedMetric[T, R]:
+            return metric if normalizer_obj is None else NormalizedParametrizedMetric(metric, normalizer_obj)
+
+        return _normalize
+
+
+normalize_param = _NormalizeParameterized()
 
 
 def macro_average(normalizers: Collection[Union[Normalizer, str]]) -> Reduction:

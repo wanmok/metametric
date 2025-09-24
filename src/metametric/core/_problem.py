@@ -1,19 +1,20 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import TypeVar, Generic
 from collections.abc import Sequence, Collection
 
 import numpy as np
 import scipy.optimize as spo
+from jaxtyping import Float
 
 from metametric.core.constraint import MatchingConstraint
 
 T = TypeVar("T")
 
 
-class MatchingProblem(Generic[T]):
+class MatchingProblem(ABC, Generic[T]):
     """A matching between two collections of objects."""
 
-    def __init__(self, x: Sequence[T], y: Sequence[T], gram_matrix: np.ndarray):
+    def __init__(self, x: Sequence[T], y: Sequence[T], gram_matrix: Float[np.ndarray, "nx ny"]):
         self.x = x
         self.y = y
         self.gram_matrix = gram_matrix
@@ -25,7 +26,9 @@ class MatchingProblem(Generic[T]):
 
 
 class AssignmentProblem(MatchingProblem[T]):
-    def __init__(self, x: Sequence[T], y: Sequence[T], gram_matrix: np.ndarray, constraint: MatchingConstraint):
+    def __init__(
+        self, x: Sequence[T], y: Sequence[T], gram_matrix: Float[np.ndarray, "nx ny"], constraint: MatchingConstraint
+    ):
         super().__init__(x, y, gram_matrix)
         self.constraint = constraint
 
@@ -39,24 +42,19 @@ class AssignmentProblem(MatchingProblem[T]):
             total = m[row_idx, col_idx].sum()
             matching = [(i.item(), j.item(), m[i, j].item()) for i, j in zip(row_idx, col_idx)]
             return total, matching
-        if self.constraint == MatchingConstraint.ONE_TO_MANY:
+        elif self.constraint == MatchingConstraint.ONE_TO_MANY:
             total = m.max(axis=0).sum().item()
             selected_x = m.argmax(axis=0)
             matching = [(selected_x[j].item(), j, m[selected_x[j], j].item()) for j in range(m.shape[1])]
             return total, matching
-        if self.constraint == MatchingConstraint.MANY_TO_ONE:
+        elif self.constraint == MatchingConstraint.MANY_TO_ONE:
             total = m.max(axis=1).sum().item()
             selected_y = m.argmax(axis=1)
             matching = [(i, selected_y[i].item(), m[i, selected_y[i]].item()) for i in range(m.shape[0])]
             return total, matching
-        if self.constraint == MatchingConstraint.MANY_TO_MANY:
+        elif self.constraint == MatchingConstraint.MANY_TO_MANY:
             total = m.sum().item()
             matching = [(i, j, m[i, j].item()) for i in range(m.shape[0]) for j in range(m.shape[1])]
             return total, matching
-        if self.constraint == MatchingConstraint.MAX_PAIR:
-            if m.size == 0:
-                return 0.0, []
-            i, j = np.unravel_index(m.argmax(), m.shape)
-            total = m[i, j].item()
-            matching = [(i, j, total)]
-            return total, matching
+        else:
+            raise ValueError(f"Unknown constraint {self.constraint}")

@@ -10,7 +10,6 @@ class MatchingConstraint(Enum):
     ONE_TO_MANY = auto()
     MANY_TO_ONE = auto()
     MANY_TO_MANY = auto()
-    MAX_PAIR = auto()
 
     @staticmethod
     def from_str(s: str) -> "MatchingConstraint":
@@ -23,5 +22,4 @@ class MatchingConstraint(Enum):
             "1:*": MatchingConstraint.ONE_TO_MANY,
             "*:1": MatchingConstraint.MANY_TO_ONE,
             "*:*": MatchingConstraint.MANY_TO_MANY,
-            "==": MatchingConstraint.MAX_PAIR,
         }[s]

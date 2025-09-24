@@ -52,6 +52,9 @@ lint.select = [
 lint.ignore = [
     "D102", # Missing docstring in public method
     "D107", # Missing docstring in `__init__`
+    "F722", # For jaxtyping shape strings
+    "F821", # For jaxtyping shape strings
+    "UP037", # For jaxtyping shape strings
 ]
 
 lint.fixable = ["ALL"]
