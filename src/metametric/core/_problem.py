@@ -42,18 +42,19 @@ class AssignmentProblem(MatchingProblem[T]):
             total = m[row_idx, col_idx].sum()
             matching = [(i.item(), j.item(), m[i, j].item()) for i, j in zip(row_idx, col_idx)]
             return total, matching
-        if self.constraint == MatchingConstraint.ONE_TO_MANY:
+        elif self.constraint == MatchingConstraint.ONE_TO_MANY:
             total = m.max(axis=0).sum().item()
             selected_x = m.argmax(axis=0)
             matching = [(selected_x[j].item(), j, m[selected_x[j], j].item()) for j in range(m.shape[1])]
             return total, matching
-        if self.constraint == MatchingConstraint.MANY_TO_ONE:
+        elif self.constraint == MatchingConstraint.MANY_TO_ONE:
             total = m.max(axis=1).sum().item()
             selected_y = m.argmax(axis=1)
             matching = [(i, selected_y[i].item(), m[i, selected_y[i]].item()) for i in range(m.shape[0])]
             return total, matching
-        if self.constraint == MatchingConstraint.MANY_TO_MANY:
+        elif self.constraint == MatchingConstraint.MANY_TO_MANY:
             total = m.sum().item()
             matching = [(i, j, m[i, j].item()) for i in range(m.shape[0]) for j in range(m.shape[1])]
             return total, matching
-        raise ValueError(f"Invalid constraint: {self.constraint}")
+        else:
+            raise ValueError(f"Unknown constraint {self.constraint}")

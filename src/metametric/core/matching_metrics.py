@@ -19,6 +19,23 @@ C = TypeVar("C")
 T = TypeVar("T")
 
 
+class MaxPairMatchingMetric(Metric[Collection[T]]):
+    """A metric derived from the maximal pairwise similarity."""
+
+    def __init__(self, inner: Metric[T]):
+        self.inner = inner
+
+    def compute(self, x: Collection[T], y: Collection[T]) -> tuple[float, Matching]:
+        xs, ys = list(x), list(y)
+        m = self.inner.gram_matrix(xs, ys)
+        i, j = np.unravel_index(m.argmax(), m.shape)
+        return m[i, j].item(), Matching([Match(Path(), x, Path(), y, m[i, j].item())])
+
+    def score_self(self, x: Collection[T]) -> float:
+        """Score a collection of objects with itself."""
+        return max((self.inner.score_self(u) for u in x), default=0.0)
+
+
 class SetMatchingMetric(Metric[Collection[T]]):
     """A metric derived from the matching of two sets."""
 

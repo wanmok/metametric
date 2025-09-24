@@ -31,6 +31,7 @@ from metametric.core.matching_metrics import (
     LatentSetMatchingMetric,
     SequenceMatchingMetric,
     SetMatchingMetric,
+    MaxPairMatchingMetric,
 )
 from metametric.core.decorator import derive_metric
 from metametric.core.graph import Graph
@@ -179,6 +180,10 @@ class _Union:
 
 
 union = _Union()
+
+
+def max_pair(inner: Metric[T]) -> Metric[Collection[T]]:
+    return MaxPairMatchingMetric(inner)
 
 
 class _SetMatching:
