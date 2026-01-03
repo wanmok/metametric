@@ -3,7 +3,7 @@
 from pytest import approx
 import numpy as np
 
-from metametric.metrics.retrieval import ranking_ap, p_at_k, r_at_k
+from metametric.metrics.retrieval import ranking_ap, p_at_k, r_at_k, r_precision
 from metametric.metrics.retrieval import dcg_at_k, ndcg_at_k
 
 
@@ -25,6 +25,7 @@ def test_retrieval():
     pk = p_at_k.score(predicted, reference)
     rk = r_at_k.score(predicted, reference)
     ap = ranking_ap.score(predicted, reference)
+    rprec = r_precision.score(predicted, reference)
     dcg = dcg_at_k.score(predicted, reference)
     ndcg = ndcg_at_k.score(predicted, reference)
     assert all(pk == [approx(0.0), approx(0.0), approx(1 / 3), approx(0.5), approx(0.5), approx(0.5), approx(0.5),
@@ -33,6 +34,8 @@ def test_retrieval():
         rk == [approx(0.0), approx(0.0), approx(1 / 3), approx(2 / 3), approx(2 / 3), approx(2 / 3), approx(2 / 3),
                approx(2 / 3), approx(2 / 3), approx(2 / 3)])
     assert ap == approx(0.2778, abs=0.01)
+    # R-precision with R=3 (relevant items): hits at rank3 is 1
+    assert rprec == approx(1.0 / 3, abs=1e-4)
     # DCG accumulates discounted hits
     assert all(dcg[:4] == [approx(0.0), approx(0.0), approx(0.5, abs=1e-4), approx(0.9307, abs=1e-4)])
     # nDCG normalizes by ideal discounted gains (three relevant items)

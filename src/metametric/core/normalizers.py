@@ -50,6 +50,8 @@ class Normalizer(Protocol[RI, RO]):
             return NDCGAtK()
         elif s == "ranking_average_precision" or s == "ranking_ap":
             return RankingAveragePrecision()
+        elif s == "r_precision" or s == "r-precision" or s == "rprecision":
+            return RPrecision()
         elif s == "recall" or s == "r":
             return Recall()
         elif s == "dice" or s == "f":
@@ -159,6 +161,22 @@ class NDCGAtK(Normalizer[Float[np.ndarray, "k"], Float[np.ndarray, "k"]]):
         ideal = np.cumsum(ideal_hits * discounts)
         with np.errstate(divide="ignore", invalid="ignore"):
             return np.divide(dcg, ideal, out=np.zeros_like(dcg), where=ideal > 0.0)
+
+
+class RPrecision(Normalizer[Float[np.ndarray, "k"], float]):
+    """R-precision at cutoff R = number of relevant items."""
+
+    name = "r_precision"
+
+    def normalize(
+        self, score_xy: Float[np.ndarray, "k"], score_xx: Float[np.ndarray, "k"], score_yy: Float[np.ndarray, "k"]
+    ) -> float:
+        r = int(round(score_yy[-1])) if len(score_yy) > 0 else 0
+        if r <= 0:
+            return 0.0
+        cutoff = min(r, len(score_xy))
+        hits_at_r = score_xy[cutoff - 1]
+        return float(hits_at_r / r)
 
 
 class RankingAveragePrecision(Normalizer[Float[np.ndarray, "k"], float]):
