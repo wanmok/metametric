@@ -44,6 +44,10 @@ class Normalizer(Protocol[RI, RO]):
             return PrecisionAtK()
         elif s == "recall@k" or s == "r@k":
             return RecallAtK()
+        elif s == "dcg@k":
+            return DCGAtK()
+        elif s == "ndcg@k":
+            return NDCGAtK()
         elif s == "ranking_average_precision" or s == "ranking_ap":
             return RankingAveragePrecision()
         elif s == "recall" or s == "r":
@@ -124,6 +128,37 @@ class RecallAtK(Normalizer[Float[np.ndarray, "k"], Float[np.ndarray, "k"]]):
     ) -> Float[np.ndarray, "k"]:
         """Normalize the metric using recall@k metric."""
         return score_xy / score_yy
+
+
+class DCGAtK(Normalizer[Float[np.ndarray, "k"], Float[np.ndarray, "k"]]):
+    """Discounted cumulative gain at k."""
+
+    name = "dcg@k"
+
+    def normalize(
+        self, score_xy: Float[np.ndarray, "k"], score_xx: Float[np.ndarray, "k"], score_yy: Float[np.ndarray, "k"]
+    ) -> Float[np.ndarray, "k"]:
+        hits = np.diff(np.concatenate(([0.0], score_xy)))
+        positions = np.arange(1, len(score_xy) + 1)
+        discounts = 1.0 / np.log2(positions + 1)
+        return np.cumsum(hits * discounts)
+
+
+class NDCGAtK(Normalizer[Float[np.ndarray, "k"], Float[np.ndarray, "k"]]):
+    """Normalized discounted cumulative gain at k."""
+
+    name = "ndcg@k"
+
+    def normalize(
+        self, score_xy: Float[np.ndarray, "k"], score_xx: Float[np.ndarray, "k"], score_yy: Float[np.ndarray, "k"]
+    ) -> Float[np.ndarray, "k"]:
+        dcg = DCGAtK().normalize(score_xy, score_xx, score_yy)
+        ideal_hits = np.diff(np.concatenate(([0.0], score_yy)))
+        positions = np.arange(1, len(score_yy) + 1)
+        discounts = 1.0 / np.log2(positions + 1)
+        ideal = np.cumsum(ideal_hits * discounts)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            return np.divide(dcg, ideal, out=np.zeros_like(dcg), where=ideal > 0.0)
 
 
 class RankingAveragePrecision(Normalizer[Float[np.ndarray, "k"], float]):

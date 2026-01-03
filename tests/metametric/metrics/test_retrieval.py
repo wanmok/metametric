@@ -1,7 +1,10 @@
 """Tests for retrieval metrics."""
 
 from pytest import approx
-from metametric.metrics.retrieval import ranking_ap
+import numpy as np
+
+from metametric.metrics.retrieval import ranking_ap, p_at_k, r_at_k
+from metametric.metrics.retrieval import dcg_at_k, ndcg_at_k
 
 
 def test_retrieval():
@@ -18,4 +21,21 @@ def test_retrieval():
         ("d", 1.0),
         ("e", 1.0),
     ]
-    assert ranking_ap.score(predicted, reference) == approx(0.2778, abs=0.01)
+
+    pk = p_at_k.score(predicted, reference)
+    rk = r_at_k.score(predicted, reference)
+    ap = ranking_ap.score(predicted, reference)
+    dcg = dcg_at_k.score(predicted, reference)
+    ndcg = ndcg_at_k.score(predicted, reference)
+    assert all(pk == [approx(0.0), approx(0.0), approx(1 / 3), approx(0.5), approx(0.5), approx(0.5), approx(0.5),
+                      approx(0.5), approx(0.5), approx(0.5)])
+    assert all(
+        rk == [approx(0.0), approx(0.0), approx(1 / 3), approx(2 / 3), approx(2 / 3), approx(2 / 3), approx(2 / 3),
+               approx(2 / 3), approx(2 / 3), approx(2 / 3)])
+    assert ap == approx(0.2778, abs=0.01)
+    # DCG accumulates discounted hits
+    assert all(dcg[:4] == [approx(0.0), approx(0.0), approx(0.5, abs=1e-4), approx(0.9307, abs=1e-4)])
+    # nDCG normalizes by ideal discounted gains (three relevant items)
+    ideal_at_3 = 1.0 + 1.0 / np.log2(3) + 1.0 / np.log2(4)
+    assert ndcg[2] == approx(0.5 / ideal_at_3, abs=1e-4)
+    assert ndcg[3] == approx(0.9307 / ideal_at_3, abs=1e-4)
