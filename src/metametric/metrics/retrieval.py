@@ -16,4 +16,5 @@ ranking_ap = mm.normalize_param["ranking_ap"](ranking_match)
 r_precision = mm.normalize_param["r_precision"](ranking_match)
 dcg_at_k = mm.normalize_param["dcg@k"](ranking_match)
 ndcg_at_k = mm.normalize_param["ndcg@k"](ranking_match)
-
+# Reciprocal rank / MRR
+mrr = mm.normalize_param["reciprocal_rank"](ranking_match)

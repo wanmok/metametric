@@ -50,6 +50,8 @@ class Normalizer(Protocol[RI, RO]):
             return NDCGAtK()
         elif s == "ranking_average_precision" or s == "ranking_ap":
             return RankingAveragePrecision()
+        elif s == "reciprocal_rank" or s == "mrr" or s == "rr":
+            return ReciprocalRank()
         elif s == "r_precision" or s == "r-precision" or s == "rprecision":
             return RPrecision()
         elif s == "recall" or s == "r":
@@ -192,6 +194,22 @@ class RankingAveragePrecision(Normalizer[Float[np.ndarray, "k"], float]):
         r = score_xy / score_yy
         dr = np.diff(r, prepend=0.0)
         return np.dot(p, dr).item()
+
+
+class ReciprocalRank(Normalizer[Float[np.ndarray, "k"], float]):
+    """Reciprocal rank of the first relevant hit."""
+
+    name = "reciprocal_rank"
+
+    def normalize(
+        self, score_xy: Float[np.ndarray, "k"], score_xx: Float[np.ndarray, "k"], score_yy: Float[np.ndarray, "k"]
+    ) -> float:
+        hits = np.diff(np.concatenate(([0.0], score_xy)))
+        hit_indices = np.flatnonzero(hits > 0.0)
+        if hit_indices.size == 0:
+            return 0.0
+        # Rank is 1-based, so add 1 to the zero-based index
+        return float(1.0 / (hit_indices[0] + 1))
 
 
 class NormalizedParametrizedMetric(ParameterizedMetric[T, RO]):
