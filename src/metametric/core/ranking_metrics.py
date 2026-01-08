@@ -22,9 +22,10 @@ class WeightedRankingMetric(ParameterizedMetric[Sequence[tuple[T, float]], Float
     Instead, it is a weight to that element when computing the metric.
     """
 
-    def __init__(self, inner: Metric[T], max_k: int = 100):
+    def __init__(self, inner: Metric[T], max_k: int = 100, extend_score_self: bool = False):
         self.inner = inner
         self.max_k = max_k
+        self.extend_score_self = extend_score_self
 
     def compute(
         self, x: Sequence[tuple[T, float]], y: Sequence[tuple[T, float]]
@@ -56,7 +57,16 @@ class WeightedRankingMetric(ParameterizedMetric[Sequence[tuple[T, float]], Float
         self_match = np.array([self.inner.score_self(u) * u_score * u_score for u, u_score in x_trunc]).cumsum()
         r = np.zeros(self.max_k)
         r[: len(self_match)] = self_match
-        r[len(self_match) :] = self_match[-1]
+        if self.extend_score_self and len(self_match) > 0:
+            # Extend the cumulative score by incrementing linearly for remaining positions
+            # This is needed for TREC eval equivalence where score_self should represent
+            # the theoretical maximum at each position k
+            # For discrete metrics with unit weights, each position increments by 1
+            increment = self.inner.score_self(x_trunc[0][0]) * (x_trunc[0][1] ** 2) if x_trunc else 1.0
+            for i in range(len(self_match), self.max_k):
+                r[i] = self_match[-1] + increment * (i - len(self_match) + 1)
+        else:
+            r[len(self_match) :] = self_match[-1] if len(self_match) > 0 else 0.0
         return r
 
 
@@ -66,8 +76,8 @@ class RankingMetric(ParameterizedMetric[Sequence[T], Float[np.ndarray, "k"]]):
     Note that the ranking is assumed to be in descending order.
     """
 
-    def __init__(self, inner: Metric[T], max_k: int = 100):
-        self.weighted = WeightedRankingMetric(inner, max_k)
+    def __init__(self, inner: Metric[T], max_k: int = 100, extend_score_self: bool = False):
+        self.weighted = WeightedRankingMetric(inner, max_k, extend_score_self)
 
     def compute(self, x: Sequence[T], y: Sequence[T]) -> tuple[Float[np.ndarray, "k"], Matching]:
         x_with_score = [(u, 1.0) for u in x]

@@ -6,7 +6,7 @@ from pytest import approx
 import numpy as np
 
 from metametric.metrics.retrieval import ranking_ap, p_at_k, r_at_k, r_precision
-from metametric.metrics.retrieval import dcg_at_k, ndcg_at_k, mrr
+from metametric.metrics.retrieval import dcg_at_k, ndcg_at_k, mrr, create_retrieval_metrics
 
 try:
     from trectools import TrecRun, TrecQrel, TrecEval
@@ -71,13 +71,22 @@ def test_mrr_edge_cases():
 def test_trec_eval_equivalence():
     """Test equivalence between metametric and trec_eval metrics.
 
-    Note: Some metrics may have slight differences due to implementation details.
-    Metametric uses a precision-recall curve integral approach for AP, while
-    TREC eval uses the standard sum of precisions at relevant positions.
+    Uses configurable metrics with max_k=1000 to match TREC eval behavior,
+    which allows proper calculation of metrics when the number of predictions
+    differs from the number of relevant documents.
     """
     if not TRECTOOLS_AVAILABLE:
         # Skip this test if trectools is not available
         pytest.skip("trectools not available")
+
+    # Create metrics with large max_k and extend_score_self=True to match TREC eval behavior
+    metrics = create_retrieval_metrics(max_k=1000, extend_score_self=True)
+    p_at_k_1000 = metrics["p_at_k"]
+    r_at_k_1000 = metrics["r_at_k"]
+    ranking_ap_1000 = metrics["ranking_ap"]
+    r_precision_1000 = metrics["r_precision"]
+    ndcg_at_k_1000 = metrics["ndcg_at_k"]
+    mrr_1000 = metrics["mrr"]
 
     # Create test data with multiple queries to test properly
     # Query 1: predictions and relevance judgments
@@ -138,50 +147,47 @@ def test_trec_eval_equivalence():
     te = TrecEval(run, qrel)
 
     # Test Precision@k for Q1
-    mm_p3_q1 = p_at_k.score(predicted_q1, reference_q1)[2]  # P@3 (index 2 for k=3)
+    mm_p3_q1 = p_at_k_1000.score(predicted_q1, reference_q1)[2]  # P@3 (index 2 for k=3)
     trec_p3 = te.get_precision(depth=3, per_query=True)
     trec_p3_q1 = trec_p3.loc['Q1', 'P@3']
     assert mm_p3_q1 == approx(trec_p3_q1, abs=1e-4), f"P@3 mismatch: metametric={mm_p3_q1}, trec={trec_p3_q1}"
 
     # Test Recall@k for Q1
-    mm_r3_q1 = r_at_k.score(predicted_q1, reference_q1)[2]  # R@3 (index 2 for k=3)
+    mm_r3_q1 = r_at_k_1000.score(predicted_q1, reference_q1)[2]  # R@3 (index 2 for k=3)
     trec_r3 = te.get_recall(depth=3, per_query=True)
     trec_r3_q1 = trec_r3.loc['Q1', 'R@3']
     assert mm_r3_q1 == approx(trec_r3_q1, abs=1e-4), f"R@3 mismatch: metametric={mm_r3_q1}, trec={trec_r3_q1}"
 
     # Test MRR for Q1
-    mm_mrr_q1 = mrr.score(predicted_q1, reference_q1)
+    mm_mrr_q1 = mrr_1000.score(predicted_q1, reference_q1)
     trec_mrr = te.get_reciprocal_rank(per_query=True)
     trec_mrr_q1 = trec_mrr.loc['Q1', 'recip_rank@1000']
     assert mm_mrr_q1 == approx(trec_mrr_q1, abs=1e-4), f"MRR mismatch: metametric={mm_mrr_q1}, trec={trec_mrr_q1}"
 
     # Test NDCG@k for Q1
-    mm_ndcg3_q1 = ndcg_at_k.score(predicted_q1, reference_q1)[2]  # NDCG@3
+    mm_ndcg3_q1 = ndcg_at_k_1000.score(predicted_q1, reference_q1)[2]  # NDCG@3
     trec_ndcg3 = te.get_ndcg(depth=3, per_query=True)
     trec_ndcg3_q1 = trec_ndcg3.loc['Q1', 'NDCG@3']
     assert mm_ndcg3_q1 == approx(trec_ndcg3_q1, abs=1e-4), f"NDCG@3 mismatch: metametric={mm_ndcg3_q1}, trec={trec_ndcg3_q1}"
 
     # Test MAP (Average Precision) for Q1
-    # NOTE: Metametric uses precision-recall curve integral, which differs slightly from TREC eval
-    # when the number of predictions differs from total relevant documents
-    mm_ap_q1 = ranking_ap.score(predicted_q1, reference_q1)
+    mm_ap_q1 = ranking_ap_1000.score(predicted_q1, reference_q1)
     trec_map = te.get_map(depth=1000, per_query=True)
     trec_map_q1 = trec_map.loc['Q1', 'MAP@1000']
-    # Allow larger tolerance due to different calculation method
-    assert mm_ap_q1 == approx(trec_map_q1, abs=0.05), f"MAP mismatch: metametric={mm_ap_q1}, trec={trec_map_q1}"
+    assert mm_ap_q1 == approx(trec_map_q1, abs=1e-4), f"MAP mismatch: metametric={mm_ap_q1}, trec={trec_map_q1}"
 
     # Test R-Precision for Q1
-    mm_rprec_q1 = r_precision.score(predicted_q1, reference_q1)
+    mm_rprec_q1 = r_precision_1000.score(predicted_q1, reference_q1)
     trec_rprec = te.get_rprec(per_query=True)
     trec_rprec_q1 = trec_rprec.loc['Q1', 'RPrec@1000']
     assert mm_rprec_q1 == approx(trec_rprec_q1, abs=1e-4), f"R-Precision mismatch: metametric={mm_rprec_q1}, trec={trec_rprec_q1}"
 
     # Test for Q2 as well
-    mm_p3_q2 = p_at_k.score(predicted_q2, reference_q2)[2]
+    mm_p3_q2 = p_at_k_1000.score(predicted_q2, reference_q2)[2]
     trec_p3_q2 = trec_p3.loc['Q2', 'P@3']
     assert mm_p3_q2 == approx(trec_p3_q2, abs=1e-4), f"P@3 Q2 mismatch: metametric={mm_p3_q2}, trec={trec_p3_q2}"
 
-    mm_mrr_q2 = mrr.score(predicted_q2, reference_q2)
+    mm_mrr_q2 = mrr_1000.score(predicted_q2, reference_q2)
     trec_mrr_q2 = trec_mrr.loc['Q2', 'recip_rank@1000']
     assert mm_mrr_q2 == approx(trec_mrr_q2, abs=1e-4), f"MRR Q2 mismatch: metametric={mm_mrr_q2}, trec={trec_mrr_q2}"
 
