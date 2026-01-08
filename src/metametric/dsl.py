@@ -120,7 +120,7 @@ class _PreprocessParameterized:
                 f_pred, f_ref = fg
             else:
                 f_pred = fg
-                f_ref = fg
+                f_ref = None  # Use None to indicate symmetric preprocessing
             return ContramappedParameterizedMetric(m, f_pred, f_ref)
 
         return _preprocess
@@ -260,10 +260,16 @@ latent_set_matching = _LatentSetMatching()
 
 class _Ranking:
     def __getitem__(
-        self, max_k: int
+        self, config: Union[int, tuple[int, bool]]
     ) -> Callable[[Metric[T]], ParameterizedMetric[Sequence[T], Float[np.ndarray, "k"]]]:
+        if isinstance(config, tuple):
+            max_k, extend_score_self = config
+        else:
+            max_k = config
+            extend_score_self = False
+
         def ranking_metric(inner: Metric[T]) -> ParameterizedMetric[Sequence[T], Float[np.ndarray, "k"]]:
-            return RankingMetric(inner, max_k=max_k)
+            return RankingMetric(inner, max_k=max_k, extend_score_self=extend_score_self)
 
         return ranking_metric
 
