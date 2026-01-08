@@ -28,6 +28,7 @@ dev = [
     "mkdocstrings[python]>=0.26.2",
     "networkx>=3.2.1",
     "setuptools>=75.2.0",
+    "trectools>=0.0.50",
 ]
 
 [build-system]
