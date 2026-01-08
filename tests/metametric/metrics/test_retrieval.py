@@ -1,6 +1,7 @@
 """Tests for retrieval metrics."""
 
 import pandas as pd
+import pytest
 from pytest import approx
 import numpy as np
 
@@ -76,7 +77,6 @@ def test_trec_eval_equivalence():
     """
     if not TRECTOOLS_AVAILABLE:
         # Skip this test if trectools is not available
-        import pytest
         pytest.skip("trectools not available")
 
     # Create test data with multiple queries to test properly
@@ -131,7 +131,6 @@ def test_trec_eval_equivalence():
 
     run = TrecRun()
     run.run_data = run_data
-    run.qrels_file = None
 
     qrel = TrecQrel()
     qrel.qrels_data = qrel_data
